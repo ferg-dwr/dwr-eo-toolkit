@@ -13,7 +13,7 @@ import pytest
 import json
 import tempfile
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import Mock, patch, MagicMock
 
 from nasa_eo_data.core.auth import (
@@ -179,7 +179,7 @@ class TestEarthDataLoginAuth:
             token1 = auth.get_bearer_token()
             
             # Manually expire cache
-            auth._token_expiry = datetime.utcnow() - timedelta(seconds=1)
+            auth._token_expiry = datetime.now(UTC) - timedelta(seconds=1)
             
             with patch.dict('os.environ', {'EARTHDATA_TOKEN': 'token2'}):
                 # Second call should re-fetch (simulating token rotation)
@@ -210,7 +210,7 @@ class TestEarthDataLoginAuth:
             cache_file = auth.token_cache_file
             cache_data = {
                 'token': 'oldtoken',
-                'timestamp': (datetime.utcnow() - timedelta(hours=2)).isoformat(),
+                'timestamp': (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             }
             cache_file.write_text(json.dumps(cache_data))
             
@@ -283,7 +283,7 @@ class TestEarthDataLoginAuth:
             # Cache a token
             auth._save_cached_token('token123')
             auth._cached_token = 'token123'
-            auth._token_expiry = datetime.utcnow() + timedelta(hours=1)
+            auth._token_expiry = datetime.now(UTC) + timedelta(hours=1)
             
             # Clear
             auth.clear_cache()

@@ -14,7 +14,7 @@ import json
 import base64
 from pathlib import Path
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from abc import ABC, abstractmethod
 import logging
 
@@ -191,7 +191,7 @@ class EarthDataLoginAuth:
         """
         # 1. Check in-memory cache
         if self._cached_token and self._token_expiry:
-            if datetime.utcnow() < self._token_expiry - timedelta(minutes=5):
+            if datetime.now(UTC) < self._token_expiry - timedelta(minutes=5):
                 logger.debug("Using cached bearer token (in-memory)")
                 return self._cached_token
 
@@ -208,14 +208,14 @@ class EarthDataLoginAuth:
             logger.debug("Using pre-generated EDL bearer token from environment")
             self._cached_token = creds
             # Pre-generated tokens expire in 60 days, but we don't know when
-            self._token_expiry = datetime.utcnow() + timedelta(days=59)
+            self._token_expiry = datetime.now(UTC) + timedelta(days=59)
             return creds
 
         # 4. Request new token using credentials
         token = self._request_token()
         if token:
             self._cached_token = token
-            self._token_expiry = datetime.utcnow() + timedelta(hours=1)
+            self._token_expiry = datetime.now(UTC) + timedelta(hours=1)
             self._save_cached_token(token)
             return token
 
@@ -273,7 +273,7 @@ class EarthDataLoginAuth:
         try:
             cache_data = {
                 "token": token,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
             self.token_cache_file.write_text(
                 json.dumps(cache_data, indent=2),
@@ -300,7 +300,7 @@ class EarthDataLoginAuth:
 
             # Tokens expire in 1 hour (conservative estimate)
             cached_time = datetime.fromisoformat(timestamp_str)
-            if datetime.utcnow() - cached_time < timedelta(hours=1):
+            if datetime.now(UTC) - cached_time < timedelta(hours=1):
                 return token
         except Exception as e:
             logger.debug(f"Could not load cached token: {e}")
