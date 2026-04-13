@@ -32,10 +32,8 @@ class CredentialProvider(ABC):
     """Abstract base for credential sources."""
 
     @abstractmethod
-    def get_credentials(self) -> Optional[tuple[str, str]]:
-        """
-        Returns (username, password) tuple or None if unavailable.
-        """
+    def get_credentials(self) -> Optional[tuple[str, str] | str]:
+        """Returns either (username, password) tuple or token string"""
         pass
 
 
@@ -117,12 +115,8 @@ class TokenProvider(CredentialProvider):
         """Get EDL bearer token from environment."""
         return os.getenv(self.token_var)
 
-    def get_credentials(self) -> Optional[tuple[str, str]]:
-        """
-        TokenProvider doesn't provide username/password credentials.
-        Returns None since tokens are used directly.
-        """
-        return None
+    def get_credentials(self) -> Optional[str]:
+        return os.getenv(self.token_var)
 
 
 class EarthDataLoginAuth:
@@ -172,7 +166,7 @@ class EarthDataLoginAuth:
         self.token_cache_file = self.token_cache_dir / ".edl_token"
         
         # Set up credential providers in priority order
-        self.token_provider = EnvironmentProvider(token_var)
+        self.token_provider = TokenProvider(token_var)
         self.netrc_provider = NetrcProvider(netrc_path)
         self.env_provider = EnvironmentProvider(username_var, password_var)
         
@@ -209,13 +203,13 @@ class EarthDataLoginAuth:
             return token_from_file
 
         # 3. Check for pre-generated token in environment
-        token_from_env = self.token_provider.get_token()
-        if token_from_env:
+        creds = self.token_provider.get_credentials()
+        if isinstance(creds, str):  # It's a token, not a tuple
             logger.debug("Using pre-generated EDL bearer token from environment")
-            self._cached_token = token_from_env
+            self._cached_token = creds
             # Pre-generated tokens expire in 60 days, but we don't know when
             self._token_expiry = datetime.utcnow() + timedelta(days=59)
-            return token_from_env
+            return creds
 
         # 4. Request new token using credentials
         token = self._request_token()
