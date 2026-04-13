@@ -117,6 +117,13 @@ class TokenProvider(CredentialProvider):
         """Get EDL bearer token from environment."""
         return os.getenv(self.token_var)
 
+    def get_credentials(self) -> Optional[tuple[str, str]]:
+        """
+        TokenProvider doesn't provide username/password credentials.
+        Returns None since tokens are used directly.
+        """
+        return None
+
 
 class EarthDataLoginAuth:
     """
