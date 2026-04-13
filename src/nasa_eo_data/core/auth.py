@@ -165,7 +165,7 @@ class EarthDataLoginAuth:
         self.token_cache_file = self.token_cache_dir / ".edl_token"
         
         # Set up credential providers in priority order
-        self.token_provider = TokenProvider(token_var)
+        self.token_provider = EnvironmentProvider(token_var)
         self.netrc_provider = NetrcProvider(netrc_path)
         self.env_provider = EnvironmentProvider(username_var, password_var)
         
