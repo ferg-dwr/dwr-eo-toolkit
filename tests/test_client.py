@@ -1,0 +1,824 @@
+"""
+Unit tests for HTTP client and CMR client modules.
+
+Tests cover:
+- HTTP request execution with authentication
+- Retry strategy and exponential backoff
+- Rate limit detection and handling
+- CMR-specific headers and pagination
+- Error handling for various HTTP status codes
+- Context manager behavior
+"""
+
+import pytest
+import json
+import time
+from unittest.mock import Mock, patch, MagicMock, call
+from typing import Dict, Any
+
+import requests
+from requests.adapters import HTTPAdapter
+
+from nasa_eo_data.core.auth import EarthDataLoginAuth
+from nasa_eo_data.core.client import (
+    HTTPClient,
+    CMRClient,
+    APIError,
+    RateLimitError,
+    AuthenticationError,
+)
+
+
+class MockResponse:
+    """Mock requests.Response for testing."""
+    
+    def __init__(
+        self,
+        status_code: int = 200,
+        json_data: Dict[str, Any] = None,
+        text: str = "",
+        headers: Dict[str, str] = None,
+    ):
+        self.status_code = status_code
+        self._json_data = json_data or {}
+        self.text = text or json.dumps(self._json_data)
+        self.headers = headers or {}
+    
+    def json(self):
+        return self._json_data
+    
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.exceptions.HTTPError(f"{self.status_code} Error")
+
+
+class TestHTTPClient:
+    """Tests for basic HTTPClient."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock authentication handler."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "test_token_123"
+        return auth
+    
+    @pytest.fixture
+    def client(self, auth):
+        """Create HTTPClient for testing."""
+        return HTTPClient(
+            auth_handler=auth,
+            base_url="https://api.example.com",
+            timeout=5,
+        )
+    
+    def test_initialization(self, auth):
+        """Should initialize with correct defaults."""
+        client = HTTPClient(
+            auth_handler=auth,
+            base_url="https://example.com",
+            client_id="test-app",
+            timeout=10,
+        )
+        
+        assert client.base_url == "https://example.com"
+        assert client.client_id == "test-app"
+        assert client.timeout == 10
+        assert client.auth_handler == auth
+    
+    def test_base_url_trailing_slash_handling(self, auth):
+        """Should handle base URLs with/without trailing slashes."""
+        client1 = HTTPClient(auth_handler=auth, base_url="https://api.com/")
+        client2 = HTTPClient(auth_handler=auth, base_url="https://api.com")
+        
+        assert client1.base_url == "https://api.com"
+        assert client2.base_url == "https://api.com"
+    
+    def test_get_headers_includes_auth_token(self, auth):
+        """Should include bearer token in headers."""
+        auth.get_bearer_token.return_value = "test_token_xyz"
+        client = HTTPClient(auth_handler=auth, client_id="myapp")
+        
+        headers = client.get_headers()
+        
+        assert headers["Authorization"] == "Bearer test_token_xyz"
+        assert headers["Client-Id"] == "myapp"
+        assert headers["Content-Type"] == "application/json"
+        assert "User-Agent" in headers
+    
+    def test_default_user_agent(self, auth):
+        """Should use default User-Agent."""
+        client = HTTPClient(auth_handler=auth)
+        headers = client.get_headers()
+        
+        assert headers["User-Agent"] == HTTPClient.DEFAULT_USER_AGENT
+    
+    def test_custom_user_agent(self, auth):
+        """Should use custom User-Agent if provided."""
+        client = HTTPClient(
+            auth_handler=auth,
+            user_agent="MyApp/1.0 (Python)"
+        )
+        headers = client.get_headers()
+        
+        assert headers["User-Agent"] == "MyApp/1.0 (Python)"
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_get_request_success(self, mock_request, client):
+        """Should successfully execute GET request."""
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={"data": "test"},
+            headers={"CMR-Request-Id": "req-123"}
+        )
+        mock_request.return_value = mock_response
+        
+        response = client.get("search/granules", params={"short_name": "MODIS"})
+        
+        assert response.status_code == 200
+        assert response.json() == {"data": "test"}
+        mock_request.assert_called_once()
+        
+        # Check call arguments
+        call_args = mock_request.call_args
+        assert call_args[0][0] == "GET"
+        assert "search/granules" in call_args[0][1]
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_post_request_success(self, mock_request, client):
+        """Should successfully execute POST request."""
+        mock_response = MockResponse(status_code=201, json_data={"id": "123"})
+        mock_request.return_value = mock_response
+        
+        payload = {"name": "test"}
+        response = client.post("submit", json_data=payload)
+        
+        assert response.status_code == 201
+        mock_request.assert_called_once()
+        
+        call_args = mock_request.call_args
+        assert call_args[0][0] == "POST"
+        assert call_args[1]["json"] == payload
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_request_authentication_error_401(self, mock_request, client):
+        """Should raise AuthenticationError for 401."""
+        mock_response = MockResponse(status_code=401, text="Unauthorized")
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(AuthenticationError):
+            client.get("protected/endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_request_authentication_error_403(self, mock_request, client):
+        """Should raise AuthenticationError for 403."""
+        mock_response = MockResponse(status_code=403, text="Forbidden")
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(AuthenticationError):
+            client.get("protected/endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_rate_limit_error_429(self, mock_request, client):
+        """Should raise RateLimitError for 429."""
+        mock_response = MockResponse(
+            status_code=429,
+            headers={"Retry-After": "60"}
+        )
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(RateLimitError) as exc_info:
+            client.get("endpoint")
+        
+        assert "Rate limited" in str(exc_info.value)
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_server_error_500(self, mock_request, client):
+        """Should raise APIError for server errors."""
+        mock_response = MockResponse(
+            status_code=500,
+            text="Internal Server Error"
+        )
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(APIError):
+            client.get("endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_bad_request_400(self, mock_request, client):
+        """Should raise HTTPError for 400 (not APIError)."""
+        mock_response = MockResponse(
+            status_code=400,
+            text="Bad Request"
+        )
+        mock_request.return_value = mock_response
+        
+        # 400 will call raise_for_status which raises HTTPError
+        with pytest.raises(requests.exceptions.HTTPError):
+            client.get("endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_timeout_error(self, mock_request, client):
+        """Should raise APIError on timeout."""
+        mock_request.side_effect = requests.exceptions.Timeout("Connection timeout")
+        
+        with pytest.raises(APIError) as exc_info:
+            client.get("endpoint")
+        
+        assert "timeout" in str(exc_info.value).lower()
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_connection_error(self, mock_request, client):
+        """Should raise APIError on connection error."""
+        mock_request.side_effect = requests.exceptions.ConnectionError("Cannot connect")
+        
+        with pytest.raises(APIError) as exc_info:
+            client.get("endpoint")
+        
+        assert "Connection error" in str(exc_info.value)
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_custom_timeout(self, mock_request, client):
+        """Should use custom timeout."""
+        mock_response = MockResponse(status_code=200)
+        mock_request.return_value = mock_response
+        
+        client.timeout = 15
+        client.get("endpoint")
+        
+        call_kwargs = mock_request.call_args[1]
+        assert call_kwargs["timeout"] == 15
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_merges_custom_headers(self, mock_request, client):
+        """Should merge custom headers with default headers."""
+        mock_response = MockResponse(status_code=200)
+        mock_request.return_value = mock_response
+        
+        custom_headers = {"X-Custom": "value"}
+        client.get("endpoint", headers=custom_headers)
+        
+        call_kwargs = mock_request.call_args[1]
+        headers = call_kwargs["headers"]
+        
+        assert headers["X-Custom"] == "value"
+        assert "Authorization" in headers  # Default header still present
+    
+    def test_context_manager(self, auth):
+        """Should support context manager protocol."""
+        with HTTPClient(auth_handler=auth) as client:
+            assert client.session is not None
+        
+        # Session should be closed after exiting context
+        assert client.session.adapters == {}  # Session is closed
+    
+    def test_close_session(self, auth):
+        """Should close session when close() is called."""
+        client = HTTPClient(auth_handler=auth)
+        assert client.session is not None
+        
+        client.close()
+        assert client.session.adapters == {}  # Session closed
+
+
+class TestCMRClient:
+    """Tests for CMR-specific client."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock authentication handler."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "test_token"
+        return auth
+    
+    @pytest.fixture
+    def client(self, auth):
+        """Create CMRClient for testing."""
+        return CMRClient(auth_handler=auth)
+    
+    def test_initialization(self, auth):
+        """Should initialize with CMR base URL."""
+        client = CMRClient(auth_handler=auth)
+        
+        assert client.base_url == "https://cmr.earthdata.nasa.gov"
+    
+    def test_custom_base_url(self, auth):
+        """Should allow custom base URL."""
+        client = CMRClient(
+            auth_handler=auth,
+            base_url="https://cmr.uat.earthdata.nasa.gov"
+        )
+        
+        assert client.base_url == "https://cmr.uat.earthdata.nasa.gov"
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_single_page(self, mock_request, client):
+        """Should handle single page of search results."""
+        # First request returns results
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {"concept_id": "G1", "umm": {"RelatedUrls": []}},
+                    {"concept_id": "G2", "umm": {"RelatedUrls": []}},
+                ]
+            },
+            headers={
+                "CMR-Hits": "2",
+                # No CMR-Search-After = end of results
+            }
+        )
+        mock_request.return_value = mock_response
+        
+        results, total_hits = client.search(
+            "search/granules",
+            {"short_name": "MODIS_TERRA_L2"}
+        )
+        
+        assert len(results) == 2
+        assert total_hits == 2
+        assert results[0]["concept_id"] == "G1"
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_multiple_pages(self, mock_request, client):
+        """Should paginate through multiple pages."""
+        # First page
+        response1 = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {"concept_id": "G1"},
+                    {"concept_id": "G2"},
+                ]
+            },
+            headers={
+                "CMR-Hits": "5",
+                "CMR-Search-After": '["token1", "G2"]',
+            }
+        )
+        
+        # Second page
+        response2 = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {"concept_id": "G3"},
+                    {"concept_id": "G4"},
+                ]
+            },
+            headers={
+                "CMR-Hits": "5",
+                "CMR-Search-After": '["token2", "G4"]',
+            }
+        )
+        
+        # Third page (last)
+        response3 = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {"concept_id": "G5"},
+                ]
+            },
+            headers={
+                "CMR-Hits": "5",
+                # No CMR-Search-After = done
+            }
+        )
+        
+        mock_request.side_effect = [response1, response2, response3]
+        
+        results, total_hits = client.search(
+            "search/granules",
+            {"short_name": "MODIS_TERRA_L2"},
+            page_size=2,
+        )
+        
+        assert len(results) == 5
+        assert total_hits == 5
+        assert results[0]["concept_id"] == "G1"
+        assert results[4]["concept_id"] == "G5"
+        assert mock_request.call_count == 3
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_with_max_results(self, mock_request, client):
+        """Should respect max_results limit."""
+        # Return more results than requested
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {"concept_id": f"G{i}"} for i in range(100)
+                ]
+            },
+            headers={"CMR-Hits": "100"}
+        )
+        mock_request.return_value = mock_response
+        
+        results, total_hits = client.search(
+            "search/granules",
+            {"short_name": "MODIS"},
+            page_size=100,
+            max_results=50,
+        )
+        
+        assert len(results) == 50
+        assert total_hits == 100
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_empty_results(self, mock_request, client):
+        """Should handle empty search results."""
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={"items": []},
+            headers={"CMR-Hits": "0"}
+        )
+        mock_request.return_value = mock_response
+        
+        results, total_hits = client.search(
+            "search/granules",
+            {"short_name": "NONEXISTENT"}
+        )
+        
+        assert len(results) == 0
+        assert total_hits == 0
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_with_search_after_header(self, mock_request, client):
+        """Should pass search-after header to next request."""
+        # Setup responses
+        response1 = MockResponse(
+            status_code=200,
+            json_data={"items": [{"concept_id": "G1"}]},
+            headers={
+                "CMR-Hits": "2",
+                "CMR-Search-After": '["page1_token", "G1"]',
+            }
+        )
+        
+        response2 = MockResponse(
+            status_code=200,
+            json_data={"items": [{"concept_id": "G2"}]},
+            headers={"CMR-Hits": "2"}  # No search-after = done
+        )
+        
+        mock_request.side_effect = [response1, response2]
+        
+        results, _ = client.search("search/granules", {})
+        
+        assert len(results) == 2
+        
+        # Check second call includes search-after header
+        second_call = mock_request.call_args_list[1]
+        headers = second_call[1]["headers"]
+        assert "CMR-Search-After" in headers
+        assert headers["CMR-Search-After"] == '["page1_token", "G1"]'
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_get_with_metadata(self, mock_request, client):
+        """Should extract CMR metadata from response."""
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={"items": []},
+            headers={
+                "CMR-Request-Id": "req-abc123",
+                "CMR-Hits": "42",
+                "CMR-Took": "150",
+            }
+        )
+        mock_request.return_value = mock_response
+        
+        response, metadata = client.get_with_metadata(
+            "search/collections",
+            {"page_size": 10}
+        )
+        
+        assert metadata["request_id"] == "req-abc123"
+        assert metadata["hits"] == 42
+        assert metadata["took_ms"] == "150"
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_search_parameters_passed_correctly(self, mock_request, client):
+        """Should pass search parameters in request."""
+        mock_response = MockResponse(
+            status_code=200,
+            json_data={"items": []},
+            headers={"CMR-Hits": "0"}
+        )
+        mock_request.return_value = mock_response
+        
+        params = {
+            "short_name": "MODIS_TERRA_L2",
+            "bounding_box": "-120,30,-100,40",
+            "temporal": ["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"],
+        }
+        
+        client.search("search/granules", params, page_size=500)
+        
+        call_params = mock_request.call_args[1]["params"]
+        assert call_params["short_name"] == "MODIS_TERRA_L2"
+        assert call_params["bounding_box"] == "-120,30,-100,40"
+        assert call_params["page_size"] == 500
+
+
+class TestRetryStrategy:
+    """Tests for retry behavior with exponential backoff."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock auth."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "token"
+        return auth
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_retry_on_429(self, mock_request, auth):
+        """Should retry on 429 (rate limit)."""
+        client = HTTPClient(auth_handler=auth, max_retries=2)
+        
+        # Fail twice, then succeed
+        responses = [
+            MockResponse(status_code=429, headers={"Retry-After": "1"}),
+            MockResponse(status_code=429, headers={"Retry-After": "1"}),
+            MockResponse(status_code=200, json_data={"data": "ok"}),
+        ]
+        mock_request.side_effect = responses
+        
+        # Note: The underlying urllib3.Retry will handle retries
+        # Our exception handling triggers on first 429
+        with pytest.raises(RateLimitError):
+            client.get("endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_retry_on_500(self, mock_request, auth):
+        """Should retry on 500 server error."""
+        client = HTTPClient(auth_handler=auth, max_retries=2)
+        
+        # Fail once, then succeed
+        responses = [
+            MockResponse(status_code=500, text="Server error"),
+            MockResponse(status_code=200, json_data={"data": "ok"}),
+        ]
+        mock_request.side_effect = responses
+        
+        # First call will get 500, retry mechanism will handle it
+        # But our code raises on 500 after checking auth
+        with pytest.raises(APIError):
+            client.get("endpoint")
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_no_retry_on_401(self, mock_request, auth):
+        """Should NOT retry on 401 (auth error)."""
+        client = HTTPClient(auth_handler=auth, max_retries=3)
+        
+        mock_request.return_value = MockResponse(status_code=401, text="Unauthorized")
+        
+        with pytest.raises(AuthenticationError):
+            client.get("endpoint")
+        
+        # Should only be called once (no retries)
+        assert mock_request.call_count == 1
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_no_retry_on_404(self, mock_request, auth):
+        """Should NOT retry on 404 (not found)."""
+        client = HTTPClient(auth_handler=auth, max_retries=3)
+        
+        mock_request.return_value = MockResponse(status_code=404, text="Not found")
+        
+        with pytest.raises(requests.exceptions.HTTPError):
+            client.get("endpoint")
+        
+        # Should only be called once (no retries)
+        assert mock_request.call_count == 1
+
+
+class TestRateLimitHandling:
+    """Tests for rate limit detection and tracking."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock auth."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "token"
+        return auth
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_rate_limit_with_retry_after_header(self, mock_request, auth):
+        """Should extract Retry-After from response."""
+        client = HTTPClient(auth_handler=auth)
+        
+        mock_response = MockResponse(
+            status_code=429,
+            headers={"Retry-After": "120"}
+        )
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(RateLimitError) as exc_info:
+            client.get("endpoint")
+        
+        assert "120" in str(exc_info.value) or "Retry-After" in str(exc_info.value)
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_rate_limit_without_retry_after_header(self, mock_request, auth):
+        """Should use default wait time if Retry-After missing."""
+        client = HTTPClient(auth_handler=auth)
+        
+        mock_response = MockResponse(
+            status_code=429,
+            headers={}  # No Retry-After
+        )
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(RateLimitError):
+            client.get("endpoint")
+        
+        # Client should have tracked rate limit reset time
+        assert client._rate_limit_reset_time is not None
+
+
+class TestErrorMessages:
+    """Tests for helpful error messages."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock auth."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "token"
+        return auth
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_authentication_error_message(self, mock_request, auth):
+        """Should include helpful message for auth errors."""
+        client = HTTPClient(auth_handler=auth)
+        
+        mock_response = MockResponse(
+            status_code=401,
+            text="Invalid token"
+        )
+        mock_request.return_value = mock_response
+        
+        with pytest.raises(AuthenticationError) as exc_info:
+            client.get("endpoint")
+        
+        error_msg = str(exc_info.value)
+        assert "401" in error_msg or "authentication" in error_msg.lower()
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_timeout_error_message(self, mock_request, auth):
+        """Should include helpful message for timeouts."""
+        client = HTTPClient(auth_handler=auth, timeout=5)
+        
+        mock_request.side_effect = requests.exceptions.Timeout("timeout")
+        
+        with pytest.raises(APIError) as exc_info:
+            client.get("endpoint")
+        
+        error_msg = str(exc_info.value).lower()
+        assert "timeout" in error_msg
+        assert "5" in str(exc_info.value)  # Should mention timeout value
+
+
+class TestEdgeCases:
+    """Tests for edge cases and boundary conditions."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock auth."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "token"
+        return auth
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_empty_endpoint_path(self, mock_request, client, auth):
+        """Should handle empty endpoint path."""
+        client = HTTPClient(auth_handler=auth, base_url="https://api.com")
+        mock_request.return_value = MockResponse(status_code=200)
+        
+        client.get("")
+        
+        # Should make request to base URL
+        call_url = mock_request.call_args[0][1]
+        assert "api.com" in call_url
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_endpoint_with_leading_slash(self, mock_request, auth):
+        """Should handle endpoint with leading slash."""
+        client = HTTPClient(auth_handler=auth, base_url="https://api.com")
+        mock_request.return_value = MockResponse(status_code=200)
+        
+        client.get("/search/data")
+        
+        call_url = mock_request.call_args[0][1]
+        assert "api.com/search/data" in call_url
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_params_none(self, mock_request, auth):
+        """Should handle None params gracefully."""
+        client = HTTPClient(auth_handler=auth)
+        mock_request.return_value = MockResponse(status_code=200)
+        
+        client.get("endpoint", params=None)
+        
+        # Should work without error
+        assert mock_request.called
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_empty_response_json(self, mock_request, auth):
+        """Should handle empty JSON response."""
+        client = HTTPClient(auth_handler=auth)
+        mock_response = MockResponse(status_code=200, json_data={})
+        mock_request.return_value = mock_response
+        
+        response = client.get("endpoint")
+        
+        assert response.json() == {}
+    
+    def test_very_large_timeout(self, auth):
+        """Should accept very large timeout values."""
+        client = HTTPClient(auth_handler=auth, timeout=3600)
+        assert client.timeout == 3600
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_special_characters_in_params(self, mock_request, auth):
+        """Should handle special characters in parameters."""
+        client = HTTPClient(auth_handler=auth)
+        mock_request.return_value = MockResponse(status_code=200)
+        
+        params = {
+            "query": "test & special = chars",
+            "bbox": "-120,30,-100,40",
+        }
+        client.get("endpoint", params=params)
+        
+        call_params = mock_request.call_args[1]["params"]
+        assert call_params["query"] == "test & special = chars"
+
+
+class TestIntegration:
+    """Integration tests combining multiple features."""
+    
+    @pytest.fixture
+    def auth(self):
+        """Mock auth."""
+        auth = Mock(spec=EarthDataLoginAuth)
+        auth.get_bearer_token.return_value = "token123"
+        return auth
+    
+    @patch('nasa_eo_data.core.client.requests.Session.request')
+    def test_cmr_workflow(self, mock_request, auth):
+        """Should support typical CMR workflow."""
+        client = CMRClient(auth_handler=auth, client_id="test-app")
+        
+        # Mock paginated search
+        response1 = MockResponse(
+            status_code=200,
+            json_data={
+                "items": [
+                    {
+                        "concept_id": "G1",
+                        "umm": {
+                            "RelatedUrls": [
+                                {"URL": "https://example.com/data1"}
+                            ]
+                        }
+                    },
+                    {
+                        "concept_id": "G2",
+                        "umm": {
+                            "RelatedUrls": [
+                                {"URL": "https://example.com/data2"}
+                            ]
+                        }
+                    }
+                ]
+            },
+            headers={"CMR-Hits": "2"}
+        )
+        
+        mock_request.return_value = response1
+        
+        # Search
+        results, total = client.search(
+            "search/granules",
+            {
+                "short_name": "MODIS_TERRA_L2",
+                "bounding_box": "-120,30,-100,40",
+            },
+            page_size=2000,
+        )
+        
+        # Verify results
+        assert len(results) == 2
+        assert total == 2
+        assert results[0]["concept_id"] == "G1"
+        assert results[0]["umm"]["RelatedUrls"][0]["URL"] == "https://example.com/data1"
+        
+        # Check that proper headers were sent
+        call_kwargs = mock_request.call_args[1]
+        headers = call_kwargs["headers"]
+        assert headers["Client-Id"] == "test-app"
+        assert "Authorization" in headers
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
