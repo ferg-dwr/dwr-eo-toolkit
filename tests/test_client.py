@@ -689,7 +689,7 @@ class TestEdgeCases:
         return auth
     
     @patch('nasa_eo_data.core.client.requests.Session.request')
-    def test_empty_endpoint_path(self, mock_request, client, auth):
+    def test_empty_endpoint_path(self, mock_request, auth):
         """Should handle empty endpoint path."""
         client = HTTPClient(auth_handler=auth, base_url="https://api.com")
         mock_request.return_value = MockResponse(status_code=200)
