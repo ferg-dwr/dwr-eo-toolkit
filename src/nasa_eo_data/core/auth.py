@@ -250,7 +250,7 @@ class EarthDataLoginAuth:
             response.raise_for_status()
             token_data = response.json()
             return token_data.get("access_token")
-        except requests.RequestException as e:
+        except Exception as e:
             logger.error(f"Failed to request EDL token: {e}")
             return None
 
