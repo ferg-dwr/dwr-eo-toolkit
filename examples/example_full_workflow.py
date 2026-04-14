@@ -194,22 +194,22 @@ def main():
     print("="*70)
     
     print(f"""
-What you just did:
-  1. Authenticated to NASA Earthdata
-  2. Initialized CMR Provider (Phase 2A)
-  3. Built a query using Filter Layer (Phase 2B)
-  4. Executed the query against NASA CMR API
-  5. Retrieved ECOSTRESS thermal imagery metadata
+            What you just did:
+            1. Authenticated to NASA Earthdata
+            2. Initialized CMR Provider (Phase 2A)
+            3. Built a query using Filter Layer (Phase 2B)
+            4. Executed the query against NASA CMR API
+            5. Retrieved ECOSTRESS thermal imagery metadata
 
-Next Steps:
-  - Phase 2C: Add ECOSTRESS-specific metadata
-  - Phase 3: Implement download manager
-  - Phase 4: Build high-level query API for DWR
+            Next Steps:
+            - Phase 2C: Add ECOSTRESS-specific metadata
+            - Phase 3: Implement download manager
+            - Phase 4: Build high-level query API for DWR
 
-For more examples, see:
-  - example_filters_only.py: Test filters without credentials
-  - example_providers_only.py: Test providers without filters
-""")
+            For more examples, see:
+            - example_filters_only.py: Test filters without credentials
+            - example_providers_only.py: Test providers without filters
+            """)
 
 
 if __name__ == "__main__":
