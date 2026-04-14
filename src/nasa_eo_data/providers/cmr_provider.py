@@ -90,18 +90,7 @@ class AdapterRegistry:
 
 
 class CMRProvider(BaseProvider):
-    """
-    Updated CMR Provider with Adapter Pattern.
-    
-    This version delegates instrument-specific logic to specialized adapters,
-    making it easier to add support for new instruments without modifying
-    the core provider.
-    
-    Use Cases:
-    - Search ECOSTRESS thermal data with ECOSTRESS-specific constants
-    - Search MODIS reflectance data with MODIS-specific constants
-    - Easy to add Landsat, Sentinel, etc. in future phases
-    
+    """    
     Example:
         >>> provider = CMRProvider(auth)
         >>> adapter = provider.get_adapter("ECOSTRESS")
@@ -420,9 +409,11 @@ class CMRProvider(BaseProvider):
                 "Use YYYY-MM-DD or ISO format."
             )
 
-    def _validate_bounding_box(
-        self, min_lon: float, min_lat: float, max_lon: float, max_lat: float
-    ) -> None:
+    def _validate_bounding_box(self,
+                               min_lon: float,
+                               min_lat: float,
+                               max_lon: float,
+                               max_lat: float) -> None:
         """Validate bounding box (Phase 2B implementation)."""
         if not (-180 <= min_lon <= 180 and -180 <= max_lon <= 180):
             raise ValueError("Longitude must be -180 to 180")
