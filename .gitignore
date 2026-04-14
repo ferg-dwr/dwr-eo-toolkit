@@ -218,3 +218,8 @@ venv/
 env/
 ENV/
 .venv
+
+# Zone.Identifier files (Windows alternate data streams)
+:Zone.Identifier
+*:Zone.Identifier
+*.zone.identifier
