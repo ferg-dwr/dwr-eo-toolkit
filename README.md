@@ -127,18 +127,18 @@ results, total = query.execute(provider)
 └────────────┬──────────────────────────┘
              │
 ┌────────────▼──────────────────────────┐
-│ EarthDataLoginAuth                     │ ← Handles all credential sources
-│ ├─ TokenProvider (env var)             │
-│ ├─ EnvironmentProvider (username/pwd)  │
-│ └─ NetrcProvider (.netrc file)         │
+│ EarthDataLoginAuth                    │ ← Handles all credential sources
+│ ├─ TokenProvider (env var)            │
+│ ├─ EnvironmentProvider (username/pwd) │
+│ └─ NetrcProvider (.netrc file)        │
 └────────────┬──────────────────────────┘
              │
 ┌────────────▼──────────────────────────┐
-│ HTTPClient / CMRClient                 │ ← Authenticated requests + retries
-│ ├─ Token caching (1 hour)              │
-│ ├─ Exponential backoff                 │
-│ ├─ Rate limit handling (429)           │
-│ └─ Error handling                      │
+│ HTTPClient / CMRClient                │ ← Authenticated requests + retries
+│ ├─ Token caching (1 hour)             │
+│ ├─ Exponential backoff                │
+│ ├─ Rate limit handling (429)          │
+│ └─ Error handling                     │
 └────────────┬──────────────────────────┘
              │
      ┌───────▼────────┐
