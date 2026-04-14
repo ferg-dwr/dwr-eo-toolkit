@@ -56,23 +56,18 @@ from nasa_eo_data.filters.product import (
 from nasa_eo_data.filters.query import Query
 
 __all__ = [
-    # Base
     "Filter",
-    # Spatial
     "BoundingBox",
     "Polygon",
     "PointBuffer",
-    # Temporal
     "DateRange",
     "Season",
     "YearMonthRange",
-    # Product
     "CloudCover",
     "QualityFlag",
     "ProcessingLevel",
     "Orbit",
     "Instrument",
-    # Query
     "Query",
 ]
 
