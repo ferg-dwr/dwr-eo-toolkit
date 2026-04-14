@@ -1,0 +1,146 @@
+"""
+MODIS adapter for CMR provider (Phase 2C stub).
+
+MODIS (Moderate Resolution Imaging Spectroradiometer) is the primary earth observation
+instrument on Terra and Aqua satellites. This adapter will handle MODIS-specific logic.
+
+Status: Stub - to be implemented in Phase 2C
+"""
+
+from typing import Dict, Any, Tuple
+
+from nasa_eo_data.providers.cmr_adapters.base import CMRAdapter, InstrumentMetadata
+
+
+class MODISAdapter(CMRAdapter):
+    """
+    Adapter for MODIS products (stub for Phase 2C).
+    
+    MODIS (Moderate Resolution Imaging Spectroradiometer)
+    
+    Key characteristics:
+    - 250m-1km spatial resolution (varies by band)
+    - 1-2 day temporal resolution
+    - Visible/infrared bands
+    - Multiple products: vegetation, thermal, aerosol, etc.
+    - Data available from 2000 onwards (Terra), 2002 onwards (Aqua)
+    
+    Note: Full implementation in Phase 2C
+    """
+
+    MODIS_SHORT_NAMES = [
+        "MOD09GA",   # MODIS/Terra Surface Reflectance Daily
+        "MYD09GA",   # MODIS/Aqua Surface Reflectance Daily
+        "MOD11A1",   # MODIS/Terra Land Surface Temperature Daily
+        "MYD11A1",   # MODIS/Aqua Land Surface Temperature Daily
+        # More products...
+    ]
+
+    KEYWORDS = [
+        "modis",
+        "terra",
+        "aqua",
+        "reflectance",
+        "surface temperature",
+    ]
+
+    SPATIAL_RESOLUTION = "250m-1km"
+    TEMPORAL_RESOLUTION = "1-2 days"
+    DATA_FORMAT = "HDF4"
+    PROVIDER = "LPDAAC"
+    PROCESSING_LEVEL = "3"
+
+    START_DATE = "2000-02-24"  # Terra launch
+    END_DATE = None  # Ongoing
+
+    def __init__(self):
+        """Initialize MODIS adapter (stub)."""
+        super().__init__()
+        self.long_name = "Moderate Resolution Imaging Spectroradiometer"
+
+    def get_keywords(self) -> list[str]:
+        """Get keywords that match MODIS."""
+        return self.KEYWORDS
+
+    def get_short_names(self) -> list[str]:
+        """Get MODIS product short names."""
+        return self.MODIS_SHORT_NAMES
+
+    def get_metadata(self) -> InstrumentMetadata:
+        """Get MODIS metadata (stub)."""
+        return InstrumentMetadata(
+            short_name="MOD09GA",
+            long_name=self.long_name,
+            description=(
+                "MODIS/Terra Surface Reflectance Daily product. "
+                "Provides surface reflectance at 250m-1km resolution. "
+                "Phase 2C: Full metadata implementation pending."
+            ),
+            provider=self.PROVIDER,
+            processing_level=self.PROCESSING_LEVEL,
+            temporal_resolution=self.TEMPORAL_RESOLUTION,
+            spatial_resolution=self.SPATIAL_RESOLUTION,
+            data_format=self.DATA_FORMAT,
+            doi="10.5067/MODIS/MOD09GA.006",
+            keywords=self.KEYWORDS,
+            related_urls=[
+                {
+                    "url": "https://lpdaac.usgs.gov/products/mod09ga/",
+                    "type": "landing page",
+                    "title": "MODIS MOD09GA Product Page"
+                },
+            ],
+        )
+
+    def process_search_params(self, **kwargs) -> Dict[str, Any]:
+        """
+        Process MODIS-specific search parameters (stub).
+        
+        Phase 2C: Implement MODIS-specific parameter processing
+        """
+        # TODO: Implement in Phase 2C
+        return {}
+
+    def supports_cloud_cover(self) -> bool:
+        """MODIS supports cloud cover filtering (Phase 2C: implement)."""
+        return False  # TODO: Implement in Phase 2C
+
+    def supports_quality_flags(self) -> bool:
+        """MODIS supports quality flags (Phase 2C: implement)."""
+        return False  # TODO: Implement in Phase 2C
+
+    def get_default_spatial_resolution(self) -> str:
+        """MODIS default: 250m-1km depending on band."""
+        return self.SPATIAL_RESOLUTION
+
+    def get_default_temporal_resolution(self) -> str:
+        """MODIS default: 1-2 day repeat."""
+        return self.TEMPORAL_RESOLUTION
+
+    def get_recommended_date_range(self) -> Tuple[str, str]:
+        """
+        Get recommended date range for MODIS (stub).
+        
+        Phase 2C: Return sensible defaults
+        """
+        # Placeholder
+        return ("2020-01-01T00:00:00Z", "2026-04-13T23:59:59Z")
+
+    def validate_temporal_range(self, start_date: str, end_date: str) -> bool:
+        """
+        Validate MODIS temporal range (stub).
+        
+        Phase 2C: Implement validation
+        """
+        # TODO: Implement in Phase 2C
+        return True
+
+    def validate_spatial_bounds(
+        self, 
+        min_lon: float, 
+        min_lat: float, 
+        max_lon: float, 
+        max_lat: float
+    ) -> bool:
+        """MODIS covers global extent."""
+        return True
