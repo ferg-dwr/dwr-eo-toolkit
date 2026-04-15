@@ -64,7 +64,7 @@ class HTTPClient:
     def __init__(
         self,
         auth_handler,
-        base_url: str,
+        base_url: str = "https://data.earthdata.nasa.gov",
         client_id: str = "nasa-eo-data",
         user_agent: Optional[str] = None,
         timeout: int = 30,
