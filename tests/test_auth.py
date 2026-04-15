@@ -125,11 +125,11 @@ class TestEarthDataLoginAuth:
             
             assert auth.token_cache_dir == Path(tmpdir)
     
-    def test_get_bearer_token_from_env(self):
+    def test_get_token_from_env(self):
         """Should get token from EARTHDATA_TOKEN env var."""
         with patch.dict('os.environ', {'EARTHDATA_TOKEN': 'envtoken'}):
             auth = EarthDataLoginAuth()
-            token = auth.get_bearer_token()
+            token = auth.get_token()
             
             assert token == 'envtoken'
     
@@ -163,9 +163,9 @@ class TestEarthDataLoginAuth:
             auth = EarthDataLoginAuth()
             
             # First call
-            token1 = auth.get_bearer_token()
+            token1 = auth.get_token()
             # Second call should return cached value
-            token2 = auth.get_bearer_token()
+            token2 = auth.get_token()
             
             assert token1 == token2
             assert auth._cached_token == 'cachedtoken'
@@ -176,14 +176,14 @@ class TestEarthDataLoginAuth:
             auth = EarthDataLoginAuth()
             
             # First call
-            token1 = auth.get_bearer_token()
+            token1 = auth.get_token()
             
             # Manually expire cache
             auth._token_expiry = datetime.now(UTC) - timedelta(seconds=1)
             
             with patch.dict('os.environ', {'EARTHDATA_TOKEN': 'token2'}):
                 # Second call should re-fetch (simulating token rotation)
-                token2 = auth.get_bearer_token()
+                token2 = auth.get_token()
                 
                 assert token1 == 'token1'
                 assert token2 == 'token2'
@@ -256,7 +256,7 @@ class TestEarthDataLoginAuth:
             auth = EarthDataLoginAuth(netrc_path='/nonexistent/.netrc')
             
             with pytest.raises(AuthenticationError):
-                auth.get_bearer_token()
+                auth.get_token()
     
     def test_setup_netrc(self):
         """Should create/update .netrc file."""

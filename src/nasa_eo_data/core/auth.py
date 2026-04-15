@@ -173,7 +173,7 @@ class EarthDataLoginAuth:
         self._cached_token: Optional[str] = None
         self._token_expiry: Optional[datetime] = None
 
-    def get_bearer_token(self) -> str:
+    def get_token(self) -> str:
         """
         Get a valid EDL bearer token.
         
@@ -223,9 +223,9 @@ class EarthDataLoginAuth:
             "Could not obtain EDL bearer token. Provide credentials via:\n"
             "  1. EARTHDATA_TOKEN environment variable (pre-generated token)\n"
             "  2. ~/.netrc file with 'urs.earthdata.nasa.gov' entry\n"
-            "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables\n"
-            "  4. Or call setup_netrc() / setup_environment() first"
+            "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables"
         )
+
 
     def _request_token(self) -> Optional[str]:
         """

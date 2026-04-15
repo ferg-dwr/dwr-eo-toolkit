@@ -1,18 +1,16 @@
 """
-MODIS adapter for CMR provider (Phase 2C stub).
+Adapter for MODIS products.
 
-MODIS (Moderate Resolution Imaging Spectroradiometer) is the primary earth observation
-instrument on Terra and Aqua satellites. This adapter will handle MODIS-specific logic.
+Provides metadata and constants for MODIS product handling.
 
-Status: Stub - to be implemented in Phase 2C
+Note: Phase 2C implementation details can be added as needed.
 """
 
 from typing import Dict, Any, Tuple
 
-from nasa_eo_data.providers.cmr_adapters.base import CMRAdapter, InstrumentMetadata
+from nasa_eo_data.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
 
-
-class MODISAdapter(CMRAdapter):
+class MODISAdapter(InstrumentAdapter):
     """
     Adapter for MODIS products (stub for Phase 2C).
     
@@ -91,56 +89,3 @@ class MODISAdapter(CMRAdapter):
                 },
             ],
         )
-
-    def process_search_params(self, **kwargs) -> Dict[str, Any]:
-        """
-        Process MODIS-specific search parameters (stub).
-        
-        Phase 2C: Implement MODIS-specific parameter processing
-        """
-        # TODO: Implement in Phase 2C
-        return {}
-
-    def supports_cloud_cover(self) -> bool:
-        """MODIS supports cloud cover filtering (Phase 2C: implement)."""
-        return False  # TODO: Implement in Phase 2C
-
-    def supports_quality_flags(self) -> bool:
-        """MODIS supports quality flags (Phase 2C: implement)."""
-        return False  # TODO: Implement in Phase 2C
-
-    def get_default_spatial_resolution(self) -> str:
-        """MODIS default: 250m-1km depending on band."""
-        return self.SPATIAL_RESOLUTION
-
-    def get_default_temporal_resolution(self) -> str:
-        """MODIS default: 1-2 day repeat."""
-        return self.TEMPORAL_RESOLUTION
-
-    def get_recommended_date_range(self) -> Tuple[str, str]:
-        """
-        Get recommended date range for MODIS (stub).
-        
-        Phase 2C: Return sensible defaults
-        """
-        # Placeholder
-        return ("2020-01-01T00:00:00Z", "2026-04-13T23:59:59Z")
-
-    def validate_temporal_range(self, start_date: str, end_date: str) -> bool:
-        """
-        Validate MODIS temporal range (stub).
-        
-        Phase 2C: Implement validation
-        """
-        # TODO: Implement in Phase 2C
-        return True
-
-    def validate_spatial_bounds(
-        self, 
-        min_lon: float, 
-        min_lat: float, 
-        max_lon: float, 
-        max_lat: float
-    ) -> bool:
-        """MODIS covers global extent."""
-        return True

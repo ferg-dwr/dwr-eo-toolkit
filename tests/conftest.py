@@ -12,7 +12,7 @@ import logging
 from unittest.mock import Mock
 
 from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.core.client import HTTPClient, CMRClient
+from nasa_eo_data.core.client import HTTPClient
 
 
 @pytest.fixture
@@ -50,111 +50,6 @@ def http_client(mock_auth):
         client_id="test-client",
         timeout=10,
     )
-
-
-@pytest.fixture
-def cmr_client(mock_auth):
-    """
-    Provide a real CMRClient with mock auth.
-    
-    Use this when testing CMR-specific functionality
-    like pagination and metadata extraction.
-    """
-    return CMRClient(
-        auth_handler=mock_auth,
-        client_id="test-cmr-client",
-    )
-
-
-@pytest.fixture
-def sample_cmr_granule():
-    """
-    Provide a sample CMR granule for testing.
-    
-    This represents a typical granule returned by CMR API.
-    """
-    return {
-        "concept_id": "G1234567890-LPDAAC_ECS",
-        "native_id": "MODIS_TERRA_L2.A2023001.h00v08.061.2023002120530",
-        "umm": {
-            "RelatedUrls": [
-                {
-                    "URL": "https://e4ftl01.cr.usgs.gov/MODIS_TERRA_L2/MODIST_L2.061/2023.01.01/MOD35_L2.A2023001.h00v08.061.2023002120530.hdf",
-                    "Type": "GET DATA",
-                    "Subtype": "OPENDAP",
-                },
-                {
-                    "URL": "https://search.earthdata.nasa.gov/search/granules/collection-details?p=C1234567890-LPDAAC_ECS&g=G1234567890-LPDAAC_ECS",
-                    "Type": "VIEW RELATED INFORMATION",
-                    "Subtype": "USER GUIDES",
-                }
-            ],
-            "TemporalExtent": {
-                "RangeDateTime": {
-                    "BeginningDateTime": "2023-01-01T00:00:00Z",
-                    "EndingDateTime": "2023-01-01T04:00:00Z",
-                }
-            },
-            "SpatialExtent": {
-                "HorizontalSpatialDomain": {
-                    "Geometry": {
-                        "BoundingRectangles": [
-                            {
-                                "WestBoundingCoordinate": -180,
-                                "EastBoundingCoordinate": -120,
-                                "NorthBoundingCoordinate": 45,
-                                "SouthBoundingCoordinate": 0,
-                            }
-                        ]
-                    }
-                }
-            },
-        },
-    }
-
-
-@pytest.fixture
-def sample_cmr_collection():
-    """
-    Provide a sample CMR collection for testing.
-    
-    This represents a typical collection returned by CMR API.
-    """
-    return {
-        "concept_id": "C1234567890-LPDAAC_ECS",
-        "native_id": "MODIS_TERRA_L2",
-        "umm": {
-            "ShortName": "MODIS_TERRA_L2",
-            "Version": "6.1",
-            "LongName": "MODIS/Terra Level 2 Cloud Top Properties 5-Min L2 Swath 1km",
-            "Abstract": "The MODIS Terra Level 2 Cloud Top Properties dataset...",
-            "TemporalExtents": [
-                {
-                    "RangeDateTime": {
-                        "BeginningDateTime": "2000-02-24T00:00:00Z",
-                    }
-                }
-            ],
-            "SpatialExtent": {
-                "SpatialRepresentation": "CARTESIAN",
-                "BoundingRectangles": [
-                    {
-                        "WestBoundingCoordinate": -180,
-                        "EastBoundingCoordinate": 180,
-                        "NorthBoundingCoordinate": 90,
-                        "SouthBoundingCoordinate": -90,
-                    }
-                ],
-            },
-            "RelatedUrls": [
-                {
-                    "URL": "https://lpdaac.usgs.gov/products/mod35_l2v061/",
-                    "Type": "HOMEPAGE",
-                }
-            ],
-        },
-    }
-
 
 @pytest.fixture
 def mock_response_success():
@@ -225,10 +120,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "client: mark test as related to HTTP client"
-    )
-    config.addinivalue_line(
-        "markers",
-        "cmr: mark test as related to CMR client"
     )
 
 

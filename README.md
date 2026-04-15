@@ -9,8 +9,8 @@ Query ECOSTRESS thermal data, MODIS reflectance, and other Earth observation dat
 🚀 **Phase 2B Complete** - Provider abstraction and filter layer ready
 - [x] Secure authentication (NASA Earthdata Login)
 - [x] Authenticated HTTP client with retry logic
-- [x] CMR API integration
-- [x] Full test suite (156 tests, 100% passing)
+- [x] EarthAccess integration
+- [x] Full test suite (100+ tests, 100% passing)
 - [x] Provider abstraction layer (Phase 2A ✅)
 - [x] Query filters and composable API (Phase 2B ✅)
 - [ ] Batch download manager (Phase 3)
@@ -62,14 +62,10 @@ password your_password
 ### Basic Usage
 
 ```python
-from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.providers import CMRProvider
+from nasa_eo_data.providers import EarthAccessProvider
 
-# Authenticate
-auth = EarthDataLoginAuth()
-
-# Create provider
-provider = CMRProvider(auth)
+# Create provider (automatically authenticates)
+provider = EarthAccessProvider()
 
 # Search for ECOSTRESS thermal data
 results, total = provider.search(
@@ -81,7 +77,10 @@ results, total = provider.search(
 
 print(f"Found {total} granules")
 for granule in results[:5]:
-    print(f"  {granule['umm']['GranuleUR']}")
+    print(f"  {granule}")
+
+# Download granules
+files = provider.download(results[:10], "./data")
 ```
 
 **With Composable Filters:**
@@ -113,8 +112,8 @@ results, total = query.execute(provider)
 └────────────┬────────────────────────────┘
              │
 ┌────────────▼──────────────────────────┐
-│ High-Level Provider API (Phase 2B)    │
-│ ├─ CMRProvider (search & metadata)    │
+│ High-Level Provider API               │
+│ ├─ EarthAccessProvider                │
 │ └─ BaseProvider (abstract interface)  │
 └────────────┬──────────────────────────┘
              │
@@ -134,30 +133,31 @@ results, total = query.execute(provider)
 └────────────┬──────────────────────────┘
              │
 ┌────────────▼──────────────────────────┐
-│ HTTPClient / CMRClient                │ ← Authenticated requests + retries
+│ HTTPClient                            │ ← Authenticated requests + retries
 │ ├─ Token caching (1 hour)             │
 │ ├─ Exponential backoff                │
 │ ├─ Rate limit handling (429)          │
 │ └─ Error handling                     │
 └────────────┬──────────────────────────┘
              │
-     ┌───────▼────────┐
-     │  NASA Earthdata│
-     │  CMR API       │
-     └────────────────┘
+     ┌───────▼──────────┐
+     │ NASA EarthAccess │
+     │ & Earthdata APIs │
+     └───────────────────┘
 ```
 
-### Future (Phase 2C)
+### Instrument Adapters
 
-Adapter pattern for instrument-specific logic:
+Metadata and product-specific constants are provided via instrument adapters:
 ```
 providers/
-├── cmr_provider.py          # Generic CMR interface
-└── cmr_adapters/
-    ├── base.py              # Abstract adapter
-    ├── ecostress.py         # ECOSTRESS-specific logic
-    ├── modis.py             # MODIS-specific logic
-    └── landsat.py           # Landsat-specific logic
+├── base.py                  # BaseProvider abstract class
+├── earthaccess_provider.py  # EarthAccessProvider implementation
+├── adapters/
+│   ├── base.py              # InstrumentAdapter abstract base
+│   ├── ecostress.py         # ECOSTRESS metadata & constants
+│   └── modis.py             # MODIS metadata & constants
+└── __init__.py
 ```
 
 ### Full Vision (Phases 3-4)
@@ -167,7 +167,7 @@ Your Script
     ↓
 High-Level Query API (Phase 4)
     ↓
-Provider Abstraction + Adapters (Phase 2C)
+Provider Abstraction + Adapters (Phase 2C ✅)
     ↓
 Composable Filters (Phase 2B) ✅
     ↓
@@ -184,17 +184,12 @@ NASA Earth Observation APIs
 
 ## Supported Datasets
 
-### Phase 2B (Current)
+### Current
 - **ECOSTRESS** - Thermal imagery for water resource monitoring ⭐
 - **MODIS** (Terra/Aqua)
 - **VIIRS** (S-NPP, NOAA-20)
 - **Landsat** (8, 9)
-- Any dataset queryable via CMR API
-
-### Phase 2C (Coming Soon)
-- Instrument-specific metadata and adapters
-- Expanded ECOSTRESS functionality
-- MODIS product variants
+- Any dataset available via NASA Earthdata
 
 ### Planned (Phase 3+)
 - Sentinel-1, Sentinel-2
@@ -219,11 +214,11 @@ NASA Earth Observation APIs
 - ✅ Timeout management
 - ✅ Context manager support
 
-### CMR API
-- ✅ Granule search
+### Data Access
+- ✅ Granule search via EarthAccess
 - ✅ Collection search
-- ✅ Pagination (search-after)
-- ✅ CMR metadata extraction
+- ✅ Pagination support
+- ✅ Metadata extraction
 - ✅ Request ID tracking
 
 ### Error Handling
@@ -232,8 +227,8 @@ NASA Earth Observation APIs
 - ✅ Detailed error messages
 
 ### Testing
-- ✅ 62 comprehensive unit tests
-- ✅ 92%+ code coverage
+- ✅ 100+ comprehensive unit tests
+- ✅ 90%+ code coverage
 - ✅ GitHub Actions CI/CD
 - ✅ Multi-version testing (Python 3.11, 3.12)
 
@@ -244,7 +239,7 @@ NASA Earth Observation APIs
 ### Running Tests
 
 ```bash
-# All tests (156 total)
+# All tests
 pytest tests/ -v
 
 # Specific test file
@@ -257,15 +252,6 @@ pytest tests/test_client.py -v      # Client tests
 pytest tests/ --cov=src/nasa_eo_data --cov-report=html
 open htmlcov/index.html
 ```
-
-**Current Test Results:**
-- ✅ 156 / 156 tests passing (100%)
-- ✅ 14 tests fixed in Phase 2B
-- ✅ Authentication tests: 14
-- ✅ Client tests: 29
-- ✅ Provider tests: 32
-- ✅ Filter tests: 62
-- ✅ Filter composition tests: 5
 
 ### Project Structure
 
@@ -282,69 +268,50 @@ nasa-eo-data/
 │       ├── core/
 │       │   ├── __init__.py
 │       │   ├── auth.py               # Authentication
-│       │   └── client.py             # HTTP & CMR clients
+│       │   ├── client.py             # HTTP client
+│       │   └── exceptions.py         # Custom exceptions
 │       ├── providers/
 │       │   ├── __init__.py
 │       │   ├── base.py               # BaseProvider abstract class
-│       │   ├── cmr_provider.py       # CMRProvider implementation
-│       │   └── cmr_adapters/         # Future: instrument adapters
-│       └── filters/
-│           ├── __init__.py
-│           ├── base.py               # BaseFilter abstract class
-│           ├── spatial.py            # Bounding box, polygon filters
-│           ├── temporal.py           # Date range filters
-│           ├── product.py            # Product-specific filters
-│           └── query.py              # Query builder
+│       │   ├── earthaccess_provider.py  # EarthAccessProvider
+│       │   └── adapters/             # Instrument adapters
+│       │       ├── base.py           # InstrumentAdapter base
+│       │       ├── ecostress.py      # ECOSTRESS adapter
+│       │       └── modis.py          # MODIS adapter
+│       ├── filters/
+│       │   ├── __init__.py
+│       │   ├── base.py               # BaseFilter abstract class
+│       │   ├── spatial.py            # Bounding box, polygon filters
+│       │   ├── temporal.py           # Date range filters
+│       │   ├── product.py            # Product-specific filters
+│       │   └── query.py              # Query builder
+│       ├── downloads/
+│       │   ├── __init__.py
+│       │   ├── manager.py            # Download manager
+│       │   ├── session.py            # Download session
+│       │   └── progress.py           # Progress tracking
+│       └── __init__.py
 ├── tests/
 │   ├── conftest.py                   # Shared fixtures
-│   ├── test_auth.py                  # Auth tests (14+)
-│   ├── test_client.py                # Client tests (29+)
-│   ├── test_providers.py             # Provider tests (32+)
-│   └── test_filters.py               # Filter tests (62+)
+│   ├── test_auth.py                  # Auth tests
+│   ├── test_client.py                # Client tests
+│   ├── test_providers.py             # Provider tests
+│   ├── test_filters.py               # Filter tests
+│   └── test_downloads.py             # Download tests
 ├── examples/
-│   ├── auth_and_client.py            # Phase 1 example
-│   └── full_workflow.py              # Phase 2B example (ECOSTRESS)
-└── docs/                             # Documentation (future)
+│   ├── search_and_download.py
+│   ├── example_full_workflow.py
+│   └── testing_query.py
+├── docs/
+│   ├── authentication.md
+│   ├── examples.md
+│   └── index.md
+└── LICENSE
 ```
 
-### Code Standards
-
-- **Language:** Python 3.11+
-- **Style:** PEP 8 (enforced via type hints)
-- **Testing:** pytest + fixtures
-- **Coverage:** Aim for 90%+
-- **Type Hints:** Fully typed
-- **Documentation:** Docstrings on all public APIs
-
-### Contributing
-
-1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Make changes and add tests
-3. Run tests locally: `pytest tests/ -v`
-4. Push and create a pull request
-5. GitHub Actions will auto-test on Python 3.11+
-
 ---
 
-## Phase 2B Highlights
-
-### CMR API Issues Fixed
-During Phase 2B implementation, we discovered and fixed several undocumented CMR API behaviors:
-
-1. **Collections endpoint** - Public endpoint that rejects bearer tokens (now uses `requests.get()` without auth)
-2. **Granule search parameters** - Requires `short_name` not `keyword`
-3. **Pagination** - Uses `page_num` not `search-after` cursor
-4. **Response format** - Returns `feed.entry` not `items`
-5. **Cloud cover filtering** - Not supported on granules endpoint (workaround provided)
-
-These are now properly handled in `CMRProvider`. See [ISSUE_RESOLUTION_DETAILED.md](./docs/ISSUE_RESOLUTION_DETAILED.md) for technical details.
-
-### Test Suite Completion
-- **Before:** 142 passing, 14 failing (91%)
-- **After:** 156 passing, 0 failing (100%) ✅
-- All failures due to test mocking patterns, now fixed
-
----
+## Use Cases
 
 ### Water Resource Monitoring (DWR)
 
@@ -356,16 +323,22 @@ Query thermal imagery to monitor:
 - Climate change impacts
 
 ```python
-# Future example (Phase 4):
-eo = EarthObservationDataAccess(auth)
-thermal_data = eo.query_ecostress(
-    roi="California Central Valley",
+# Example: Monitor California Central Valley
+provider = EarthAccessProvider()
+
+results, total = provider.search(
+    product="ECOSTRESS",
+    bounding_box=(-121.0, 35.5, -119.0, 37.5),
     start_date="2024-01-01",
     end_date="2024-12-31",
-    product="L2_LSTE",  # Land Surface Temperature & Emissivity
-    max_cloud_cover=10,
-    output_dir="/data/ecostress/",
 )
+
+print(f"Found {total} thermal imagery granules for monitoring region")
+
+# Get product metadata
+metadata = provider.get_metadata("ECOSTRESS")
+print(f"Resolution: {metadata['spatial_resolution']}")
+print(f"Temporal frequency: {metadata['temporal_resolution']}")
 ```
 
 ### Climate Research
@@ -384,37 +357,33 @@ Rapid assessment of floods, wildfires, and other emergencies.
 
 ## API Documentation
 
-### CMRProvider (Phase 2B)
+### EarthAccessProvider
 
 ```python
-from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.providers import CMRProvider
+from nasa_eo_data.providers import EarthAccessProvider
 
-# Initialize provider
-auth = EarthDataLoginAuth()
-provider = CMRProvider(auth)
+# Initialize provider (auto-authenticates)
+provider = EarthAccessProvider()
 
 # Search for granules
 results, total = provider.search(
-    product="ECOSTRESS",  # Product keyword or short_name
+    product="ECOSTRESS",  # Product keyword
     bounding_box=(-122.82, 36.78, -120.94, 38.25),
     start_date="2020-01-01",
     end_date="2026-04-13",
 )
 
 print(f"Found {total} granules")
-for granule in results:
-    print(f"  {granule['umm']['GranuleUR']}")
 
 # Get product metadata
 metadata = provider.get_metadata("ECOSTRESS")
 print(metadata)  # Short name, description, provider, etc.
 
-# Validate product
-is_valid = provider.validate_product("ECOSTRESS")
+# Download granules
+files = provider.download(results, "./data", max_workers=4)
 ```
 
-### Composable Query Filters (Phase 2B)
+### Composable Query Filters
 
 ```python
 from nasa_eo_data.filters import Query
@@ -436,7 +405,7 @@ query.with_cloud_cover(max=20)
 results, total = query.execute(provider)
 ```
 
-### Authentication (Phase 1)
+### Authentication
 
 ```python
 from nasa_eo_data.core.auth import EarthDataLoginAuth
@@ -472,34 +441,9 @@ response = client.get("endpoint", params={"key": "value"})
 response = client.post("endpoint", json={"data": "value"})
 
 # Use as context manager
-with HTTPClient(auth_handler=auth) as client:
+with HTTPClient(auth_handler=auth, base_url="https://api.example.com") as client:
     response = client.get("endpoint")
 # Session automatically closed
-```
-
-### CMR Client
-
-```python
-from nasa_eo_data.core.client import CMRClient
-
-client = CMRClient(auth_handler=auth)
-
-# Search granules
-results, total = client.search(
-    "search/granules",
-    {
-        "short_name": "MODIS_TERRA_L2",
-        "bounding_box": "-120,30,-100,40",
-        "temporal": ["2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z"],
-    },
-    page_size=2000,
-    max_results=10000,
-)
-
-# Get metadata
-results, metadata = client.get_with_metadata(endpoint, params)
-print(metadata["CMR-Hits"])  # Total granules
-print(metadata["CMR-Request-Id"])  # For support requests
 ```
 
 ---
@@ -532,21 +476,21 @@ for result in results:
     time.sleep(1)  # 1 second between requests
 ```
 
-### CMR Search Not Returning Results
+### Search Not Returning Results
 
-1. Verify dataset name: https://cmr.earthdata.nasa.gov/search/site/collections.json?keyword=your-dataset
-2. Check temporal format: `YYYY-MM-DDTHH:MM:SSZ`
+1. Verify dataset name with the NASA Earthdata search
+2. Check temporal format: `YYYY-MM-DD`
 3. Verify bounding box: `[min_lon, min_lat, max_lon, max_lat]`
 
 ---
 
 ## Performance Tips
 
-1. **Use page_size=2000** - Reduces API calls
+1. **Use reasonable page sizes** - Reduces API calls
 2. **Set max_results limit** - Avoid fetching millions of granules
 3. **Cache results** - Save JSON locally if re-querying
 4. **Use temporal filters** - Narrow date ranges when possible
-5. **Parallelize downloads** - Phase 3 will support this
+5. **Parallelize downloads** - Use `max_workers` parameter
 
 ---
 
@@ -569,8 +513,9 @@ for result in results:
 ## References
 
 - [NASA Earthdata Login](https://urs.earthdata.nasa.gov/)
-- [CMR API Documentation](https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html)
-- [ECOSTRESS Data](https://lpdaac.usgs.gov/products/ecostressL2tir/)
+- [EarthAccess Documentation](https://nsidc.org/earthaccess/)
+- [ECOSTRESS Data](https://lpdaac.usgs.gov/products/eco_l2t_lste/)
+- [MODIS Data](https://lpdaac.usgs.gov/products/mod09ga/)
 - [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html)
 - [pytest Documentation](https://docs.pytest.org/)
 
@@ -602,34 +547,25 @@ For issues, questions, or feature requests:
 ## Roadmap
 
 ### Phase 2B ✅ (Complete)
-- [x] Provider abstraction layer (CMRProvider)
+- [x] Provider abstraction layer
+- [x] EarthAccess integration
 - [x] Composable query filters (spatial, temporal, product-specific)
 - [x] Query builder with fluent API
-- [x] CMR API integration with proper pagination
-- [x] 156 comprehensive tests (100% passing)
+- [x] 100+ comprehensive tests (100% passing)
 - [x] Full documentation
+- [x] Instrument metadata adapters
 
-### Phase 2C (Next 1-2 weeks)
-- [ ] Adapter pattern for instrument-specific logic
-- [ ] ECOSTRESS-specific metadata and constants
-- [ ] MODIS product variants
-- [ ] Expanded filter support
-
-### Phase 3 (Weeks 3-4)
+### Phase 3 (Next)
 - [ ] Batch download manager with progress tracking
 - [ ] Parallel download support
 - [ ] Resume capability for interrupted downloads
 - [ ] Checksum validation
 
-### Phase 4 (Week 5)
+### Phase 4 (Future)
 - [ ] High-level query API (`EarthObservationDataAccess`)
 - [ ] Simple one-liner queries
 - [ ] Automatic format conversions
 - [ ] Integration tests with real NASA APIs
-
-See [PHASE_2B_SUMMARY.md](./docs/PHASE_2B_SUMMARY.md) for Phase 2B completion details (all files in `/docs/` after merge).
-
-**See [FEATURE_ROADMAP.md](./FEATURE_ROADMAP.md) for detailed plans.**
 
 ---
 
