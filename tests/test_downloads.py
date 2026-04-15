@@ -19,7 +19,7 @@ import tempfile
 import json
 import hashlib
 
-from nasa_eo_data.downloads import (
+from nasa_eo_data.download_manager import (
     DownloadTask,
     DownloadSession,
     DownloadManager,
