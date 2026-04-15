@@ -9,8 +9,10 @@ References:
 - https://cmr.earthdata.nasa.gov/ingest/site/docs/ingest/api.html
 """
 
+import os
 import logging
 import time
+import uuid
 from typing import Optional, Dict, Any, List
 from urllib.parse import urljoin
 
@@ -62,13 +64,14 @@ class HTTPClient:
     def __init__(
         self,
         auth_handler,
-        base_url: str = "https://cmr.earthdata.nasa.gov",
+        base_url: str,
         client_id: str = "nasa-eo-data",
         user_agent: Optional[str] = None,
         timeout: int = 30,
         max_retries: int = 3,
         backoff_factor: float = 0.5,
-    ):
+        verify_ssl: Optional[bool] = None,
+        ):
         """
         Initialize HTTP client.
         
@@ -80,12 +83,33 @@ class HTTPClient:
             timeout: Request timeout in seconds
             max_retries: Maximum number of retries
             backoff_factor: Exponential backoff multiplier
+            verify_ssl: Whether to verify SSL certificates.
+                    If None, defaults to False for corporate proxy compatibility.
+                    Set to True for public networks where security is critical.
+                    
+                    Examples:
+                        verify_ssl=False  # Corporate proxy (default)
+                        verify_ssl=True   # Public network
+                        verify_ssl="/path/to/ca-bundle.crt"  # Custom CA bundle
         """
         self.auth_handler = auth_handler
         self.base_url = base_url.rstrip("/")
         self.client_id = client_id
         self.user_agent = user_agent or self.DEFAULT_USER_AGENT
         self.timeout = timeout
+        
+        # Handle SSL verification setting
+        if verify_ssl is None:
+            # Auto-detect: Assume corporate environment by default
+            # Users can override if needed
+            self.verify_ssl = False
+            logger.debug("SSL verification disabled (corporate proxy mode)")
+        else:
+            self.verify_ssl = verify_ssl
+            if verify_ssl is False:
+                logger.warning("SSL verification is disabled - only use in trusted networks")
+            else:
+                logger.debug(f"SSL verification enabled: {verify_ssl}")
         
         # Set up session with retry strategy
         self.session = requests.Session()
@@ -131,7 +155,7 @@ class HTTPClient:
         - Client-Id: NASA metrics tracking
         - Content-Type: JSON
         """
-        token = self.auth_handler.get_bearer_token()
+        token = self.auth_handler.get_token()
         
         return {
             "Authorization": f"Bearer {token}",
@@ -143,82 +167,105 @@ class HTTPClient:
     def request(
         self,
         method: str,
-        endpoint: str,
-        **kwargs
-    ) -> requests.Response:
+        url: str,
+        **kwargs) -> requests.Response:
         """
-        Make an HTTP request with authentication and error handling.
-        
-        Args:
-            method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint (relative to base_url)
-            **kwargs: Additional arguments passed to requests (params, json, etc.)
-            
-        Returns:
-            Response object
-            
-        Raises:
-            RateLimitError: If rate limited
-            AuthenticationError: If authentication fails
-            APIError: For other API errors
+        Make HTTP request with auth, retries, logging, and SSL verification.
         """
-        url = urljoin(self.base_url + "/", endpoint.lstrip("/"))
-        headers = self.get_headers()
+        # Ensure full URL
+        full_url = url if url.startswith("http") else urljoin(self.base_url, url)
         
-        # Merge with any custom headers in kwargs
-        if "headers" in kwargs:
-            headers.update(kwargs.pop("headers"))
+        # Add SSL verification setting if not already provided
+        if 'verify' not in kwargs:
+            kwargs['verify'] = self.verify_ssl
         
-        # Set default timeout
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = self.timeout
+        # Add standard headers
+        headers = kwargs.pop('headers', {})
+        headers.update({
+            'User-Agent': self.user_agent,
+            self.CLIENT_ID_HEADER: self.client_id,
+        })
         
-        logger.debug(f"{method} {url}")
+        # Add authentication token if available
+        print("In Request!")
+        print(f"auth_handler: {self.auth_handler}")  # ← Shows if it's None
+        print(f"auth_handler type: {type(self.auth_handler)}")  # ← Shows type
+
+        # Add authentication token if available
+        if self.auth_handler:
+            token = self.auth_handler.get_token() # ← Shows token or None
+            if token:
+                headers['Authorization'] = f'Bearer {token}'
         
+        # Add timeout
+        if 'timeout' not in kwargs:
+            kwargs['timeout'] = self.timeout
+        
+        # Add CMR request ID for tracking
+        if self.CMR_REQUEST_ID_HEADER not in headers:
+            headers[self.CMR_REQUEST_ID_HEADER] = str(uuid.uuid4())
+        
+        # Log request
+        logger.debug(f"{method} {full_url}")
+        
+        # Make request with proper error handling
         try:
             response = self.session.request(
                 method,
-                url,
+                full_url,
                 headers=headers,
                 **kwargs
             )
             
+            # Log response
+            logger.debug(f"Response: {response.status_code}")
+            
             # Handle rate limiting
             if response.status_code == 429:
+                retry_after = response.headers.get('Retry-After', '60')
+                logger.warning(f"Rate limited. Retry after {retry_after}s")
                 self._handle_rate_limit(response)
-                raise RateLimitError(
-                    f"Rate limited. Retry-After: {response.headers.get('Retry-After', 'unknown')}"
-                )
-            
+                # raise RateLimitError(f"Rate limit exceeded. Retry after {retry_after}s")
+                raise RateLimitError(f"Rate limited. Retry after {retry_after}s")
+
             # Handle authentication errors
-            if response.status_code in (401, 403):
-                raise AuthenticationError(
-                    f"Authentication failed ({response.status_code}): {response.text[:200]}"
-                )
+            if response.status_code == 401:
+                raise AuthenticationError("Authentication failed: Invalid or expired token")
+
+            # Handle forbidden
+            if response.status_code == 403:
+                raise AuthenticationError(f"Access forbidden: 403")
             
-            # Log request ID for debugging
-            request_id = response.headers.get(self.CMR_REQUEST_ID_HEADER)
-            if request_id:
-                logger.debug(f"CMR Request ID: {request_id}")
-            
-            # Raise for other HTTP errors
-            if response.status_code >= 400:
-                logger.error(
-                    f"{method} {endpoint} returned {response.status_code}: {response.text[:200]}"
-                )
-                response.raise_for_status()
+            # Handle bad requests
+            if response.status_code == 400:
+                raise APIError(f"Bad request: {response.text}")
+
+            # Handle not found
+            if response.status_code == 404:
+                raise APIError(f"Not found: {response.text}")
+                    
+            # Handle server errors
+            if response.status_code >= 500:
+                logger.error(f"Server error {response.status_code}: {response.text}")
+                raise APIError(f"Server error {response.status_code}: {response.text}")
             
             return response
-            
-        except requests.exceptions.Timeout:
-            logger.error(f"Request timeout: {url}")
-            raise APIError(f"Request timeout after {self.timeout}s")
+        
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Request timeout ({self.timeout}s): {e}")
+            raise APIError(f"Request timeout ({self.timeout}s): {e}") from e
+        
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Connection error: {e}")
-            raise APIError(f"Connection error: {e}")
+            raise APIError(f"Connection error: {e}") from e
+        
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed: {e}")
-            raise APIError(f"Request failed: {e}")
+            raise APIError(f"Request failed: {e}") from e
+        
+        except (AuthenticationError, RateLimitError, APIError):
+            # Re-raise our custom exceptions
+            raise
 
     def _handle_rate_limit(self, response: requests.Response) -> None:
         """
@@ -280,114 +327,3 @@ class HTTPClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-
-
-class CMRClient(HTTPClient):
-    """
-    Specialized HTTP client for CMR API with search-after pagination.
-    
-    CMR search-after is a stateless pagination mechanism recommended for:
-    - Deep paging (avoiding server state)
-    - Harvesting large result sets
-    - Data consistency when results change between requests
-    
-    Reference:
-    https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html#search-after
-    """
-
-    SEARCH_AFTER_HEADER = "CMR-Search-After"
-    HITS_HEADER = "CMR-Hits"
-
-    def __init__(self, *args, **kwargs):
-        """Initialize CMR client."""
-        if "base_url" not in kwargs:
-            kwargs["base_url"] = "https://cmr.earthdata.nasa.gov"
-        super().__init__(*args, **kwargs)
-
-
-    def search(self,
-               endpoint: str,
-               params: Dict[str, Any],
-               page_size: int = 2000,
-               max_results: Optional[int] = None,
-               ) -> tuple[List[Dict[str, Any]], int]:
-        """
-        Execute a paginated CMR search using search-after.
-        
-        Args:
-            endpoint: Search endpoint (e.g., "search/granules")
-            params: Search parameters (spatial, temporal, product, etc.)
-            page_size: Results per page (1-2000, default 2000)
-            max_results: Maximum total results to retrieve (None = all)
-            
-        Returns:
-            (results, total_hits) tuple
-        """
-        all_results = []
-        total_hits = None
-        search_after = None
-        
-        while True:
-            # Build request
-            request_params = {
-                **params,
-                "page_size": page_size,
-            }
-            
-            headers = {}
-            if search_after:
-                headers[self.SEARCH_AFTER_HEADER] = search_after
-            
-            # Execute search
-            logger.debug(f"Fetching results with page_size={page_size}")
-            response = self.get(endpoint, params=request_params, headers=headers)
-            
-            # Parse response
-            data = response.json()
-            items = data.get("items", [])
-            all_results.extend(items)
-            
-            # Capture total hits from first response
-            if total_hits is None:
-                total_hits = int(response.headers.get(self.HITS_HEADER, 0))
-                logger.debug(f"Total hits: {total_hits}")
-            
-            # Check if we're done
-            if not items:
-                break
-            
-            if max_results and len(all_results) >= max_results:
-                all_results = all_results[:max_results]
-                break
-            
-            # Get next page token
-            search_after = response.headers.get(self.SEARCH_AFTER_HEADER)
-            if not search_after:
-                # No more results
-                break
-        
-        return all_results, total_hits or 0
-
-
-    def get_with_metadata(self,
-                          endpoint: str,
-                          params:
-                          Dict[str, Any]) -> tuple[requests.Response, Dict[str, Any]]:
-        """
-        Execute a GET request and extract CMR metadata headers.
-        
-        Returns:
-            (response, metadata) tuple where metadata includes request_id, hits, etc.
-        """
-        response = self.get(endpoint, params=params)
-        
-        metadata = {
-            "request_id": response.headers.get(self.CMR_REQUEST_HEADER),
-            "hits": int(response.headers.get(self.HITS_HEADER, 0)),
-            "took_ms": response.headers.get("CMR-Took"),
-        }
-        
-        return response, metadata
-
-    # Add CMR Request ID header constant if missing
-    CMR_REQUEST_HEADER = "CMR-Request-Id"

@@ -1,7 +1,15 @@
 """
-Abstract base class for data providers.
+Defines the interface that all data providers must implement.
 
-Defines the interface that all providers (CMR, LP DAAC, NSIDC, etc.) must implement.
+Example:
+    >>> from nasa_eo_data.providers import EarthAccessProvider
+    >>> provider = EarthAccessProvider()
+    >>> granules, total = provider.search(
+    ...     product="ECOSTRESS",
+    ...     bounding_box=(-120, 30, -100, 40),
+    ...     start_date="2023-01-01",
+    ...     end_date="2023-12-31"
+    ... )
 """
 
 from abc import ABC, abstractmethod
