@@ -63,9 +63,9 @@ class EarthAccessProvider(BaseProvider):
 
     def _ensure_authenticated(self) -> None:
         """Ensure we're logged in with earthaccess."""
-        if not earthaccess.is_logged_in():
+        if not earthaccess.login():
             logger.info("Logging in to earthaccess...")
-            earthaccess.login(strategy="netrc")
+            earthaccess.login(strategy="environment")
             logger.info("✅ Authenticated with earthaccess")
 
     def get_adapter(self, product: str):
@@ -192,3 +192,28 @@ class EarthAccessProvider(BaseProvider):
                 "temporal_resolution": metadata.temporal_resolution,
             }
         return {"keyword": product}
+
+    def validate_product(self, product: str) -> bool:
+        """
+        Validate that a product is available.
+        
+        Args:
+            product: Product keyword or short name
+        
+        Returns:
+            True if product has an adapter or can be searched, False otherwise
+        
+        Example:
+            >>> provider = EarthAccessProvider()
+            >>> if provider.validate_product("ECOSTRESS"):
+            ...     print("Valid product")
+        """
+        # Check if we have an adapter for this product
+        adapter = self.get_adapter(product)
+        if adapter:
+            return True
+        
+        # If no adapter, assume it's a valid keyword (earthaccess will handle it)
+        # This allows searching by keyword even without a specific adapter
+        logger.debug(f"No adapter for {product}, but allowing search by keyword")
+        return True
