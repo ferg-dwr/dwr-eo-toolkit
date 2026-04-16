@@ -238,11 +238,11 @@ class HTTPClient:
 
             # Handle server errors
             if response.status_code >= 500:
-                logger.error(f"Server error {\
-                    response.status_code}: {\
+                logger.error(f"Server error {
+                    response.status_code}: {
                     response.text}")
-                raise APIError(f"Server error {\
-                    response.status_code}: {\
+                raise APIError(f"Server error {
+                    response.status_code}: {
                     response.text}")
 
             return response
