@@ -52,7 +52,7 @@ jobs:
     # ← IMPROVE: Better coverage reporting
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src/nasa_eo_data --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v --cov=src/dwr_eo_toolkit --cov-report=xml --cov-report=term-missing
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -86,4 +86,4 @@ jobs:
     - name: Test Docker image
       run: |
         docker build -t nasa-eo-data:test .
-        docker run --rm nasa-eo-data:test python -c "from nasa_eo_data import DownloadManager; print('✅ Docker build successful')"
+        docker run --rm nasa-eo-data:test python -c "from dwr_eo_toolkit import DownloadManager; print('✅ Docker build successful')"

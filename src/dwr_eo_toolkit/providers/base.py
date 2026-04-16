@@ -2,7 +2,7 @@
 Defines the interface that all data providers must implement.
 
 Example:
-    >>> from nasa_eo_data.providers import EarthAccessProvider
+    >>> from dwr_eo_toolkit.providers import EarthAccessProvider
     >>> provider = EarthAccessProvider()
     >>> granules, total = provider.search(
     ...     product="ECOSTRESS",

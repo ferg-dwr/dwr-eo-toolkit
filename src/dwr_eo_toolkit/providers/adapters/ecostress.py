@@ -7,8 +7,8 @@ Provides metadata and constants for ECOSTRESS product handling.
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
 
-from nasa_eo_data.providers.adapters.base import (InstrumentAdapter,
-                                                  InstrumentMetadata)
+from dwr_eo_toolkit.providers.adapters.base import (InstrumentAdapter,
+                                                    InstrumentMetadata)
 
 
 class ECOSTRESSAdapter(InstrumentAdapter):

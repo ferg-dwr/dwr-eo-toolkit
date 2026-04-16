@@ -4,7 +4,7 @@ Query builder with fluent interface for composing Earth observation searches.
 Provides a clean, chainable API for building complex queries.
 
 Example:
-    >>> from nasa_eo_data.filters import Query
+    >>> from dwr_eo_toolkit.filters import Query
     >>> query = (Query()
     ...     .with_product("ECOSTRESS_L2_LSTE")
     ...     .with_spatial_bounds(-120, 30, -100, 40)
@@ -17,11 +17,11 @@ Example:
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from nasa_eo_data.filters.base import Filter
-from nasa_eo_data.filters.product import (CloudCover, ProcessingLevel,
+from dwr_eo_toolkit.filters.base import Filter
+from dwr_eo_toolkit.filters.product import (CloudCover, ProcessingLevel,
                                           QualityFlag)
-from nasa_eo_data.filters.spatial import BoundingBox, PointBuffer, Polygon
-from nasa_eo_data.filters.temporal import DateRange, Season
+from dwr_eo_toolkit.filters.spatial import BoundingBox, PointBuffer, Polygon
+from dwr_eo_toolkit.filters.temporal import DateRange, Season
 
 logger = logging.getLogger(__name__)
 

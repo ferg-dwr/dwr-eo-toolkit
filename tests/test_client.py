@@ -18,8 +18,8 @@ import pytest
 import requests
 from requests.adapters import HTTPAdapter
 
-from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.core.client import (APIError, AuthenticationError,
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.core.client import (APIError, AuthenticationError,
                                       HTTPClient, RateLimitError)
 
 
@@ -113,7 +113,7 @@ class TestHTTPClient:
 
         assert headers["User-Agent"] == "MyApp/1.0 (Python)"
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_get_request_success(self, mock_request, client):
         """Should successfully execute GET request."""
         mock_response = MockResponse(
@@ -134,7 +134,7 @@ class TestHTTPClient:
         assert call_args[0][0] == "GET"
         assert "search/granules" in call_args[0][1]
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_post_request_success(self, mock_request, client):
         """Should successfully execute POST request."""
         mock_response = MockResponse(status_code=201, json_data={"id": "123"})
@@ -150,7 +150,7 @@ class TestHTTPClient:
         assert call_args[0][0] == "POST"
         assert call_args[1]["json"] == payload
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_request_authentication_error_401(self, mock_request, client):
         """Should raise AuthenticationError for 401."""
         mock_response = MockResponse(status_code=401, text="Invalid or expired token")
@@ -159,7 +159,7 @@ class TestHTTPClient:
         with pytest.raises(AuthenticationError):
             client.get("protected/endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_request_authentication_error_403(self, mock_request, client):
         """Should raise AuthenticationError for 403."""
         mock_response = MockResponse(status_code=403, text="Forbidden")
@@ -168,7 +168,7 @@ class TestHTTPClient:
         with pytest.raises(AuthenticationError):
             client.get("protected/endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_rate_limit_error_429(self, mock_request, client):
         """Should raise RateLimitError for 429."""
         mock_response = MockResponse(status_code=429, headers={"Retry-After": "60"})
@@ -179,7 +179,7 @@ class TestHTTPClient:
 
         assert "Rate limited" in str(exc_info.value)
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_server_error_500(self, mock_request, client):
         """Should raise APIError for server errors."""
         mock_response = MockResponse(status_code=500, text="Internal Server Error")
@@ -188,7 +188,7 @@ class TestHTTPClient:
         with pytest.raises(APIError):
             client.get("endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_bad_request_400(self, mock_request, client):
         """Should raise HTTPError for 400 (not APIError)."""
         mock_response = MockResponse(status_code=400, text="Bad Request")
@@ -198,7 +198,7 @@ class TestHTTPClient:
         with pytest.raises(APIError):
             client.get("endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_timeout_error(self, mock_request, client):
         """Should raise APIError on timeout."""
         mock_request.side_effect = requests.exceptions.Timeout("Connection timeout")
@@ -208,7 +208,7 @@ class TestHTTPClient:
 
         assert "timeout" in str(exc_info.value).lower()
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_connection_error(self, mock_request, client):
         """Should raise APIError on connection error."""
         mock_request.side_effect = requests.exceptions.ConnectionError("Cannot connect")
@@ -218,7 +218,7 @@ class TestHTTPClient:
 
         assert "Connection error" in str(exc_info.value)
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_custom_timeout(self, mock_request, client):
         """Should use custom timeout."""
         mock_response = MockResponse(status_code=200)
@@ -230,7 +230,7 @@ class TestHTTPClient:
         call_kwargs = mock_request.call_args[1]
         assert call_kwargs["timeout"] == 15
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_merges_custom_headers(self, mock_request, client):
         """Should merge custom headers with default headers."""
         mock_response = MockResponse(status_code=200)
@@ -272,7 +272,7 @@ class TestRetryStrategy:
         auth.get_token.return_value = "token"
         return auth
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_retry_on_429(self, mock_request, auth):
         """Should retry on 429 (rate limit)."""
         client = HTTPClient(auth_handler=auth, max_retries=2)
@@ -289,7 +289,7 @@ class TestRetryStrategy:
         with pytest.raises(RateLimitError):
             client.get("endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_retry_on_500(self, mock_request, auth):
         """Should retry on 500 server error."""
         client = HTTPClient(auth_handler=auth, max_retries=2)
@@ -306,7 +306,7 @@ class TestRetryStrategy:
         with pytest.raises(APIError):
             client.get("endpoint")
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_no_retry_on_401(self, mock_request, auth):
         """Should NOT retry on 401 (auth error)."""
         client = HTTPClient(auth_handler=auth, max_retries=3)
@@ -319,7 +319,7 @@ class TestRetryStrategy:
         # Should only be called once (no retries)
         assert mock_request.call_count == 1
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_no_retry_on_404(self, mock_request, auth):
         """Should NOT retry on 404 (not found)."""
         client = HTTPClient(auth_handler=auth, max_retries=3)
@@ -343,7 +343,7 @@ class TestRateLimitHandling:
         auth.get_token.return_value = "token"
         return auth
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_rate_limit_with_retry_after_header(self, mock_request, auth):
         """Should extract Retry-After from response."""
         client = HTTPClient(auth_handler=auth)
@@ -356,7 +356,7 @@ class TestRateLimitHandling:
 
         assert "120" in str(exc_info.value) or "Retry-After" in str(exc_info.value)
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_rate_limit_without_retry_after_header(self, mock_request, auth):
         """Should use default wait time if Retry-After missing."""
         client = HTTPClient(auth_handler=auth)
@@ -381,7 +381,7 @@ class TestErrorMessages:
         auth.get_token.return_value = "token"
         return auth
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_authentication_error_message(self, mock_request, auth):
         """Should include helpful message for auth errors."""
         client = HTTPClient(auth_handler=auth)
@@ -395,7 +395,7 @@ class TestErrorMessages:
         error_msg = str(exc_info.value)
         assert "401" in error_msg or "authentication" in error_msg.lower()
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_timeout_error_message(self, mock_request, auth):
         """Should include helpful message for timeouts."""
         client = HTTPClient(auth_handler=auth, timeout=5)
@@ -420,7 +420,7 @@ class TestEdgeCases:
         auth.get_token.return_value = "token"
         return auth
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_empty_endpoint_path(self, mock_request, auth):
         """Should handle empty endpoint path."""
         client = HTTPClient(auth_handler=auth, base_url="https://api.com")
@@ -432,7 +432,7 @@ class TestEdgeCases:
         call_url = mock_request.call_args[0][1]
         assert "api.com" in call_url
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_endpoint_with_leading_slash(self, mock_request, auth):
         """Should handle endpoint with leading slash."""
         client = HTTPClient(auth_handler=auth, base_url="https://api.com")
@@ -443,7 +443,7 @@ class TestEdgeCases:
         call_url = mock_request.call_args[0][1]
         assert "api.com/search/data" in call_url
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_params_none(self, mock_request, auth):
         """Should handle None params gracefully."""
         client = HTTPClient(auth_handler=auth)
@@ -454,7 +454,7 @@ class TestEdgeCases:
         # Should work without error
         assert mock_request.called
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_empty_response_json(self, mock_request, auth):
         """Should handle empty JSON response."""
         client = HTTPClient(auth_handler=auth)
@@ -470,7 +470,7 @@ class TestEdgeCases:
         client = HTTPClient(auth_handler=auth, timeout=3600)
         assert client.timeout == 3600
 
-    @patch("nasa_eo_data.core.client.requests.Session.request")
+    @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_special_characters_in_params(self, mock_request, auth):
         """Should handle special characters in parameters."""
         client = HTTPClient(auth_handler=auth)

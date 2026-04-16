@@ -9,10 +9,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import earthaccess
 
-from nasa_eo_data.providers.adapters.base import InstrumentAdapter
-from nasa_eo_data.providers.adapters.ecostress import ECOSTRESSAdapter
-from nasa_eo_data.providers.adapters.modis import MODISAdapter
-from nasa_eo_data.providers.base import BaseProvider
+from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter
+from dwr_eo_toolkit.providers.adapters.ecostress import ECOSTRESSAdapter
+from dwr_eo_toolkit.providers.adapters.modis import MODISAdapter
+from dwr_eo_toolkit.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
 

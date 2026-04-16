@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  nasa-eo-data:
+  dwr-eo-toolkit:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nasa-eo-data-dev
+    container_name: dwr-eo-toolkit-dev
     environment:
       EARTHDATA_TOKEN: ${EARTHDATA_TOKEN:-your_token_here}
       LOG_LEVEL: DEBUG
@@ -26,9 +26,9 @@ services:
   # Optional: PostgreSQL for metadata (Phase 3+)
   postgres:
     image: postgres:15-alpine
-    container_name: nasa-eo-data-db
+    container_name: dwr-eo-toolkit-db
     environment:
-      POSTGRES_DB: nasa_eo_data
+      POSTGRES_DB: dwr_eo_toolkit
       POSTGRES_USER: nasa
       POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
     volumes:

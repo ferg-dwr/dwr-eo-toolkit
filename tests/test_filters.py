@@ -15,8 +15,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from nasa_eo_data.filters import (BoundingBox, CloudCover, DateRange, Filter,
-                                  ProcessingLevel, QualityFlag, Query)
+from dwr_eo_toolkit.filters import (BoundingBox, CloudCover, DateRange, Filter,
+                                    ProcessingLevel, QualityFlag, Query)
 
 
 class TestBaseFilter:

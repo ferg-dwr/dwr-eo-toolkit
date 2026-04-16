@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from nasa_eo_data.core.auth import (AuthenticationError, EarthDataLoginAuth,
+from dwr_eo_toolkit.core.auth import (AuthenticationError, EarthDataLoginAuth,
                                     EnvironmentProvider, NetrcProvider,
                                     TokenProvider)
 
@@ -225,7 +225,7 @@ class TestEarthDataLoginAuth:
 
             assert loaded is None
 
-    @patch("nasa_eo_data.core.auth.requests.post")
+    @patch("dwr_eo_toolkit.core.auth.requests.post")
     def test_request_token_success(self, mock_post):
         """Should successfully request token."""
         mock_response = Mock()
@@ -245,7 +245,7 @@ class TestEarthDataLoginAuth:
             assert token == "newtoken"
             mock_post.assert_called_once()
 
-    @patch("nasa_eo_data.core.auth.requests.post")
+    @patch("dwr_eo_toolkit.core.auth.requests.post")
     def test_request_token_failure(self, mock_post):
         """Should handle token request failure gracefully."""
         mock_post.side_effect = Exception("Network error")

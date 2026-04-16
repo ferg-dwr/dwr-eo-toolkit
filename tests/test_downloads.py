@@ -20,14 +20,14 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from nasa_eo_data.download_manager import (DownloadManager, DownloadProgress,
-                                           DownloadResult, DownloadSession,
-                                           DownloadTask,
-                                           ExponentialBackoffRetry,
-                                           ResilienceManager, ResumeConfig,
-                                           RetryConfig, RetryStrategy,
-                                           TaskStatus, format_bytes,
-                                           format_speed, format_time)
+from dwr_eo_toolkit.download_manager import (DownloadManager, DownloadProgress,
+                                             DownloadResult, DownloadSession,
+                                             DownloadTask,
+                                             ExponentialBackoffRetry,
+                                             ResilienceManager, ResumeConfig,
+                                             RetryConfig, RetryStrategy,
+                                             TaskStatus, format_bytes,
+                                             format_speed, format_time)
 
 # ============================================================================
 # Test DownloadTask

@@ -15,8 +15,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.providers import BaseProvider
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.providers import BaseProvider
 
 
 class TestBaseProvider:

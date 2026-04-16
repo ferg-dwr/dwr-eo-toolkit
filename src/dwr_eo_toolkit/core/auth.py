@@ -1,5 +1,5 @@
 """
-Authentication module for NASA Earthdata Login integration.
+Authentication module for API Login Integration
 
 Handles credential retrieval from multiple sources (.netrc, env vars, tokens),
 secure token management, and token refresh.
@@ -146,7 +146,7 @@ class EarthDataLoginAuth:
         username_var: str = "EARTHDATA_USERNAME",
         password_var: str = "EARTHDATA_PASSWORD",
         token_var: str = "EARTHDATA_TOKEN",
-    ):
+        ):
         """
         Initialize Earthdata Login authentication.
 

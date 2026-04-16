@@ -8,7 +8,7 @@ Note: Phase 2C implementation details can be added as needed.
 
 from typing import Any, Dict, Tuple
 
-from nasa_eo_data.providers.adapters.base import (InstrumentAdapter,
+from dwr_eo_toolkit.providers.adapters.base import (InstrumentAdapter,
                                                   InstrumentMetadata)
 
 

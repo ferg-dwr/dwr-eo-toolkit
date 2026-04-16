@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict
 
-from nasa_eo_data.filters.base import Filter
+from dwr_eo_toolkit.filters.base import Filter
 
 logger = logging.getLogger(__name__)
 

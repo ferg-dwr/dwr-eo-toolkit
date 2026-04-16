@@ -10,7 +10,7 @@ Provides robust download capabilities with:
 - File verification with checksums
 
 Example:
-    >>> from nasa_eo_data.downloads import DownloadManager
+    >>> from dwr_eo_toolkit.downloads import DownloadManager
     >>>
     >>> manager = DownloadManager(max_workers=4)
     >>> granules = [

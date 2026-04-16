@@ -7,7 +7,7 @@ Supports bounding box queries and future polygon/point+radius searches.
 import logging
 from typing import Any, Dict, Tuple
 
-from nasa_eo_data.filters.base import Filter
+from dwr_eo_toolkit.filters.base import Filter
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,5 @@
 """
-Base HTTP client for NASA API requests.
-
-Handles authentication, retry logic, rate limiting, proper headers, and CMR-specific
-request patterns (search-after pagination, custom headers).
-
-References:
-- https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html
-- https://cmr.earthdata.nasa.gov/ingest/site/docs/ingest/api.html
+Base HTTP client for EO API requests
 """
 
 import logging

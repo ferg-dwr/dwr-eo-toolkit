@@ -10,9 +10,9 @@ Main Components:
 - Product Filters: CloudCover, QualityFlag, ProcessingLevel
 
 Quick Start:
-    >>> from nasa_eo_data.filters import Query
-    >>> from nasa_eo_data.providers import CMRProvider
-    >>> from nasa_eo_data.core.auth import EarthDataLoginAuth
+    >>> from dwr_eo_toolkit.filters import Query
+    >>> from dwr_eo_toolkit.providers import CMRProvider
+    >>> from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
     >>>
     >>> auth = EarthDataLoginAuth()
     >>> provider = CMRProvider(auth)
@@ -27,16 +27,16 @@ Quick Start:
 """
 
 # Base
-from nasa_eo_data.filters.base import Filter
+from dwr_eo_toolkit.filters.base import Filter
 # Product
-from nasa_eo_data.filters.product import (CloudCover, Instrument, Orbit,
+from dwr_eo_toolkit.filters.product import (CloudCover, Instrument, Orbit,
                                           ProcessingLevel, QualityFlag)
 # Query Builder
-from nasa_eo_data.filters.query import Query
+from dwr_eo_toolkit.filters.query import Query
 # Spatial
-from nasa_eo_data.filters.spatial import BoundingBox, PointBuffer, Polygon
+from dwr_eo_toolkit.filters.spatial import BoundingBox, PointBuffer, Polygon
 # Temporal
-from nasa_eo_data.filters.temporal import DateRange, Season, YearMonthRange
+from dwr_eo_toolkit.filters.temporal import DateRange, Season, YearMonthRange
 
 __all__ = [
     "Filter",

@@ -1,4 +1,4 @@
-# Contributing to NASA EO Data
+# Contributing to DWR EarthObservation Toolkit
 
 Thank you for your interest in contributing! This document outlines the process and guidelines for contributing to the project.
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing! This document outlines the process 
 
 ### 1. Fork & Clone
 ```bash
-git clone https://github.com/yourusername/nasa-eo-data.git
-cd nasa-eo-data
+git clone https://github.com/ferg-dwr/dwr-eo-toolkit/
+cd dwr-eo-toolkit
 ```
 
 ### 2. Set Up Development Environment
@@ -262,14 +262,14 @@ cd docs && make html
 ### Local Testing in Docker
 ```bash
 docker-compose up --build
-docker-compose exec nasa-eo-data pytest tests/ -v
+docker-compose exec dwr-eo-toolkit pytest tests/ -v
 docker-compose down
 ```
 
 ### Building Image
 ```bash
-docker build -t nasa-eo-data:latest .
-docker run --rm nasa-eo-data:latest pytest tests/ -v
+docker build -t dwr-eo-toolkit:latest .
+docker run --rm dwr-eo-toolkit:latest pytest tests/ -v
 ```
 
 ## Reporting Issues
@@ -308,8 +308,8 @@ Help improve documentation:
 ## Project Structure for Reference
 
 ```
-nasa-eo-data/
-├── src/nasa_eo_data/
+dwr-eo-toolkit/
+├── src/dwr_eo_toolkit/
 │   ├── download_manager/     ← Phase 3 features
 │   ├── core/
 │   ├── providers/

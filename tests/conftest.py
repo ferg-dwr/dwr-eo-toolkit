@@ -12,8 +12,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from nasa_eo_data.core.auth import EarthDataLoginAuth
-from nasa_eo_data.core.client import HTTPClient
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.core.client import HTTPClient
 
 
 @pytest.fixture
