@@ -10,17 +10,19 @@ Tests cover:
 """
 
 import json
-import time
 from typing import Any, Dict, Optional
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
-from requests.adapters import HTTPAdapter
 
 from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
-from dwr_eo_toolkit.core.client import (APIError, AuthenticationError,
-                                      HTTPClient, RateLimitError)
+from dwr_eo_toolkit.core.client import (
+    APIError,
+    AuthenticationError,
+    HTTPClient,
+    RateLimitError,
+)
 
 
 class MockResponse:

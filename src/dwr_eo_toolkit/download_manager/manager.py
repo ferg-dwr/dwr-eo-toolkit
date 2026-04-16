@@ -3,7 +3,7 @@ DownloadManager - Main interface for downloading granules.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 from .progress import DownloadProgress
 from .result import DownloadResult
@@ -48,7 +48,7 @@ class DownloadManager:
 
     def download(
         self,
-        granules: Union[List[Dict[str, Any]], List],
+        granules: List[Union[Dict[str, Any], DownloadTask]],
         output_dir: Union[str, Path],
         progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
     ) -> DownloadResult:
@@ -118,7 +118,7 @@ class DownloadManager:
 
     def _prepare_tasks(
         self,
-        granules: List[Union[Dict[str, Any], DownloadTask]],
+        granules: Sequence[Union[Dict[str, Any], DownloadTask]],
         output_dir: Path,
     ) -> List[DownloadTask]:
         """Convert granules to DownloadTask objects.
@@ -129,25 +129,37 @@ class DownloadManager:
 
         Returns:
             List of DownloadTask objects
+
+        Raises:
+            ValueError: If required fields are missing
         """
         tasks = []
 
-        for granule in granules:
+        for i, granule in enumerate(granules):
             if isinstance(granule, DownloadTask):
                 tasks.append(granule)
             elif isinstance(granule, dict):
+                url = granule.get("url")  # Validate required fields
+                if not url:
+                    raise ValueError(f"Granule {i} missing required 'url' field")
+
+                if not isinstance(url, str):
+                    raise ValueError(
+                        f"Granule {i} 'url' must be string, got {type(url)}"
+                    )
+
                 task = DownloadTask(
-                    url=granule.get("url"),
-                    output_path=output_dir
-                    / granule.get("filename", Path(granule["url"]).name),
-                    filename=granule.get("filename", Path(granule["url"]).name),
+                    url=url,
+                    output_path=output_dir / granule.get("filename", Path(url).name),
+                    filename=granule.get("filename", Path(url).name),
                     size=granule.get("size"),
                     checksum=granule.get("checksum"),
                     checksum_type=granule.get("checksum_type", "md5"),
                 )
                 tasks.append(task)
             else:
-                raise ValueError(f"Unsupported granule type: {type(granule)}")
+                raise ValueError(f"Granule {i}: unsupported type {
+                    type(granule)}")
 
         return tasks
 

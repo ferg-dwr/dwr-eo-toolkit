@@ -16,7 +16,7 @@ import os
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import requests
 
@@ -146,7 +146,7 @@ class EarthDataLoginAuth:
         username_var: str = "EARTHDATA_USERNAME",
         password_var: str = "EARTHDATA_PASSWORD",
         token_var: str = "EARTHDATA_TOKEN",
-        ):
+    ):
         """
         Initialize Earthdata Login authentication.
 

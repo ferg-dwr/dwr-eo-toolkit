@@ -5,7 +5,7 @@ These filters apply constraints relevant to specific datasets or data types.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from dwr_eo_toolkit.filters.base import Filter
 
@@ -48,14 +48,10 @@ class CloudCover(Filter):
         Raises:
             ValueError: If outside 0-100 range
         """
-        if not isinstance(self.max_percent, (int, float)):
-            raise ValueError(
-                f"Cloud cover must be numeric, got {type(self.max_percent)}"
-            )
-
+        if not isinstance(self.max_percent, int):
+            raise TypeError("max_percent must be int")
         if not 0 <= self.max_percent <= 100:
-            raise ValueError(f"Cloud cover must be 0-100, got {self.max_percent}")
-
+            raise ValueError("max_percent must be 0-100")
         return True
 
     def to_params(self) -> Dict[str, Any]:
@@ -167,9 +163,9 @@ class ProcessingLevel(Filter):
             ValueError: If not recognized
         """
         if self.level not in self.VALID_LEVELS:
-            raise ValueError(
-                f"Processing level must be one of {self.VALID_LEVELS}, got {self.level}"
-            )
+            raise ValueError(f"Processing level must be one of {
+                self.VALID_LEVELS}, got {
+                self.level}")
 
         return True
 
@@ -199,7 +195,10 @@ class Orbit(Filter):
     """
 
     def __init__(
-        self, orbit_number: int = None, track: int = None, relative_orbit: int = None
+        self,
+        orbit_number: Optional[int] = None,
+        track: Optional[int] = None,
+        relative_orbit: Optional[int] = None,
     ):
         """Initialize orbit filter."""
         self.orbit_number = orbit_number

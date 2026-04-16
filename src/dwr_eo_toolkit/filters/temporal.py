@@ -6,7 +6,7 @@ Supports date range queries and future seasonal filtering.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from dwr_eo_toolkit.filters.base import Filter
 
@@ -59,9 +59,9 @@ class DateRange(Filter):
 
         # Check chronological order
         if start > end:
-            raise ValueError(
-                f"start_date ({self.start_date}) must be before end_date ({self.end_date})"
-            )
+            raise ValueError(f"start_date ({
+                self.start_date}) must be before end_date ({
+                self.end_date})")
 
         return True
 
@@ -145,7 +145,7 @@ class Season(Filter):
     Future implementation: Search for specific seasons (spring, summer, fall, winter).
     """
 
-    def __init__(self, season: str, years: list = None):
+    def __init__(self, season: str, years: Optional[list] = None):
         """
         Initialize seasonal filter.
 

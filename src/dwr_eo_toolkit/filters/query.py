@@ -18,8 +18,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from dwr_eo_toolkit.filters.base import Filter
-from dwr_eo_toolkit.filters.product import (CloudCover, ProcessingLevel,
-                                          QualityFlag)
+from dwr_eo_toolkit.filters.product import CloudCover, ProcessingLevel, QualityFlag
 from dwr_eo_toolkit.filters.spatial import BoundingBox, PointBuffer, Polygon
 from dwr_eo_toolkit.filters.temporal import DateRange, Season
 
@@ -57,8 +56,6 @@ class Query:
         """
         self.product = product
         self.filters: List[Filter] = filters or []
-
-    # ==================== Spatial Filters ====================
 
     def with_spatial_bounds(
         self,
@@ -105,7 +102,7 @@ class Query:
         """
         polygon = Polygon(coordinates)
         self.filters.append(polygon)
-        logger.debug(f"Added polygon filter")
+        logger.debug("Added polygon filter")
         return self
 
     def with_point_buffer(self, lon: float, lat: float, radius_km: float) -> "Query":
@@ -127,8 +124,6 @@ class Query:
         self.filters.append(point_buf)
         logger.debug(f"Added point buffer filter: {lon}, {lat}, {radius_km}km")
         return self
-
-    # ==================== Temporal Filters ====================
 
     def with_date_range(self, start_date: str, end_date: str) -> "Query":
         """
@@ -152,7 +147,7 @@ class Query:
         logger.debug(f"Added temporal filter: {date_range}")
         return self
 
-    def with_season(self, season: str, years: List[int] = None) -> "Query":
+    def with_season(self, season: str, years: Optional[List[int]] = None) -> "Query":
         """
         Add seasonal constraint (future).
 
@@ -170,8 +165,6 @@ class Query:
         self.filters.append(season_filter)
         logger.debug(f"Added season filter: {season}")
         return self
-
-    # ==================== Product Filters ====================
 
     def with_cloud_cover(self, max_percent: int) -> "Query":
         """
@@ -231,8 +224,6 @@ class Query:
         logger.debug(f"Added processing level filter: {level}")
         return self
 
-    # ==================== Product Selection ====================
-
     def with_product(self, product: str) -> "Query":
         """
         Set product to search for.
@@ -249,8 +240,6 @@ class Query:
         self.product = product
         logger.debug(f"Set product: {product}")
         return self
-
-    # ==================== Execution ====================
 
     def execute(self, provider) -> Tuple[List[Dict[str, Any]], int]:
         """
@@ -292,8 +281,6 @@ class Query:
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             raise
-
-    # ==================== Query Inspection ====================
 
     def filters_summary(self) -> str:
         """
@@ -341,8 +328,6 @@ class Query:
     def __str__(self) -> str:
         """User-friendly string representation."""
         return self.filters_summary()
-
-    # ==================== Builder Shortcuts ====================
 
     @staticmethod
     def for_product(product: str) -> "Query":

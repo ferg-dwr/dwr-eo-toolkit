@@ -3,10 +3,9 @@ Base HTTP client for EO API requests
 """
 
 import logging
-import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -227,7 +226,7 @@ class HTTPClient:
 
             # Handle forbidden
             if response.status_code == 403:
-                raise AuthenticationError(f"Access forbidden: 403")
+                raise AuthenticationError("Access forbidden: 403")
 
             # Handle bad requests
             if response.status_code == 400:
@@ -239,8 +238,12 @@ class HTTPClient:
 
             # Handle server errors
             if response.status_code >= 500:
-                logger.error(f"Server error {response.status_code}: {response.text}")
-                raise APIError(f"Server error {response.status_code}: {response.text}")
+                logger.error(f"Server error {
+                    response.status_code}: {
+                    response.text}")
+                raise APIError(f"Server error {
+                    response.status_code}: {
+                    response.text}")
 
             return response
 

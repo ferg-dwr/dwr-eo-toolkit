@@ -3,12 +3,15 @@ DownloadSession - Manage multiple downloads with parallel execution.
 """
 
 import threading
+import json
+from pathlib import Path
+from datetime import datetime
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Callable, List, Optional
 
-from .progress import DownloadProgress
+from .progress import DownloadProgress, DownloadStatistics
 from .resilience import ResilienceManager, ResumeConfig, RetryConfig
 from .result import DownloadResult
 from .task import DownloadTask, TaskStatus
@@ -42,7 +45,7 @@ class DownloadSession:
     progress: DownloadProgress = field(default_factory=DownloadProgress)
     """Current progress tracking."""
 
-    results: Optional[DownloadResult] = None
+    results: DownloadResult = field(default_factory=lambda: DownloadResult(total=0))
     """Results of download session."""
 
     _paused: bool = field(default=False, init=False)
@@ -66,6 +69,164 @@ class DownloadSession:
             resume_config=ResumeConfig(enable_resume=self.enable_resume),
         )
 
+    def save_state(self, session_path: Path) -> bool:
+        """Save session state to JSON file for recovery.
+
+        Allows resuming interrupted download sessions from where they left off.
+
+        Args:
+            session_path: Path where session state will be saved
+
+        Returns:
+            True if successful, False otherwise
+
+        Example:
+            >>> session = DownloadSession(tasks=[...])
+            >>> session.save_state(Path("~/.dwr/sessions/session_123.json"))
+        """
+        try:
+            session_path = Path(session_path)
+            session_path.parent.mkdir(parents=True, exist_ok=True)
+
+            state = {
+                "metadata": {
+                    "saved_at": datetime.now().isoformat(),
+                    "total_tasks": len(self.tasks),
+                    "completed_tasks": self.progress.completed_files,
+                },
+                "progress": {
+                    "total_files": self.progress.total_files,
+                    "completed_files": self.progress.completed_files,
+                    "failed_files": self.progress.failed_files,
+                    "total_bytes": self.progress.total_bytes,
+                    "downloaded_bytes": self.progress.downloaded_bytes,
+                    "current_file": self.progress.current_file,
+                },
+                "results": {
+                    "successful": self.results.successful,
+                    "failed": self.results.failed,
+                    "total": self.results.total,
+                    "total_size_bytes": self.results.total_size_bytes,
+                },
+                "tasks": [
+                    {
+                        "url": task.url,
+                        "filename": task.filename,
+                        "status": task.status.value,
+                        "downloaded_bytes": task.downloaded_bytes,
+                        "error_message": task.error_message,
+                    }
+                    for task in self.tasks
+                ],
+            }
+
+            with open(session_path, "w") as f:
+                json.dump(state, f, indent=2)
+
+            return True
+
+        except Exception as e:
+            # Log error but don't fail the download
+            return False
+
+    @classmethod
+    def load_state(cls, session_path: Path) -> Optional["DownloadSession"]:
+        """Load session state from JSON file.
+
+        Allows resuming a previous download session from its saved state.
+
+        Args:
+            session_path: Path to saved session JSON file
+
+        Returns:
+            DownloadSession instance or None if load failed
+
+        Example:
+            >>> session = DownloadSession.load_state(
+            ...     Path("~/.dwr/sessions/session_123.json")
+            ... )
+            >>> if session:
+            ...     results = session.download_all()
+        """
+        try:
+            session_path = Path(session_path)
+
+            if not session_path.exists():
+                return None
+
+            with open(session_path, "r") as f:
+                state = json.load(f)
+
+            # Reconstruct tasks from saved state
+            tasks = []
+            for task_data in state.get("tasks", []):
+                task = DownloadTask(
+                    url=task_data["url"],
+                    output_path=Path(task_data["filename"]).parent
+                    / Path(task_data["filename"]).name,
+                    filename=task_data["filename"],
+                )
+                task.status = TaskStatus(task_data["status"])
+                task.downloaded_bytes = task_data["downloaded_bytes"]
+                task.error_message = task_data.get("error_message")
+                tasks.append(task)
+
+            # Create session with recovered tasks
+            session = cls(tasks=tasks)
+
+            # Restore progress state
+            progress_data = state.get("progress", {})
+            session.progress.total_files = progress_data.get("total_files", 0)
+            session.progress.completed_files = progress_data.get("completed_files", 0)
+            session.progress.failed_files = progress_data.get("failed_files", 0)
+            session.progress.total_bytes = progress_data.get("total_bytes", 0)
+            session.progress.downloaded_bytes = progress_data.get("downloaded_bytes", 0)
+
+            return session
+
+        except Exception as e:
+            return None
+
+    def get_statistics(self) -> DownloadStatistics:
+        """Get download session statistics.
+
+        Returns:
+            DownloadStatistics with session metrics
+
+        Example:
+            >>> session = DownloadSession(tasks=[...])
+            >>> session.download_all()
+            >>> stats = session.get_statistics()
+            >>> print(f"Speed: {stats.avg_speed_mbps:.1f} MB/s")
+        """
+        elapsed = self.progress.elapsed_time.total_seconds()
+
+        # Calculate average speed
+        if elapsed > 0:
+            avg_speed_mbps = self.progress.downloaded_bytes / (1024 * 1024) / elapsed
+        else:
+            avg_speed_mbps = 0.0
+
+        # Calculate success rate
+        total = self.results.total if self.results.total > 0 else 1
+        success_rate = (self.results.successful / total) * 100
+
+        # Find most common errors
+        error_counts = Counter(self.results.error_messages.values())
+        most_common_errors = [error for error, _ in error_counts.most_common(5)]
+
+        return DownloadStatistics(
+            total_files=self.progress.total_files,
+            files_downloaded=self.results.successful,
+            files_failed=self.results.failed,
+            total_size_bytes=self.progress.total_bytes,
+            bytes_downloaded=self.progress.downloaded_bytes,
+            duration=self.progress.elapsed_time,
+            avg_speed_mbps=avg_speed_mbps,
+            success_rate=success_rate,
+            most_common_errors=most_common_errors,
+        )
+
     def download_all(self) -> DownloadResult:
         """Download all tasks with parallel execution.
 
@@ -77,7 +238,6 @@ class DownloadSession:
 
         try:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                # Submit all tasks
                 future_to_task = {
                     executor.submit(self._download_task, task): task
                     for task in self.tasks
@@ -115,7 +275,6 @@ class DownloadSession:
         self.progress.current_file = task.filename
         self._call_progress_callback()
 
-        # Check if should resume
         if self.resilience.should_resume(task):
             success, _, error = self.resilience.execute_with_retry(
                 task.resume, timeout=self.timeout_seconds
@@ -125,7 +284,6 @@ class DownloadSession:
                 task.download, timeout=self.timeout_seconds
             )
 
-        # Update progress
         with self._lock:
             self.progress.downloaded_bytes += task.downloaded_bytes
 
