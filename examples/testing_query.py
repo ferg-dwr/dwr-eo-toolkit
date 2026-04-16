@@ -1,4 +1,4 @@
-from nasa_eo_data.providers import EarthAccessProvider
+from dwr_eo_toolkit.providers import EarthAccessProvider
 import earthaccess
 
 # Authenticate

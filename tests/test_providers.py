@@ -10,12 +10,13 @@ Tests cover:
 - Bounding box validation
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
 
-from nasa_eo_data.providers import BaseProvider
-from nasa_eo_data.core.auth import EarthDataLoginAuth
+import pytest
+
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.providers import BaseProvider
 
 
 class TestBaseProvider:

@@ -1,4 +1,4 @@
-# nasa-eo-data
+# dwr-eo-toolkit
 
 A Python package for DWR employees to programmatically query and download NASA satellite imagery at scale.
 
@@ -24,8 +24,8 @@ Query ECOSTRESS thermal data, MODIS reflectance, and other Earth observation dat
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/nasa-eo-data.git
-cd nasa-eo-data
+git clone https://github.com/your-org/dwr-eo-toolkit.git
+cd dwr-eo-toolkit
 
 # Create virtual environment
 python -m venv venv
@@ -62,7 +62,7 @@ password your_password
 ### Basic Usage
 
 ```python
-from nasa_eo_data.providers import EarthAccessProvider
+from dwr_eo_toolkit.providers import EarthAccessProvider
 
 # Create provider (automatically authenticates)
 provider = EarthAccessProvider()
@@ -86,7 +86,7 @@ files = provider.download(results[:10], "./data")
 **With Composable Filters:**
 
 ```python
-from nasa_eo_data.filters import Query, BoundingBox, DateRange
+from dwr_eo_toolkit.filters import Query, BoundingBox, DateRange
 
 # Build query fluently
 query = (
@@ -249,21 +249,21 @@ pytest tests/test_auth.py -v        # Auth tests
 pytest tests/test_client.py -v      # Client tests
 
 # With coverage report
-pytest tests/ --cov=src/nasa_eo_data --cov-report=html
+pytest tests/ --cov=src/dwr_eo_toolkit --cov-report=html
 open htmlcov/index.html
 ```
 
 ### Project Structure
 
 ```
-nasa-eo-data/
+dwr-eo-toolkit/
 ├── .github/
 │   └── workflows/tests.yml          # GitHub Actions CI/CD
 ├── .gitignore                        # Git ignore rules
 ├── pyproject.toml                    # Package config
 ├── README.md                         # This file
 ├── src/
-│   └── nasa_eo_data/
+│   └── dwr_eo_toolkit/
 │       ├── __init__.py
 │       ├── core/
 │       │   ├── __init__.py
@@ -360,7 +360,7 @@ Rapid assessment of floods, wildfires, and other emergencies.
 ### EarthAccessProvider
 
 ```python
-from nasa_eo_data.providers import EarthAccessProvider
+from dwr_eo_toolkit.providers import EarthAccessProvider
 
 # Initialize provider (auto-authenticates)
 provider = EarthAccessProvider()
@@ -386,8 +386,8 @@ files = provider.download(results, "./data", max_workers=4)
 ### Composable Query Filters
 
 ```python
-from nasa_eo_data.filters import Query
-from nasa_eo_data.filters import BoundingBox, DateRange
+from dwr_eo_toolkit.filters import Query
+from dwr_eo_toolkit.filters import BoundingBox, DateRange
 
 # Build query fluently
 query = (
@@ -408,7 +408,7 @@ results, total = query.execute(provider)
 ### Authentication
 
 ```python
-from nasa_eo_data.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
 
 # Initialize (tries token → .netrc → env vars in order)
 auth = EarthDataLoginAuth()
@@ -427,7 +427,7 @@ auth.clear_cache()
 ### HTTP Client
 
 ```python
-from nasa_eo_data.core.client import HTTPClient
+from dwr_eo_toolkit.core.client import HTTPClient
 
 client = HTTPClient(
     auth_handler=auth,
@@ -454,7 +454,7 @@ with HTTPClient(auth_handler=auth, base_url="https://api.example.com") as client
 
 ```python
 # Check which credential source is being used
-from nasa_eo_data.core.auth import EarthDataLoginAuth
+from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
 
 auth = EarthDataLoginAuth()
 try:
@@ -569,18 +569,67 @@ For issues, questions, or feature requests:
 
 ---
 
+## Authentication
+
+### Getting Your NASA Earthdata Token
+
+1. Create account at: https://urs.earthdata.nasa.gov
+2. Go to: Settings → Applications → Authorized Apps
+3. Create new token
+4. Set environment variable:
+```bash
+   export EARTHDATA_TOKEN="your_token_here"
+```
+
+### For Docker Users
+
+1. Create Docker Hub account: https://hub.docker.com
+2. Go to: Settings → Security → Access Tokens
+3. Create new token (read & write)
+4. Set environment variable:
+```bash
+   export DOCKER_PASSWORD="your_token"
+```
+
+### Running the Code
+
+```bash
+# Set your tokens
+export EARTHDATA_TOKEN="your_earthdata_token"
+
+# Run code
+python examples/download_imagery.py
+```
+
+**Note:** You must create your own tokens. We do not share ours.
+
+
 ## Citation
 
-If you use this package in research, please cite:
+If you use this project in your research, please cite both this package and earthaccess:
 
 ```bibtex
-@software{nasa_eo_data,
-  title={nasa-eo-data: NASA Earth Observation Data Access for Python},
-  author={Fernando E. Romero Galvan},
+@software{dwr_eo_toolkit,
+  title={dwr-eo-toolkit: NASA Earth Observation Data Access for Python},
+  author={Romero Galvan, Fernando Emiliano},
   year={2026},
-  url={https://github.com/your-org/nasa-eo-data}
+  url={https://github.com/yourusername/dwr-eo-toolkit},
+  doi={0000-0003-0664-8169},
+  orcid={YOUR-ORCID-HERE},
+  note={Wrapper around NASA's earthaccess library}
+}
+
+@software{earthaccess,
+  title={earthaccess: Simplifying NASA Earth Observational Data Discovery and Access},
+  author={NASA NSIDC DAAC and Contributors},
+  year={2023},
+  url={https://github.com/nsidc/earthaccess},
+  doi={10.5281/zenodo.8368432}
 }
 ```
+
+## Acknowledgments
+This project is built on NASA's excellent [earthaccess](https://github.com/nsidc/earthaccess) library.
 
 ---
 

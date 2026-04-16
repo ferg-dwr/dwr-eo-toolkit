@@ -1,0 +1,42 @@
+name: Token Rotation Reminder
+
+on:
+  schedule:
+    - cron: '0 0 1 1,4,7,10 *' # Jan, Apr, Jul, Oct 1st at midnight UTC
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create token rotation reminder
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = '[Security] Rotate API tokens';
+
+            // Search for open issues with this title
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            const existing = issues.find(issue => issue.title === title);
+
+            if (existing) {
+              console.log(`Reminder issue already exists: #${existing.number}`);
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: `Token rotation reminder:
+                        - NASA Earthdata: https://urs.earthdata.nasa.gov/user_settings/applications
+                        - Docker Hub: https://hub.docker.com/settings/security
+                        - Codecov: https://app.codecov.io/account
+
+                        Update GitHub Secrets after creating new tokens.`
+                                      });
+
+                                      console.log('Created new reminder issue.');
+                                    }

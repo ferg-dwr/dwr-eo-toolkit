@@ -151,7 +151,7 @@ Thumbs.db
 .earthdata_token
 
 # Local NASA EO Data cache
-.nasa-eo-data/
+.dwr_eo_toolkit/
 
 # Test artifacts
 .pytest_cache/
@@ -223,3 +223,5 @@ ENV/
 :Zone.Identifier
 *:Zone.Identifier
 *.zone.identifier
+.env
+.env

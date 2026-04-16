@@ -3,13 +3,13 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nasa-eo-data"
+name = "dwr-eo-toolkit"
 version = "0.1.0"
-description = "NASA Earth Observation Data Access Package"
+description = "Department of Water Resources Earth Observation Toolkit"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    {name = "Your Name", email = "your.email@example.com"},
+    {name = "Fernando Emiliano Romero Galvan", email = "fernando.romerogalvan@gmail.com"},
 ]
 license = {text = "MIT"}
 
@@ -22,15 +22,18 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "black>=23.0.0",        # (code formatting)
+    "isort>=5.12.0",        # (import sorting)
+    "flake8>=6.0.0",        # (linting)
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-username/nasa-eo-data"
-Documentation = "https://github.com/your-username/nasa-eo-data"
-Repository = "https://github.com/your-username/nasa-eo-data.git"
+Homepage = "https://github.com/ferg-dwr/dwr-eo-toolkit"
+Documentation = "https://github.com/ferg-dwr/dwr-eo-toolkit"
+Repository = "https://github.com/ferg-dwr/dwr-eo-toolkit.git"
 
 [tool.setuptools]
-packages = ["nasa_eo_data"]
+packages = ["dwr_eo_toolkit"]
 
 [tool.setuptools.package-dir]
 "" = "src"

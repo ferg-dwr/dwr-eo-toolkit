@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: 'dwr-eo-toolkit: NASA Earth Observation Data Access for Python'
+message: 'If you use this software, please cite it as below. Please also cite the underlying earthaccess library.'
+type: software
+authors:
+  - family-names: Romero Galvan
+    given-names: Fernando Emiliano
+    orcid: '0000-0003-0664-8169'
+    affiliation: 'California Department of Water Resources'
+repository-code: 'https://github.com/yourusername/dwr-eo-toolkit'
+url: 'https://github.com/yourusername/dwr-eo-toolkit'
+abstract: 'A Python package for accessing NASA Earth Observation data with simplified search and download capabilities, built on top of the earthaccess library.'
+keywords:
+  - nasa
+  - earth-observation
+  - satellite-data
+  - data-access
+  - python
+  - earthaccess
+license: MIT
+version: 0.1.0
+date-released: '2026-04-15'
+references:
+  - type: software
+    title: 'earthaccess: Simplifying NASA Earth Observational Data Discovery and Access'
+    authors:
+      - name: 'NASA NSIDC DAAC'
+      - name: 'earthaccess Contributors'
+    repository-code: 'https://github.com/nsidc/earthaccess'
+    url: 'https://github.com/nsidc/earthaccess'
+    doi: '10.5281/zenodo.8368432'
+    version: '>=0.7.0'
+    year-published: 2023
