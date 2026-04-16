@@ -27,28 +27,20 @@ class DownloadTask:
 
     url: str
     """URL to download from."""
-
     output_path: Path
     """Path where file will be saved."""
-
     filename: str = ""
     """Display name of file."""
-
     size: Optional[int] = None
     """Expected file size in bytes."""
-
     checksum: Optional[str] = None
     """Expected checksum of file."""
-
     checksum_type: str = "md5"
     """Type of checksum (md5, sha256, etc)."""
-
     status: TaskStatus = TaskStatus.PENDING
     """Current status of task."""
-
     downloaded_bytes: int = 0
     """Bytes downloaded so far."""
-
     error_message: Optional[str] = None
     """Error message if download failed."""
 
@@ -56,7 +48,6 @@ class DownloadTask:
         """Initialize task after creation."""
         if isinstance(self.output_path, str):
             self.output_path = Path(self.output_path)
-
         if not self.filename:
             self.filename = self.output_path.name
 
@@ -221,4 +212,8 @@ class DownloadTask:
 
     def __str__(self) -> str:
         """User-friendly string representation."""
-        return f"DownloadTask({self.filename}, status={self.status.value}, progress={self.downloaded_bytes}/{self.size or '?'})"
+        return f"DownloadTask({
+            self.filename}, status={
+            self.status.value}, progress={
+            self.downloaded_bytes}/{
+                self.size or '?'})"

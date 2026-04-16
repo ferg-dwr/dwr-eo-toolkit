@@ -3,7 +3,7 @@ DownloadResult - Encapsulates results from download operations.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 @dataclass
@@ -69,7 +69,9 @@ class DownloadResult:
     def __str__(self) -> str:
         """User-friendly string representation."""
         return (
-            f"DownloadResult(successful={self.successful}, failed={self.failed}, "
-            f"total={self.total}, size={self.total_size_gb}GB, "
-            f"success_rate={self.success_rate}%)"
-        )
+            f"DownloadResult(successful={
+                self.successful}, failed={
+                self.failed}, " f"total={
+                self.total}, size={
+                    self.total_size_gb}GB, " f"success_rate={
+                        self.success_rate}%)")

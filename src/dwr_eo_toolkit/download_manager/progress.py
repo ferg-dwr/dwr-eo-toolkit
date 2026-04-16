@@ -4,7 +4,6 @@ DownloadProgress - Real-time progress tracking for downloads.
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 
 
 @dataclass
@@ -110,7 +109,9 @@ class DownloadProgress:
         if elapsed_seconds < 0.1:  # Avoid division issues
             return "0 B/s"
 
-        file_downloaded = int(self.downloaded_bytes * self.current_file_progress)
+        file_downloaded = int(
+            self.downloaded_bytes *
+            self.current_file_progress)
         bytes_per_second = (
             file_downloaded / elapsed_seconds if elapsed_seconds > 0 else 0
         )
@@ -156,3 +157,24 @@ class DownloadProgress:
             f"speed={self.download_speed}, "
             f"eta={self.estimated_remaining})"
         )
+
+
+@dataclass
+class DownloadStatistics:
+    """Download session statistics"""
+
+    total_files: int
+    files_downloaded: int
+    files_failed: int
+    total_size_bytes: int
+    bytes_downloaded: int
+    duration: timedelta
+    avg_speed_mbps: float
+    success_rate: float
+
+    def to_dict(self) -> dict:
+        return {
+            "total_files": self.total_files,
+            "files_downloaded": self.files_downloaded,
+            # TODO: Complete dict return for statistics on download
+        }

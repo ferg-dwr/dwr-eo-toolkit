@@ -74,13 +74,15 @@ class BoundingBox(Filter):
         # Check min < max
         if self.min_lon >= self.max_lon:
             raise ValueError(
-                f"min_lon ({self.min_lon}) must be less than max_lon ({self.max_lon})"
-            )
+                f"min_lon ({
+                    self.min_lon}) must be less than max_lon ({
+                    self.max_lon})")
 
         if self.min_lat >= self.max_lat:
             raise ValueError(
-                f"min_lat ({self.min_lat}) must be less than max_lat ({self.max_lat})"
-            )
+                f"min_lat ({
+                    self.min_lat}) must be less than max_lat ({
+                    self.max_lat})")
 
         return True
 
@@ -93,8 +95,11 @@ class BoundingBox(Filter):
         """
         self.validate()
         return {
-            "bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
-        }
+            "bounding_box": (
+                self.min_lon,
+                self.min_lat,
+                self.max_lon,
+                self.max_lat)}
 
     def center(self) -> Tuple[float, float]:
         """

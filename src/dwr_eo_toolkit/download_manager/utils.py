@@ -4,7 +4,7 @@ Utility functions for downloads module.
 
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 def format_bytes(num_bytes: float) -> str:

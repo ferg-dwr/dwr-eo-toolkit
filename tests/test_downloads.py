@@ -13,21 +13,15 @@ Tests cover:
 
 import hashlib
 import json
-import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List, Union, cast
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-from dwr_eo_toolkit.download_manager import (DownloadManager, DownloadProgress,
-                                             DownloadResult, DownloadSession,
-                                             DownloadTask,
-                                             ExponentialBackoffRetry,
-                                             ResilienceManager, ResumeConfig,
-                                             RetryConfig, RetryStrategy,
-                                             TaskStatus, format_bytes,
-                                             format_speed, format_time)
+from dwr_eo_toolkit.download_manager import (  # ResilienceManager, ResumeConfig,
+    DownloadManager, DownloadProgress, DownloadResult, DownloadSession,
+    DownloadTask, ExponentialBackoffRetry, RetryConfig, RetryStrategy,
+    TaskStatus, format_bytes, format_speed, format_time)
 
 # ============================================================================
 # Test DownloadTask
@@ -55,7 +49,7 @@ class TestDownloadTask:
         """Test task with string path converts to Path."""
         task = DownloadTask(
             url="https://example.com/file.hdf",
-            output_path=str(tmp_path / "file.hdf"),
+            output_path=cast(Path, str(tmp_path / "file.hdf")),
         )
         assert isinstance(task.output_path, Path)
 
@@ -154,6 +148,7 @@ class TestDownloadTask:
         success = task.download()
         assert not success
         assert task.status == TaskStatus.FAILED
+        assert task.error_message is not None
         assert "Network error" in task.error_message
 
     @patch("requests.get")
@@ -613,7 +608,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=1)
 
-        granules = [
+        granules: List[Union[Dict[str, Any], DownloadTask]] = [
             {"url": "https://example.com/file.hdf", "filename": "file.hdf", "size": 12},
         ]
 
@@ -633,7 +628,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=2)
 
-        granules = [
+        granules: List[Union[Dict[str, Any], DownloadTask]] = [
             {
                 "url": f"https://example.com/file{i}.hdf",
                 "filename": f"file{i}.hdf",
@@ -645,3 +640,16 @@ class TestDownloadIntegration:
         result = manager.download(granules, tmp_path)
 
         assert result.total == 3
+
+    # TODO:
+    # Complete test_session_persistence, test_download_statistics, and
+    # test_graceful_shutdown
+
+    # def test_session_persistence():
+    #     """Test save/load session state"""
+
+    # def test_download_statistics():
+    #     """Test statistics calculation"""
+
+    # def test_graceful_shutdown():
+    #     """Test Ctrl+C handling"""

@@ -13,13 +13,13 @@ import json
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from dwr_eo_toolkit.core.auth import (AuthenticationError, EarthDataLoginAuth,
-                                    EnvironmentProvider, NetrcProvider,
-                                    TokenProvider)
+                                      EnvironmentProvider, NetrcProvider,
+                                      TokenProvider)
 
 
 class TestNetrcProvider:
@@ -216,7 +216,10 @@ class TestEarthDataLoginAuth:
             cache_file = auth.token_cache_file
             cache_data = {
                 "token": "oldtoken",
-                "timestamp": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
+                "timestamp": (
+                    datetime.now(UTC) -
+                    timedelta(
+                        hours=2)).isoformat(),
             }
             cache_file.write_text(json.dumps(cache_data))
 

@@ -4,11 +4,9 @@ Adapter for ECOSTRESS thermal imagery products.
 Provides metadata and constants for ECOSTRESS product handling.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
-from dwr_eo_toolkit.providers.adapters.base import (InstrumentAdapter,
-                                                    InstrumentMetadata)
+from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
 
 
 class ECOSTRESSAdapter(InstrumentAdapter):
@@ -79,8 +77,7 @@ class ECOSTRESSAdapter(InstrumentAdapter):
             description=(
                 "ECOSTRESS Level 2 Land Surface Temperature and Emissivity (LSTE) product. "
                 "Provides 70m resolution thermal imagery from the ISS. "
-                "Used for water resource monitoring, agriculture, and climate research."
-            ),
+                "Used for water resource monitoring, agriculture, and climate research."),
             provider=self.PROVIDER,
             processing_level=self.PROCESSING_LEVEL,
             temporal_resolution=self.TEMPORAL_RESOLUTION,
@@ -111,10 +108,7 @@ class ECOSTRESSAdapter(InstrumentAdapter):
         Adds ECOSTRESS-specific metadata to granules.
         """
         for granule in granules:
-            # Extract ECOSTRESS-specific fields
             umm = granule.get("umm", {})
-
-            # Add instrument-specific metadata
             if "RelatedUrls" in umm:
                 for url in umm["RelatedUrls"]:
                     if "LST" in url.get("Description", ""):

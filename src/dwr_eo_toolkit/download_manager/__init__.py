@@ -31,13 +31,23 @@ Example:
 
 from .manager import DownloadManager
 from .progress import DownloadProgress
-from .resilience import (ExponentialBackoffRetry, ResilienceManager,
-                         ResumeConfig, RetryConfig, RetryStrategy)
+from .resilience import (
+    ExponentialBackoffRetry,
+    ResilienceManager,
+    ResumeConfig,
+    RetryConfig,
+    RetryStrategy,
+)
 from .result import DownloadResult
 from .session import DownloadSession
 from .task import DownloadTask, TaskStatus
-from .utils import (cleanup_failed, format_bytes, format_speed, format_time,
-                    get_partial_files)
+from .utils import (
+    cleanup_failed,
+    format_bytes,
+    format_speed,
+    format_time,
+    get_partial_files,
+)
 
 __all__ = [
     # Main API
@@ -66,4 +76,4 @@ __all__ = [
 ]
 
 __version__ = "0.3.0"
-__doc__ = """NASA Earth Observation Data Downloads Module"""
+__doc__ = """DWR Earth Observations Download Modules"""

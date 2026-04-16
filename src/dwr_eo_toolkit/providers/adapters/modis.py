@@ -6,10 +6,7 @@ Provides metadata and constants for MODIS product handling.
 Note: Phase 2C implementation details can be added as needed.
 """
 
-from typing import Any, Dict, Tuple
-
-from dwr_eo_toolkit.providers.adapters.base import (InstrumentAdapter,
-                                                  InstrumentMetadata)
+from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
 
 
 class MODISAdapter(InstrumentAdapter):

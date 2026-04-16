@@ -28,13 +28,22 @@ Quick Start:
 
 # Base
 from dwr_eo_toolkit.filters.base import Filter
+
 # Product
-from dwr_eo_toolkit.filters.product import (CloudCover, Instrument, Orbit,
-                                          ProcessingLevel, QualityFlag)
+from dwr_eo_toolkit.filters.product import (
+    CloudCover,
+    Instrument,
+    Orbit,
+    ProcessingLevel,
+    QualityFlag,
+)
+
 # Query Builder
 from dwr_eo_toolkit.filters.query import Query
+
 # Spatial
 from dwr_eo_toolkit.filters.spatial import BoundingBox, PointBuffer, Polygon
+
 # Temporal
 from dwr_eo_toolkit.filters.temporal import DateRange, Season, YearMonthRange
 

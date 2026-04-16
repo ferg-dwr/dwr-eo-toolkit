@@ -10,12 +10,10 @@ Tests cover:
 - Bounding box validation
 """
 
-from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List, Optional
 
 import pytest
 
-from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
 from dwr_eo_toolkit.providers import BaseProvider
 
 
@@ -23,29 +21,59 @@ class TestBaseProvider:
     """Tests for BaseProvider abstract base class."""
 
     def test_cannot_instantiate_abstract_class(self):
-        """Should not be able to instantiate BaseProvider directly."""
-        with pytest.raises(TypeError):
-            BaseProvider()
+        with pytest.raises(TypeError, match="abstract"):
+            BaseProvider()  # type: ignore
 
-    def test_requires_search_implementation(self):
-        """Subclass must implement search method."""
+    def test_subclass_must_implement_all_methods(self):
+        # Test with only search implemented
+        class OnlySearch(BaseProvider):  # type: ignore
+            def search(
+                self,
+                product: str,
+                bounding_box: Optional[tuple[float, float, float, float]] = None,
+                start_date: Optional[str] = None,
+                end_date: Optional[str] = None,
+                **kwargs,
+            ) -> tuple[List[Dict[str, Any]], int]:
+                return ([], 0)
 
-        class IncompleteProvider(BaseProvider):
-            def get_metadata(self, product):
-                pass
+        with pytest.raises(TypeError, match="get_metadata|validate_product"):
+            OnlySearch()  # type: ignore
 
-            def validate_product(self, product):
-                pass
+        # Test with missing search
+        class NoSearch(BaseProvider):  # type: ignore
+            def get_metadata(self, product: str) -> Dict[str, Any]:
+                return {}
 
-        with pytest.raises(TypeError):
-            IncompleteProvider()
+            def validate_product(self, product: str) -> bool:
+                return True
 
-    def test_requires_all_abstract_methods(self):
-        """Subclass must implement all abstract methods."""
+        with pytest.raises(TypeError, match="search"):
+            NoSearch()  # type: ignore
 
-        class AlmostProvider(BaseProvider):
-            def search(self, product, **kwargs):
-                pass
+    def test_complete_implementation_works(self):
+        class CompleteProvider(BaseProvider):
+            def search(
+                self,
+                product: str,
+                bounding_box: Optional[tuple[float, float, float, float]] = None,
+                start_date: Optional[str] = None,
+                end_date: Optional[str] = None,
+                **kwargs,
+            ) -> tuple[List[Dict[str, Any]], int]:
+                return ([{"id": "test", "product": product}], 1)
 
-        with pytest.raises(TypeError):
-            AlmostProvider()
+            def get_metadata(self, product: str) -> Dict[str, Any]:
+                return {"product": product}
+
+            def validate_product(self, product: str) -> bool:
+                return True
+
+        provider = CompleteProvider()
+        assert provider.validate_product("ECOSTRESS_L2_LSTE")
+        assert provider.get_metadata("ECOSTRESS_L2_LSTE") == {
+            "product": "ECOSTRESS_L2_LSTE"
+        }
+        results, total = provider.search("ECOSTRESS_L2_LSTE")
+        assert total == 1
+        assert len(results) == 1

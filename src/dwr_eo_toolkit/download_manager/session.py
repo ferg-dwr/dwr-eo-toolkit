@@ -5,7 +5,6 @@ DownloadSession - Manage multiple downloads with parallel execution.
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Callable, List, Optional
 
 from .progress import DownloadProgress
@@ -42,7 +41,8 @@ class DownloadSession:
     progress: DownloadProgress = field(default_factory=DownloadProgress)
     """Current progress tracking."""
 
-    results: Optional[DownloadResult] = None
+    results: DownloadResult = field(
+        default_factory=lambda: DownloadResult(total=0))
     """Results of download session."""
 
     _paused: bool = field(default=False, init=False)
@@ -65,6 +65,18 @@ class DownloadSession:
             retry_config=RetryConfig(max_attempts=self.retry_attempts),
             resume_config=ResumeConfig(enable_resume=self.enable_resume),
         )
+
+    # TODO
+    # complete save_state, load_state, and get_statistics
+
+    # def save_state(self, session_path: Path) -> bool:
+    # """Save session state to JSON"""
+
+    # def load_state(cls, session_path: Path) -> 'DownloadSession':
+    #     """Load session from JSON"""
+
+    # def get_statistics(self) -> DownloadStatistics:
+    #     """Get session statistics"""
 
     def download_all(self) -> DownloadResult:
         """Download all tasks with parallel execution.

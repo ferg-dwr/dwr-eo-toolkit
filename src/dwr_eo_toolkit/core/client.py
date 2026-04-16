@@ -3,10 +3,9 @@ Base HTTP client for EO API requests
 """
 
 import logging
-import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -116,7 +115,10 @@ class HTTPClient:
         # Track rate limiting
         self._rate_limit_reset_time: Optional[float] = None
 
-    def _configure_retries(self, max_retries: int, backoff_factor: float) -> None:
+    def _configure_retries(
+            self,
+            max_retries: int,
+            backoff_factor: float) -> None:
         """
         Configure exponential backoff retry strategy.
 
@@ -167,7 +169,8 @@ class HTTPClient:
         Make HTTP request with auth, retries, logging, and SSL verification.
         """
         # Ensure full URL
-        full_url = url if url.startswith("http") else urljoin(self.base_url, url)
+        full_url = url if url.startswith(
+            "http") else urljoin(self.base_url, url)
 
         # Add SSL verification setting if not already provided
         if "verify" not in kwargs:
@@ -206,7 +209,8 @@ class HTTPClient:
 
         # Make request with proper error handling
         try:
-            response = self.session.request(method, full_url, headers=headers, **kwargs)
+            response = self.session.request(
+                method, full_url, headers=headers, **kwargs)
 
             # Log response
             logger.debug(f"Response: {response.status_code}")
@@ -217,7 +221,8 @@ class HTTPClient:
                 logger.warning(f"Rate limited. Retry after {retry_after}s")
                 self._handle_rate_limit(response)
                 # raise RateLimitError(f"Rate limit exceeded. Retry after {retry_after}s")
-                raise RateLimitError(f"Rate limited. Retry after {retry_after}s")
+                raise RateLimitError(
+                    f"Rate limited. Retry after {retry_after}s")
 
             # Handle authentication errors
             if response.status_code == 401:
@@ -227,7 +232,7 @@ class HTTPClient:
 
             # Handle forbidden
             if response.status_code == 403:
-                raise AuthenticationError(f"Access forbidden: 403")
+                raise AuthenticationError("Access forbidden: 403")
 
             # Handle bad requests
             if response.status_code == 400:
@@ -239,8 +244,14 @@ class HTTPClient:
 
             # Handle server errors
             if response.status_code >= 500:
-                logger.error(f"Server error {response.status_code}: {response.text}")
-                raise APIError(f"Server error {response.status_code}: {response.text}")
+                logger.error(
+                    f"Server error {
+                        response.status_code}: {
+                        response.text}")
+                raise APIError(
+                    f"Server error {
+                        response.status_code}: {
+                        response.text}")
 
             return response
 

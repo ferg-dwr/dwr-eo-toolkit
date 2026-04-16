@@ -10,17 +10,15 @@ Tests cover:
 """
 
 import json
-import time
 from typing import Any, Dict, Optional
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
-from requests.adapters import HTTPAdapter
 
 from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
 from dwr_eo_toolkit.core.client import (APIError, AuthenticationError,
-                                      HTTPClient, RateLimitError)
+                                        HTTPClient, RateLimitError)
 
 
 class MockResponse:
@@ -123,7 +121,10 @@ class TestHTTPClient:
         )
         mock_request.return_value = mock_response
 
-        response = client.get("search/granules", params={"short_name": "MODIS"})
+        response = client.get(
+            "search/granules",
+            params={
+                "short_name": "MODIS"})
 
         assert response.status_code == 200
         assert response.json() == {"data": "test"}
@@ -153,7 +154,8 @@ class TestHTTPClient:
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_request_authentication_error_401(self, mock_request, client):
         """Should raise AuthenticationError for 401."""
-        mock_response = MockResponse(status_code=401, text="Invalid or expired token")
+        mock_response = MockResponse(
+            status_code=401, text="Invalid or expired token")
         mock_request.return_value = mock_response
 
         with pytest.raises(AuthenticationError):
@@ -171,7 +173,9 @@ class TestHTTPClient:
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_rate_limit_error_429(self, mock_request, client):
         """Should raise RateLimitError for 429."""
-        mock_response = MockResponse(status_code=429, headers={"Retry-After": "60"})
+        mock_response = MockResponse(
+            status_code=429, headers={
+                "Retry-After": "60"})
         mock_request.return_value = mock_response
 
         with pytest.raises(RateLimitError) as exc_info:
@@ -182,7 +186,8 @@ class TestHTTPClient:
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_server_error_500(self, mock_request, client):
         """Should raise APIError for server errors."""
-        mock_response = MockResponse(status_code=500, text="Internal Server Error")
+        mock_response = MockResponse(
+            status_code=500, text="Internal Server Error")
         mock_request.return_value = mock_response
 
         with pytest.raises(APIError):
@@ -201,7 +206,8 @@ class TestHTTPClient:
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_timeout_error(self, mock_request, client):
         """Should raise APIError on timeout."""
-        mock_request.side_effect = requests.exceptions.Timeout("Connection timeout")
+        mock_request.side_effect = requests.exceptions.Timeout(
+            "Connection timeout")
 
         with pytest.raises(APIError) as exc_info:
             client.get("endpoint")
@@ -211,7 +217,8 @@ class TestHTTPClient:
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_connection_error(self, mock_request, client):
         """Should raise APIError on connection error."""
-        mock_request.side_effect = requests.exceptions.ConnectionError("Cannot connect")
+        mock_request.side_effect = requests.exceptions.ConnectionError(
+            "Cannot connect")
 
         with pytest.raises(APIError) as exc_info:
             client.get("endpoint")
@@ -311,7 +318,8 @@ class TestRetryStrategy:
         """Should NOT retry on 401 (auth error)."""
         client = HTTPClient(auth_handler=auth, max_retries=3)
 
-        mock_request.return_value = MockResponse(status_code=401, text="Unauthorized")
+        mock_request.return_value = MockResponse(
+            status_code=401, text="Unauthorized")
 
         with pytest.raises(AuthenticationError):
             client.get("endpoint")
@@ -324,7 +332,8 @@ class TestRetryStrategy:
         """Should NOT retry on 404 (not found)."""
         client = HTTPClient(auth_handler=auth, max_retries=3)
 
-        mock_request.return_value = MockResponse(status_code=404, text="Not found")
+        mock_request.return_value = MockResponse(
+            status_code=404, text="Not found")
 
         with pytest.raises(APIError):
             client.get("endpoint")
@@ -348,20 +357,24 @@ class TestRateLimitHandling:
         """Should extract Retry-After from response."""
         client = HTTPClient(auth_handler=auth)
 
-        mock_response = MockResponse(status_code=429, headers={"Retry-After": "120"})
+        mock_response = MockResponse(
+            status_code=429, headers={
+                "Retry-After": "120"})
         mock_request.return_value = mock_response
 
         with pytest.raises(RateLimitError) as exc_info:
             client.get("endpoint")
 
-        assert "120" in str(exc_info.value) or "Retry-After" in str(exc_info.value)
+        assert "120" in str(
+            exc_info.value) or "Retry-After" in str(exc_info.value)
 
     @patch("dwr_eo_toolkit.core.client.requests.Session.request")
     def test_rate_limit_without_retry_after_header(self, mock_request, auth):
         """Should use default wait time if Retry-After missing."""
         client = HTTPClient(auth_handler=auth)
 
-        mock_response = MockResponse(status_code=429, headers={})  # No Retry-After
+        mock_response = MockResponse(
+            status_code=429, headers={})  # No Retry-After
         mock_request.return_value = mock_response
 
         with pytest.raises(RateLimitError):
