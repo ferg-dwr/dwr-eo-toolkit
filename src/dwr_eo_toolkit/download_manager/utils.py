@@ -70,6 +70,7 @@ def organize_by_date(output_dir: Path, date_format: str = "%Y/%m/%d") -> None:
         output_dir: Directory containing downloaded files
         date_format: Date format for organization (default: YYYY/MM/DD)
     """
+    # TODO:
     # This is a placeholder for file organization logic
     # Can be extended to parse filenames and organize by date
     pass

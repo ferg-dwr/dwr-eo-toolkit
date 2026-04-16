@@ -71,9 +71,6 @@ class DownloadTask:
             )
             response.raise_for_status()
 
-            # Get total size from headers if available
-            total_size = int(response.headers.get("content-length", 0))
-
             # Download file in chunks
             with open(self.output_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
@@ -212,8 +209,8 @@ class DownloadTask:
 
     def __str__(self) -> str:
         """User-friendly string representation."""
-        return f"DownloadTask({
-            self.filename}, status={
-            self.status.value}, progress={
-            self.downloaded_bytes}/{
+        return f"DownloadTask({\
+            self.filename}, status={\
+            self.status.value}, progress={\
+            self.downloaded_bytes}/{\
                 self.size or '?'})"

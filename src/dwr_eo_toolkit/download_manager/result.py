@@ -12,19 +12,14 @@ class DownloadResult:
 
     successful: int = 0
     """Number of successfully downloaded files."""
-
     failed: int = 0
     """Number of failed downloads."""
-
     total: int = 0
     """Total number of files requested."""
-
     total_size_bytes: int = 0
     """Total size of all downloaded files in bytes."""
-
     failed_tasks: List = field(default_factory=list)
     """List of failed DownloadTask objects."""
-
     error_messages: Dict[str, str] = field(default_factory=dict)
     """Mapping of URL to error message for failed downloads."""
 
