@@ -183,12 +183,12 @@ class HTTPClient:
 
         # Add authentication token if available
         print("In Request!")
-        print(f"auth_handler: {self.auth_handler}")  # ← Shows if it's None
-        print(f"auth_handler type: {type(self.auth_handler)}")  # ← Shows type
+        print(f"auth_handler: {self.auth_handler}")
+        print(f"auth_handler type: {type(self.auth_handler)}")
 
         # Add authentication token if available
         if self.auth_handler:
-            token = self.auth_handler.get_token()  # ← Shows token or None
+            token = self.auth_handler.get_token()
             if token:
                 headers["Authorization"] = f"Bearer {token}"
 
@@ -238,12 +238,9 @@ class HTTPClient:
 
             # Handle server errors
             if response.status_code >= 500:
-                logger.error(f"Server error {
-                    response.status_code}: {
-                    response.text}")
-                raise APIError(f"Server error {
-                    response.status_code}: {
-                    response.text}")
+                error_msg = f"Server error {response.status_code}: {response.text}"
+                logger.error(error_msg)
+                raise APIError(error_msg)
 
             return response
 
