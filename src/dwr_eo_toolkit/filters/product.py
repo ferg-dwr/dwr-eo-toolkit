@@ -163,9 +163,9 @@ class ProcessingLevel(Filter):
             ValueError: If not recognized
         """
         if self.level not in self.VALID_LEVELS:
-            raise ValueError(f"Processing level must be one of {
-                self.VALID_LEVELS}, got {
-                self.level}")
+            raise ValueError(
+                f"""Processing level must be one of {self.VALID_LEVELS}, got {self.level}"""
+            )
 
         return True
 

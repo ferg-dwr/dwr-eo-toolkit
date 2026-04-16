@@ -36,18 +36,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
     
-    # ← ADD: Code quality checks
-    - name: Lint with flake8
+    # ← ADD: Code quality checks with Ruff
+    - name: Lint and format check with Ruff
       run: |
-        flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Format check with black
-      run: |
-        black --check src tests || echo "Run: black src tests"
-    
-    - name: Sort imports with isort
-      run: |
-        isort --check-only src tests || echo "Run: isort src tests"
+        ruff check src tests
+        ruff format --check src tests
     
     # ← IMPROVE: Better coverage reporting
     - name: Run tests with pytest
@@ -79,11 +72,11 @@ jobs:
       with:
         context: .
         push: false
-        tags: nasa-eo-data:latest
+        tags: dwr-eo-toolkit:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
     - name: Test Docker image
       run: |
-        docker build -t nasa-eo-data:test .
-        docker run --rm nasa-eo-data:test python -c "from dwr_eo_toolkit import DownloadManager; print('✅ Docker build successful')"
+        docker build -t dwr-eo-toolkit:test .
+        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit import DownloadManager; print('Docker build successful')"

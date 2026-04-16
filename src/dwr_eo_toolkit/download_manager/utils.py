@@ -89,7 +89,7 @@ def load_metadata(metadata_path: Path) -> dict:
         return {}
 
     try:
-        with open(metadata_path, "r") as f:
+        with open(metadata_path) as f:
             return json.load(f)
     except Exception:
         return {}
@@ -155,7 +155,6 @@ def cleanup_failed(output_dir: Path) -> int:
         if metadata.get("status") == "failed":
             data_file = metadata_file.with_suffix("")
 
-            # Remove both metadata and data file
             if data_file.exists():
                 data_file.unlink()
                 count += 1
