@@ -1,6 +1,8 @@
 # Contributing to DWR EarthObservation Toolkit
 
-Thank you for your interest in contributing! This document outlines the process and guidelines for contributing to the project.
+Thank you for your interest in contributing!
+
+This document outlines the process and guidelines for contributing to the project.
 
 ## Code of Conduct
 
@@ -310,7 +312,7 @@ Help improve documentation:
 ```
 dwr-eo-toolkit/
 ├── src/dwr_eo_toolkit/
-│   ├── download_manager/     ← Phase 3 features
+│   ├── download_manager/     Phase 3 features
 │   ├── core/
 │   ├── providers/
 │   └── filters/
@@ -336,6 +338,4 @@ Maintainers only:
 
 ---
 
-Thank you for contributing! 🚀
-
-Your contributions make this project better for everyone.
+Thank you for contributing!
