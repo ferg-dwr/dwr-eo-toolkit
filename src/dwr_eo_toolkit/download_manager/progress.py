@@ -4,7 +4,7 @@ DownloadProgress - Real-time progress tracking for downloads.
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

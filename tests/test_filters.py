@@ -11,8 +11,9 @@ Test coverage:
 - Parameter conversion
 """
 
+from typing import Any, Dict
 from unittest.mock import Mock
-from typing import Dict, Any
+
 import pytest
 
 from dwr_eo_toolkit.filters import (

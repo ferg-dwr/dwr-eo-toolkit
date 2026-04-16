@@ -2,13 +2,13 @@
 DownloadSession - Manage multiple downloads with parallel execution.
 """
 
-import threading
 import json
-from pathlib import Path
-from datetime import datetime
+import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Callable, List, Optional
 
 from .progress import DownloadProgress, DownloadStatistics
@@ -125,7 +125,7 @@ class DownloadSession:
 
             return True
 
-        except Exception as e:
+        except Exception:
             # Log error but don't fail the download
             return False
 
@@ -154,7 +154,7 @@ class DownloadSession:
             if not session_path.exists():
                 return None
 
-            with open(session_path, "r") as f:
+            with open(session_path) as f:
                 state = json.load(f)
 
             # Reconstruct tasks from saved state
@@ -184,7 +184,7 @@ class DownloadSession:
 
             return session
 
-        except Exception as e:
+        except Exception:
             return None
 
     def get_statistics(self) -> DownloadStatistics:

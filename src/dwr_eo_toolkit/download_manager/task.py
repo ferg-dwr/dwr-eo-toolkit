@@ -209,8 +209,8 @@ class DownloadTask:
 
     def __str__(self) -> str:
         """User-friendly string representation."""
-        return f"DownloadTask({\
-            self.filename}, status={\
-            self.status.value}, progress={\
-            self.downloaded_bytes}/{\
-                self.size or '?'})"
+        return f"""DownloadTask({
+            self.filename}, status={
+            self.status.value}, progress={
+            self.downloaded_bytes}/{
+                self.size or '?'})"""
