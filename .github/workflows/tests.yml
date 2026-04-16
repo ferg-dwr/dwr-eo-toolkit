@@ -1,6 +1,5 @@
 name: Tests
 
-# When to run this workflow
 on:
   push:
     branches: [ main, develop ]
@@ -9,42 +8,82 @@ on:
 
 jobs:
   test:
-    # Run on Ubuntu Linux in GitHub cloud
     runs-on: ubuntu-latest
     
-    # Test on multiple Python versions
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12"]  # ← YOUR Python versions
     
     steps:
-    # Step 1: Get your code from GitHub
     - uses: actions/checkout@v3
-      
-    # Step 2: Set up Python
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     
-    # Step 3: Install dependencies
+    # ← ADD: Pip caching (speeds up builds)
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
-        pip install -e .
-
-    # Step 4: Run tests
+    
+    # ← ADD: Code quality checks
+    - name: Lint with flake8
+      run: |
+        flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Format check with black
+      run: |
+        black --check src tests || echo "Run: black src tests"
+    
+    - name: Sort imports with isort
+      run: |
+        isort --check-only src tests || echo "Run: isort src tests"
+    
+    # ← IMPROVE: Better coverage reporting
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src/nasa_eo_data --cov-report=xml
+        pytest tests/ -v --cov=src/nasa_eo_data --cov-report=xml --cov-report=term-missing
     
-    # Step 5: Upload coverage reports to Codecov (optional)
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-      # Don't fail the workflow if codecov upload fails
       continue-on-error: true
+
+  # ← ADD: Optional Docker validation
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: false
+        tags: nasa-eo-data:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        docker build -t nasa-eo-data:test .
+        docker run --rm nasa-eo-data:test python -c "from nasa_eo_data import DownloadManager; print('✅ Docker build successful')"
