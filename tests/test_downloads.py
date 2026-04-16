@@ -21,6 +21,7 @@ from unittest.mock import MagicMock, patch
 from dwr_eo_toolkit.download_manager import (  # ResilienceManager, ResumeConfig,
     DownloadManager,
     DownloadProgress,
+    DownloadStatistics,
     DownloadResult,
     DownloadSession,
     DownloadTask,
@@ -651,15 +652,102 @@ class TestDownloadIntegration:
 
         assert result.total == 3
 
-    # TODO:
-    # Complete test_session_persistence, test_download_statistics, and
-    # test_graceful_shutdown
+    def test_save_and_load_session_state(self, tmp_path):
+        """Test saving and loading session state."""
+        # Create session with tasks
+        tasks = [
+            DownloadTask(
+                url="https://example.com/file1.hdf",
+                output_path=tmp_path / "file1.hdf",
+            ),
+            DownloadTask(
+                url="https://example.com/file2.hdf",
+                output_path=tmp_path / "file2.hdf",
+            ),
+        ]
 
-    # def test_session_persistence():
-    #     """Test save/load session state"""
+        session = DownloadSession(tasks=tasks, max_workers=2)
 
-    # def test_download_statistics():
-    #     """Test statistics calculation"""
+        # Save state
+        session_file = tmp_path / "session.json"
+        assert session.save_state(session_file)
+        assert session_file.exists()
 
-    # def test_graceful_shutdown():
-    #     """Test Ctrl+C handling"""
+        # Load state
+        loaded_session = DownloadSession.load_state(session_file)
+        assert loaded_session is not None
+        assert len(loaded_session.tasks) == 2
+        assert loaded_session.progress.total_files == 2
+
+    def test_get_statistics(self):
+        """Test getting download statistics."""
+        tasks = [
+            DownloadTask(
+                url="https://example.com/file1.hdf",
+                output_path=Path("file1.hdf"),
+                size=1000,
+            ),
+            DownloadTask(
+                url="https://example.com/file2.hdf",
+                output_path=Path("file2.hdf"),
+                size=2000,
+            ),
+        ]
+
+        session = DownloadSession(tasks=tasks)
+        session.progress.total_files = 2
+        session.progress.total_bytes = 3000
+        session.progress.completed_files = 1
+        session.progress.downloaded_bytes = 1000
+        session.results.successful = 1
+        session.results.failed = 0
+        session.results.total = 2
+
+        stats = session.get_statistics()
+
+        assert stats.total_files == 2
+        assert stats.files_downloaded == 1
+        assert stats.files_failed == 0
+        assert stats.success_rate == 50.0
+
+    def test_statistics_to_dict(self):
+        """Test DownloadStatistics serialization."""
+        from datetime import timedelta
+
+        stats = DownloadStatistics(
+            total_files=10,
+            files_downloaded=8,
+            files_failed=2,
+            total_size_bytes=1000000,
+            bytes_downloaded=800000,
+            duration=timedelta(seconds=100),
+            avg_speed_mbps=8.0,
+            success_rate=80.0,
+        )
+
+        data = stats.to_dict()
+
+        assert data["total_files"] == 10
+        assert data["success_rate"] == 80.0
+        assert data["duration_seconds"] == 100
+
+    def test_statistics_from_dict(self):
+        """Test DownloadStatistics deserialization."""
+        from datetime import timedelta
+
+        data = {
+            "total_files": 10,
+            "files_downloaded": 8,
+            "files_failed": 2,
+            "total_size_bytes": 1000000,
+            "bytes_downloaded": 800000,
+            "duration_seconds": 100,
+            "avg_speed_mbps": 8.0,
+            "success_rate": 80.0,
+        }
+
+        stats = DownloadStatistics.from_dict(data)
+
+        assert stats.total_files == 10
+        assert stats.files_downloaded == 8
+        assert stats.duration == timedelta(seconds=100)

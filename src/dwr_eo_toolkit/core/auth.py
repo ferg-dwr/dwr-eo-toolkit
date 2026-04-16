@@ -207,8 +207,7 @@ class EarthDataLoginAuth:
         # 3. Check for pre-generated token in environment
         creds = self.token_provider.get_credentials()
         if isinstance(creds, str):  # It's a token, not a tuple
-            logger.debug(
-                "Using pre-generated EDL bearer token from environment")
+            logger.debug("Using pre-generated EDL bearer token from environment")
             self._cached_token = creds
             # Pre-generated tokens expire in 60 days, but we don't know when
             self._token_expiry = datetime.now(UTC) + timedelta(days=59)
@@ -226,7 +225,8 @@ class EarthDataLoginAuth:
             "Could not obtain EDL bearer token. Provide credentials via:\n"
             "  1. EARTHDATA_TOKEN environment variable (pre-generated token)\n"
             "  2. ~/.netrc file with 'urs.earthdata.nasa.gov' entry\n"
-            "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables")
+            "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables"
+        )
 
     def _request_token(self) -> Optional[str]:
         """
@@ -325,7 +325,8 @@ class EarthDataLoginAuth:
 
         # Remove any existing urs.earthdata.nasa.gov entry
         new_lines = [
-            line for line in existing_lines if "urs.earthdata.nasa.gov" not in line]
+            line for line in existing_lines if "urs.earthdata.nasa.gov" not in line
+        ]
 
         # Add new entry
         new_lines.extend(

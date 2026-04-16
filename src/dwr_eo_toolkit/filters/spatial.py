@@ -93,11 +93,8 @@ class BoundingBox(Filter):
         """
         self.validate()
         return {
-            "bounding_box": (
-                self.min_lon,
-                self.min_lat,
-                self.max_lon,
-                self.max_lat)}
+            "bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
+        }
 
     def center(self) -> Tuple[float, float]:
         """

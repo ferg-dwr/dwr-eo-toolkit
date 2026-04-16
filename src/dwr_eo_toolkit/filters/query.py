@@ -105,8 +105,7 @@ class Query:
         logger.debug("Added polygon filter")
         return self
 
-    def with_point_buffer(self, lon: float, lat: float,
-                          radius_km: float) -> "Query":
+    def with_point_buffer(self, lon: float, lat: float, radius_km: float) -> "Query":
         """
         Add point + radius spatial constraint (future).
 
@@ -148,8 +147,7 @@ class Query:
         logger.debug(f"Added temporal filter: {date_range}")
         return self
 
-    def with_season(self, season: str,
-                    years: Optional[List[int]] = None) -> "Query":
+    def with_season(self, season: str, years: Optional[List[int]] = None) -> "Query":
         """
         Add seasonal constraint (future).
 

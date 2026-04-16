@@ -77,7 +77,8 @@ class ECOSTRESSAdapter(InstrumentAdapter):
             description=(
                 "ECOSTRESS Level 2 Land Surface Temperature and Emissivity (LSTE) product. "
                 "Provides 70m resolution thermal imagery from the ISS. "
-                "Used for water resource monitoring, agriculture, and climate research."),
+                "Used for water resource monitoring, agriculture, and climate research."
+            ),
             provider=self.PROVIDER,
             processing_level=self.PROCESSING_LEVEL,
             temporal_resolution=self.TEMPORAL_RESOLUTION,

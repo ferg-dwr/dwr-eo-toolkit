@@ -112,9 +112,7 @@ class DownloadManager:
             >>> result = manager.download_single(granule, '/data')
         """
         if isinstance(granule, str):
-            granule = {
-                "url": granule,
-                "filename": filename or Path(granule).name}
+            granule = {"url": granule, "filename": filename or Path(granule).name}
 
         return self.download([granule], output_dir)
 
@@ -143,8 +141,7 @@ class DownloadManager:
             elif isinstance(granule, dict):
                 url = granule.get("url")  # Validate required fields
                 if not url:
-                    raise ValueError(
-                        f"Granule {i} missing required 'url' field")
+                    raise ValueError(f"Granule {i} missing required 'url' field")
 
                 if not isinstance(url, str):
                     raise ValueError(
@@ -153,18 +150,11 @@ class DownloadManager:
 
                 task = DownloadTask(
                     url=url,
-                    output_path=output_dir /
-                    granule.get(
-                        "filename",
-                        Path(url).name),
-                    filename=granule.get(
-                        "filename",
-                        Path(url).name),
+                    output_path=output_dir / granule.get("filename", Path(url).name),
+                    filename=granule.get("filename", Path(url).name),
                     size=granule.get("size"),
                     checksum=granule.get("checksum"),
-                    checksum_type=granule.get(
-                        "checksum_type",
-                        "md5"),
+                    checksum_type=granule.get("checksum_type", "md5"),
                 )
                 tasks.append(task)
             else:

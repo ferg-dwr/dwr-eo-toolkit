@@ -30,7 +30,7 @@ Example:
 """
 
 from .manager import DownloadManager
-from .progress import DownloadProgress
+from .progress import DownloadProgress, DownloadStatistics
 from .resilience import (
     ExponentialBackoffRetry,
     ResilienceManager,
@@ -59,6 +59,8 @@ __all__ = [
     "TaskStatus",
     # Progress
     "DownloadProgress",
+    # Statistics
+    "DownloadStatistics",
     # Results
     "DownloadResult",
     # Resilience

@@ -110,7 +110,8 @@ class DateRange(Filter):
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             raise ValueError(
-                f"Date format not recognized: {date_str}. Use YYYY-MM-DD or ISO format.")
+                f"Date format not recognized: {date_str}. Use YYYY-MM-DD or ISO format."
+            )
 
     def duration_days(self) -> int:
         """

@@ -220,10 +220,7 @@ class TestEarthDataLoginAuth:
             cache_file = auth.token_cache_file
             cache_data = {
                 "token": "oldtoken",
-                "timestamp": (
-                    datetime.now(UTC) -
-                    timedelta(
-                        hours=2)).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             }
             cache_file.write_text(json.dumps(cache_data))
 

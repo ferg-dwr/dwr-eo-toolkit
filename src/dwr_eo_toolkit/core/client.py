@@ -115,10 +115,7 @@ class HTTPClient:
         # Track rate limiting
         self._rate_limit_reset_time: Optional[float] = None
 
-    def _configure_retries(
-            self,
-            max_retries: int,
-            backoff_factor: float) -> None:
+    def _configure_retries(self, max_retries: int, backoff_factor: float) -> None:
         """
         Configure exponential backoff retry strategy.
 
@@ -169,8 +166,7 @@ class HTTPClient:
         Make HTTP request with auth, retries, logging, and SSL verification.
         """
         # Ensure full URL
-        full_url = url if url.startswith(
-            "http") else urljoin(self.base_url, url)
+        full_url = url if url.startswith("http") else urljoin(self.base_url, url)
 
         # Add SSL verification setting if not already provided
         if "verify" not in kwargs:
@@ -209,8 +205,7 @@ class HTTPClient:
 
         # Make request with proper error handling
         try:
-            response = self.session.request(
-                method, full_url, headers=headers, **kwargs)
+            response = self.session.request(method, full_url, headers=headers, **kwargs)
 
             # Log response
             logger.debug(f"Response: {response.status_code}")
@@ -221,8 +216,7 @@ class HTTPClient:
                 logger.warning(f"Rate limited. Retry after {retry_after}s")
                 self._handle_rate_limit(response)
                 # raise RateLimitError(f"Rate limit exceeded. Retry after {retry_after}s")
-                raise RateLimitError(
-                    f"Rate limited. Retry after {retry_after}s")
+                raise RateLimitError(f"Rate limited. Retry after {retry_after}s")
 
             # Handle authentication errors
             if response.status_code == 401:

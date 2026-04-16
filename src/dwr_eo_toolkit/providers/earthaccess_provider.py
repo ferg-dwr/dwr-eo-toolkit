@@ -124,8 +124,7 @@ class EarthAccessProvider(BaseProvider):
         # Add temporal range if provided
         if start_date or end_date:
             search_params["temporal"] = (start_date, end_date)
-            logger.debug(
-                f"Searching with temporal: {start_date} to {end_date}")
+            logger.debug(f"Searching with temporal: {start_date} to {end_date}")
 
         # Search using earthaccess
         try:
@@ -212,6 +211,5 @@ class EarthAccessProvider(BaseProvider):
 
         # If no adapter, assume it's a valid keyword (earthaccess will handle it)
         # This allows searching by keyword even without a specific adapter
-        logger.debug(
-            f"No adapter for {product}, but allowing search by keyword")
+        logger.debug(f"No adapter for {product}, but allowing search by keyword")
         return True
