@@ -68,10 +68,9 @@ class DownloadResult:
 
     def __str__(self) -> str:
         """User-friendly string representation."""
-        return (
-            f"DownloadResult(successful={
-                self.successful}, failed={
-                self.failed}, " f"total={
-                self.total}, size={
-                    self.total_size_gb}GB, " f"success_rate={
-                        self.success_rate}%)")
+        return f"DownloadResult(successful={
+            self.successful}, failed={
+            self.failed}, " f"total={
+            self.total}, size={
+            self.total_size_gb}GB, " f"success_rate={
+            self.success_rate}%)"

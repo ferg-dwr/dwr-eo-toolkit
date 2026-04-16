@@ -168,9 +168,8 @@ class DownloadManager:
                 )
                 tasks.append(task)
             else:
-                raise ValueError(
-                    f"Granule {i}: unsupported type {
-                        type(granule)}")
+                raise ValueError(f"Granule {i}: unsupported type {
+                    type(granule)}")
 
         return tasks
 

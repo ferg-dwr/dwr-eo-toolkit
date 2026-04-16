@@ -73,16 +73,14 @@ class BoundingBox(Filter):
 
         # Check min < max
         if self.min_lon >= self.max_lon:
-            raise ValueError(
-                f"min_lon ({
-                    self.min_lon}) must be less than max_lon ({
-                    self.max_lon})")
+            raise ValueError(f"min_lon ({
+                self.min_lon}) must be less than max_lon ({
+                self.max_lon})")
 
         if self.min_lat >= self.max_lat:
-            raise ValueError(
-                f"min_lat ({
-                    self.min_lat}) must be less than max_lat ({
-                    self.max_lat})")
+            raise ValueError(f"min_lat ({
+                self.min_lat}) must be less than max_lat ({
+                self.max_lat})")
 
         return True
 

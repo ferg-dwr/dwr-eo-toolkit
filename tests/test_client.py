@@ -17,8 +17,12 @@ import pytest
 import requests
 
 from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
-from dwr_eo_toolkit.core.client import (APIError, AuthenticationError,
-                                        HTTPClient, RateLimitError)
+from dwr_eo_toolkit.core.client import (
+    APIError,
+    AuthenticationError,
+    HTTPClient,
+    RateLimitError,
+)
 
 
 class MockResponse:

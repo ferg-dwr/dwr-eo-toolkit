@@ -32,7 +32,7 @@ class TestBaseFilter:
     def test_cannot_instantiate_abstract_class(self):
         """Filter cannot be instantiated directly."""
         with pytest.raises(TypeError, match="abstract"):
-            Filter()   # type: ignore
+            Filter()  # type: ignore
 
     def test_subclass_must_implement_both_methods(self):
         """Subclass must implement both abstract methods."""
@@ -43,7 +43,7 @@ class TestBaseFilter:
                 return True
 
         with pytest.raises(TypeError, match="to_params"):
-            NoToParams()   # type: ignore
+            NoToParams()  # type: ignore
 
         # Missing validate
         class NoValidate(Filter):
@@ -51,7 +51,7 @@ class TestBaseFilter:
                 return {}
 
         with pytest.raises(TypeError, match="validate"):
-            NoValidate()   # type: ignore
+            NoValidate()  # type: ignore
 
     def test_complete_implementation_works(self):
         """Subclass with all methods implemented can be instantiated."""

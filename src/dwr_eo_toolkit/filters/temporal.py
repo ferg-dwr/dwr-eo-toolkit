@@ -59,10 +59,9 @@ class DateRange(Filter):
 
         # Check chronological order
         if start > end:
-            raise ValueError(
-                f"start_date ({
-                    self.start_date}) must be before end_date ({
-                    self.end_date})")
+            raise ValueError(f"start_date ({
+                self.start_date}) must be before end_date ({
+                self.end_date})")
 
         return True
 

@@ -19,9 +19,19 @@ from typing import Any, Dict, List, Union, cast
 from unittest.mock import MagicMock, patch
 
 from dwr_eo_toolkit.download_manager import (  # ResilienceManager, ResumeConfig,
-    DownloadManager, DownloadProgress, DownloadResult, DownloadSession,
-    DownloadTask, ExponentialBackoffRetry, RetryConfig, RetryStrategy,
-    TaskStatus, format_bytes, format_speed, format_time)
+    DownloadManager,
+    DownloadProgress,
+    DownloadResult,
+    DownloadSession,
+    DownloadTask,
+    ExponentialBackoffRetry,
+    RetryConfig,
+    RetryStrategy,
+    TaskStatus,
+    format_bytes,
+    format_speed,
+    format_time,
+)
 
 # ============================================================================
 # Test DownloadTask

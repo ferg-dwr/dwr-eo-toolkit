@@ -17,9 +17,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from dwr_eo_toolkit.core.auth import (AuthenticationError, EarthDataLoginAuth,
-                                      EnvironmentProvider, NetrcProvider,
-                                      TokenProvider)
+from dwr_eo_toolkit.core.auth import (
+    AuthenticationError,
+    EarthDataLoginAuth,
+    EnvironmentProvider,
+    NetrcProvider,
+    TokenProvider,
+)
 
 
 class TestNetrcProvider:
