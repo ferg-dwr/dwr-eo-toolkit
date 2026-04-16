@@ -9,14 +9,14 @@ References:
 - https://urs.earthdata.nasa.gov/sso_client_impl
 """
 
-import os
-import json
 import base64
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta, UTC
-from abc import ABC, abstractmethod
+import json
 import logging
+import os
+from abc import ABC, abstractmethod
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class AuthenticationError(Exception):
     """Raised when authentication fails."""
+
     pass
 
 
@@ -58,6 +59,7 @@ class NetrcProvider(CredentialProvider):
         try:
             # Read .netrc in a safe way (respects file permissions)
             import netrc as netrc_module
+
             rc = netrc_module.netrc(self.netrc_path)
             auth = rc.authenticators("urs.earthdata.nasa.gov")
             if auth:
@@ -98,7 +100,7 @@ class EnvironmentProvider(CredentialProvider):
 class TokenProvider(CredentialProvider):
     """
     Uses a pre-generated EDL bearer token instead of username/password.
-    
+
     Tokens are valid for 60 days and can be generated via:
     - https://urs.earthdata.nasa.gov (GUI: Account Settings > Generate Token)
     - EDL User Tokens API
@@ -122,12 +124,12 @@ class TokenProvider(CredentialProvider):
 class EarthDataLoginAuth:
     """
     Manages authentication with NASA Earthdata Login (EDL).
-    
+
     Supports multiple authentication methods in priority order:
     1. Pre-generated EDL bearer token (fastest, no network call)
     2. Credentials from .netrc (Unix/Linux/Mac)
     3. Credentials from environment variables
-    
+
     References:
     - Bearer tokens: https://urs.earthdata.nasa.gov/documentation/for_users/user_token
     - Token validity: 60 days, max 2 active tokens
@@ -136,7 +138,7 @@ class EarthDataLoginAuth:
     EARTHDATA_LOGIN_HOST = "urs.earthdata.nasa.gov"
     TOKEN_ENDPOINT = f"https://{EARTHDATA_LOGIN_HOST}/api/users/tokens"
     TOKEN_REFRESH_ENDPOINT = f"https://{EARTHDATA_LOGIN_HOST}/oauth/token"
-    
+
     def __init__(
         self,
         netrc_path: Optional[str] = None,
@@ -147,7 +149,7 @@ class EarthDataLoginAuth:
     ):
         """
         Initialize Earthdata Login authentication.
-        
+
         Args:
             netrc_path: Path to .netrc file (defaults to ~/.netrc)
             token_cache_dir: Directory to cache tokens (defaults to ~/.nasa-eo-data)
@@ -156,7 +158,7 @@ class EarthDataLoginAuth:
             token_var: Environment variable for pre-generated token
         """
         self.netrc_path = netrc_path
-        
+
         # Set up token cache directory
         if token_cache_dir:
             self.token_cache_dir = Path(token_cache_dir)
@@ -164,28 +166,28 @@ class EarthDataLoginAuth:
             self.token_cache_dir = Path.home() / ".nasa-eo-data"
         self.token_cache_dir.mkdir(parents=True, exist_ok=True)
         self.token_cache_file = self.token_cache_dir / ".edl_token"
-        
+
         # Set up credential providers in priority order
         self.token_provider = TokenProvider(token_var)
         self.netrc_provider = NetrcProvider(netrc_path)
         self.env_provider = EnvironmentProvider(username_var, password_var)
-        
+
         self._cached_token: Optional[str] = None
         self._token_expiry: Optional[datetime] = None
 
     def get_token(self) -> str:
         """
         Get a valid EDL bearer token.
-        
+
         Priority:
         1. Check cached in-memory token (if not expired)
         2. Check cached token file (if not expired)
         3. Check for pre-generated token in environment
         4. Request new token using credentials from .netrc or environment
-        
+
         Returns:
             Valid EDL bearer token string
-            
+
         Raises:
             AuthenticationError: If no valid token can be obtained
         """
@@ -226,11 +228,10 @@ class EarthDataLoginAuth:
             "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables"
         )
 
-
     def _request_token(self) -> Optional[str]:
         """
         Request a new EDL bearer token using username/password credentials.
-        
+
         Uses HTTP Basic Auth as per:
         https://urs.earthdata.nasa.gov/documentation/for_users/user_token
         """
@@ -310,7 +311,7 @@ class EarthDataLoginAuth:
     def setup_netrc(self, username: str, password: str) -> None:
         """
         Create or update .netrc file with Earthdata Login credentials.
-        
+
         Args:
             username: Earthdata Login username
             password: Earthdata Login password
@@ -324,18 +325,18 @@ class EarthDataLoginAuth:
 
         # Remove any existing urs.earthdata.nasa.gov entry
         new_lines = [
-            line
-            for line in existing_lines
-            if "urs.earthdata.nasa.gov" not in line
+            line for line in existing_lines if "urs.earthdata.nasa.gov" not in line
         ]
 
         # Add new entry
-        new_lines.extend([
-            f"machine {self.EARTHDATA_LOGIN_HOST}",
-            f"login {username}",
-            f"password {password}",
-            "",
-        ])
+        new_lines.extend(
+            [
+                f"machine {self.EARTHDATA_LOGIN_HOST}",
+                f"login {username}",
+                f"password {password}",
+                "",
+            ]
+        )
 
         netrc_path.write_text("\n".join(new_lines))
         netrc_path.chmod(0o600)  # .netrc must be readable only by owner
@@ -346,7 +347,7 @@ class EarthDataLoginAuth:
     ) -> None:
         """
         Print shell commands to set up environment variables.
-        
+
         Args:
             username: Earthdata Login username
             password: Earthdata Login password

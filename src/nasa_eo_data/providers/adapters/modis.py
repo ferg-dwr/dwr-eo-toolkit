@@ -6,31 +6,33 @@ Provides metadata and constants for MODIS product handling.
 Note: Phase 2C implementation details can be added as needed.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 
-from nasa_eo_data.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
+from nasa_eo_data.providers.adapters.base import (InstrumentAdapter,
+                                                  InstrumentMetadata)
+
 
 class MODISAdapter(InstrumentAdapter):
     """
     Adapter for MODIS products (stub for Phase 2C).
-    
+
     MODIS (Moderate Resolution Imaging Spectroradiometer)
-    
+
     Key characteristics:
     - 250m-1km spatial resolution (varies by band)
     - 1-2 day temporal resolution
     - Visible/infrared bands
     - Multiple products: vegetation, thermal, aerosol, etc.
     - Data available from 2000 onwards (Terra), 2002 onwards (Aqua)
-    
+
     Note: Full implementation in Phase 2C
     """
 
     MODIS_SHORT_NAMES = [
-        "MOD09GA",   # MODIS/Terra Surface Reflectance Daily
-        "MYD09GA",   # MODIS/Aqua Surface Reflectance Daily
-        "MOD11A1",   # MODIS/Terra Land Surface Temperature Daily
-        "MYD11A1",   # MODIS/Aqua Land Surface Temperature Daily
+        "MOD09GA",  # MODIS/Terra Surface Reflectance Daily
+        "MYD09GA",  # MODIS/Aqua Surface Reflectance Daily
+        "MOD11A1",  # MODIS/Terra Land Surface Temperature Daily
+        "MYD11A1",  # MODIS/Aqua Land Surface Temperature Daily
         # More products...
     ]
 
@@ -85,7 +87,7 @@ class MODISAdapter(InstrumentAdapter):
                 {
                     "url": "https://lpdaac.usgs.gov/products/mod09ga/",
                     "type": "landing page",
-                    "title": "MODIS MOD09GA Product Page"
+                    "title": "MODIS MOD09GA Product Page",
                 },
             ],
         )

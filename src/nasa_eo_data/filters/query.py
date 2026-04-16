@@ -15,12 +15,13 @@ Example:
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from nasa_eo_data.filters.base import Filter
-from nasa_eo_data.filters.spatial import BoundingBox, Polygon, PointBuffer
+from nasa_eo_data.filters.product import (CloudCover, ProcessingLevel,
+                                          QualityFlag)
+from nasa_eo_data.filters.spatial import BoundingBox, PointBuffer, Polygon
 from nasa_eo_data.filters.temporal import DateRange, Season
-from nasa_eo_data.filters.product import CloudCover, QualityFlag, ProcessingLevel
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,10 @@ logger = logging.getLogger(__name__)
 class Query:
     """
     Fluent query builder for Earth observation searches.
-    
+
     Supports method chaining for intuitive query construction.
     Converts all filters into provider-specific parameters.
-    
+
     Example:
         >>> query = (Query()
         ...     .with_product("ECOSTRESS_L2_LSTE")
@@ -49,7 +50,7 @@ class Query:
     ):
         """
         Initialize query builder.
-        
+
         Args:
             product: Product short name (optional, can set with with_product())
             filters: List of Filter objects (optional)
@@ -68,19 +69,19 @@ class Query:
     ) -> "Query":
         """
         Add bounding box spatial constraint.
-        
+
         Args:
             min_lon: Minimum longitude (-180 to 180)
             min_lat: Minimum latitude (-90 to 90)
             max_lon: Maximum longitude
             max_lat: Maximum latitude
-        
+
         Returns:
             self for method chaining
-        
+
         Raises:
             ValueError: If coordinates invalid
-        
+
         Example:
             >>> query.with_spatial_bounds(-120, 30, -100, 40)
         """
@@ -92,13 +93,13 @@ class Query:
     def with_polygon(self, coordinates: list) -> "Query":
         """
         Add polygon spatial constraint (future).
-        
+
         Args:
             coordinates: List of (lon, lat) tuples defining polygon
-        
+
         Returns:
             self for method chaining
-        
+
         Note:
             This is a future feature. Currently raises NotImplementedError.
         """
@@ -110,15 +111,15 @@ class Query:
     def with_point_buffer(self, lon: float, lat: float, radius_km: float) -> "Query":
         """
         Add point + radius spatial constraint (future).
-        
+
         Args:
             lon: Center longitude
             lat: Center latitude
             radius_km: Search radius in kilometers
-        
+
         Returns:
             self for method chaining
-        
+
         Note:
             This is a future feature. Currently raises NotImplementedError.
         """
@@ -132,17 +133,17 @@ class Query:
     def with_date_range(self, start_date: str, end_date: str) -> "Query":
         """
         Add date range temporal constraint.
-        
+
         Args:
             start_date: Start date (YYYY-MM-DD or ISO format)
             end_date: End date (YYYY-MM-DD or ISO format)
-        
+
         Returns:
             self for method chaining
-        
+
         Raises:
             ValueError: If dates invalid or start > end
-        
+
         Example:
             >>> query.with_date_range("2023-01-01", "2023-12-31")
         """
@@ -154,14 +155,14 @@ class Query:
     def with_season(self, season: str, years: List[int] = None) -> "Query":
         """
         Add seasonal constraint (future).
-        
+
         Args:
             season: 'spring', 'summer', 'fall', or 'winter'
             years: Years to include (optional)
-        
+
         Returns:
             self for method chaining
-        
+
         Note:
             This is a future feature. Currently raises NotImplementedError.
         """
@@ -175,16 +176,16 @@ class Query:
     def with_cloud_cover(self, max_percent: int) -> "Query":
         """
         Add cloud cover constraint.
-        
+
         Args:
             max_percent: Maximum cloud cover percentage (0-100)
-        
+
         Returns:
             self for method chaining
-        
+
         Raises:
             ValueError: If max_percent not in 0-100
-        
+
         Example:
             >>> query.with_cloud_cover(10)  # Max 10% cloud
         """
@@ -196,14 +197,14 @@ class Query:
     def with_quality_flag(self, flag_name: str, flag_value: str) -> "Query":
         """
         Add quality flag constraint.
-        
+
         Args:
             flag_name: Quality flag name (e.g., 'LST_QC')
             flag_value: Expected quality value (e.g., 'good')
-        
+
         Returns:
             self for method chaining
-        
+
         Example:
             >>> query.with_quality_flag('LST_QC', 'good')
         """
@@ -215,13 +216,13 @@ class Query:
     def with_processing_level(self, level: str) -> "Query":
         """
         Add processing level constraint.
-        
+
         Args:
             level: Processing level ('L1B', 'L2', 'L3', 'L4')
-        
+
         Returns:
             self for method chaining
-        
+
         Example:
             >>> query.with_processing_level('L2')
         """
@@ -235,13 +236,13 @@ class Query:
     def with_product(self, product: str) -> "Query":
         """
         Set product to search for.
-        
+
         Args:
             product: Product short name (e.g., 'ECOSTRESS_L2_LSTE')
-        
+
         Returns:
             self for method chaining
-        
+
         Example:
             >>> query.with_product('ECOSTRESS_L2_LSTE')
         """
@@ -254,17 +255,17 @@ class Query:
     def execute(self, provider) -> Tuple[List[Dict[str, Any]], int]:
         """
         Execute query against a provider.
-        
+
         Args:
             provider: Provider instance (e.g., CMRProvider)
-        
+
         Returns:
             Tuple of (results_list, total_count)
-        
+
         Raises:
             ValueError: If no product set
             APIError: If provider API fails
-        
+
         Example:
             >>> results, total = query.execute(provider)
             >>> print(f"Found {total} granules, retrieved {len(results)}")
@@ -278,7 +279,9 @@ class Query:
             filter_params = filter_obj.to_params()
             params.update(filter_params)
 
-        logger.info(f"Executing query for {self.product} with {len(self.filters)} filters")
+        logger.info(
+            f"Executing query for {self.product} with {len(self.filters)} filters"
+        )
         logger.debug(f"Query parameters: {params}")
 
         # Execute against provider
@@ -295,10 +298,10 @@ class Query:
     def filters_summary(self) -> str:
         """
         Get summary of all filters in query.
-        
+
         Returns:
             Human-readable filter summary
-        
+
         Example:
             >>> query.filters_summary()
             'Product: ECOSTRESS_L2_LSTE, Filters: BoundingBox(...), DateRange(...)'
@@ -310,12 +313,12 @@ class Query:
     def to_params(self) -> Dict[str, Any]:
         """
         Convert query to provider parameters.
-        
+
         Useful for debugging or logging.
-        
+
         Returns:
             Dictionary of all parameters
-        
+
         Example:
             >>> params = query.to_params()
             >>> print(params)
@@ -345,13 +348,13 @@ class Query:
     def for_product(product: str) -> "Query":
         """
         Create query for specific product (convenience method).
-        
+
         Args:
             product: Product short name
-        
+
         Returns:
             Query instance with product set
-        
+
         Example:
             >>> query = Query.for_product('ECOSTRESS_L2_LSTE')
         """
@@ -360,12 +363,12 @@ class Query:
     def copy(self) -> "Query":
         """
         Create a copy of this query.
-        
+
         Useful for creating similar queries with minor modifications.
-        
+
         Returns:
             New Query instance with same product and filters
-        
+
         Example:
             >>> query2 = query1.copy().with_cloud_cover(5)
         """
@@ -374,10 +377,10 @@ class Query:
     def clear_filters(self) -> "Query":
         """
         Remove all filters (keep product).
-        
+
         Returns:
             self for method chaining
-        
+
         Example:
             >>> query.clear_filters().with_date_range(...)
         """

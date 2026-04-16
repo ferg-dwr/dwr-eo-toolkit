@@ -4,9 +4,9 @@ Temporal filters for date range search constraints.
 Supports date range queries and future seasonal filtering.
 """
 
-from typing import Dict, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict
 
 from nasa_eo_data.filters.base import Filter
 
@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 class DateRange(Filter):
     """
     Date range temporal filter.
-    
+
     Constrains search to observations within a date range.
-    
+
     Args:
         start_date: Start date in YYYY-MM-DD or ISO format
         end_date: End date in YYYY-MM-DD or ISO format
-    
+
     Example:
         >>> # Search all of 2023
         >>> dr = DateRange("2023-01-01", "2023-12-31")
@@ -30,7 +30,7 @@ class DateRange(Filter):
         True
         >>> dr.to_params()
         {'start_date': '2023-01-01', 'end_date': '2023-12-31'}
-    
+
     Raises:
         ValueError: If dates are invalid or start > end
     """
@@ -43,10 +43,10 @@ class DateRange(Filter):
     def validate(self) -> bool:
         """
         Validate date range.
-        
+
         Returns:
             True if valid
-        
+
         Raises:
             ValueError: If invalid
         """
@@ -59,14 +59,16 @@ class DateRange(Filter):
 
         # Check chronological order
         if start > end:
-            raise ValueError(f"start_date ({self.start_date}) must be before end_date ({self.end_date})")
+            raise ValueError(
+                f"start_date ({self.start_date}) must be before end_date ({self.end_date})"
+            )
 
         return True
 
     def to_params(self) -> Dict[str, Any]:
         """
         Convert to provider search parameters.
-        
+
         Returns:
             Dictionary with 'start_date' and 'end_date' keys
         """
@@ -80,17 +82,17 @@ class DateRange(Filter):
     def _parse_date(date_str: str) -> datetime:
         """
         Parse date string in multiple formats.
-        
+
         Accepts:
         - YYYY-MM-DD
         - YYYY-MM-DDTHH:MM:SSZ
-        
+
         Args:
             date_str: Date string
-        
+
         Returns:
             datetime object
-        
+
         Raises:
             ValueError: If format not recognized
         """
@@ -107,15 +109,17 @@ class DateRange(Filter):
         try:
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            raise ValueError(f"Date format not recognized: {date_str}. Use YYYY-MM-DD or ISO format.")
+            raise ValueError(
+                f"Date format not recognized: {date_str}. Use YYYY-MM-DD or ISO format."
+            )
 
     def duration_days(self) -> int:
         """
         Get duration of date range in days.
-        
+
         Returns:
             Number of days between start and end
-        
+
         Example:
             >>> dr = DateRange("2023-01-01", "2023-12-31")
             >>> dr.duration_days()
@@ -133,17 +137,18 @@ class DateRange(Filter):
 
 # Future filters (stubs for Phase 2B+)
 
+
 class Season(Filter):
     """
     Seasonal temporal filter.
-    
+
     Future implementation: Search for specific seasons (spring, summer, fall, winter).
     """
 
     def __init__(self, season: str, years: list = None):
         """
         Initialize seasonal filter.
-        
+
         Args:
             season: 'spring', 'summer', 'fall', or 'winter'
             years: List of years to include (optional, defaults to all)
@@ -153,7 +158,7 @@ class Season(Filter):
 
     def validate(self) -> bool:
         """Validate season."""
-        valid_seasons = ['spring', 'summer', 'fall', 'winter']
+        valid_seasons = ["spring", "summer", "fall", "winter"]
         if self.season not in valid_seasons:
             raise ValueError(f"Season must be one of {valid_seasons}")
         return True
@@ -167,11 +172,13 @@ class Season(Filter):
 class YearMonthRange(Filter):
     """
     Year-month range temporal filter.
-    
+
     Future implementation: Search by year and month ranges.
     """
 
-    def __init__(self, start_year: int, start_month: int, end_year: int, end_month: int):
+    def __init__(
+        self, start_year: int, start_month: int, end_year: int, end_month: int
+    ):
         """Initialize year-month range."""
         self.start_year = start_year
         self.start_month = start_month

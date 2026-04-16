@@ -11,16 +11,16 @@ Provides robust download capabilities with:
 
 Example:
     >>> from nasa_eo_data.downloads import DownloadManager
-    >>> 
+    >>>
     >>> manager = DownloadManager(max_workers=4)
     >>> granules = [
     ...     {'url': 'https://...', 'filename': 'file1.hdf', 'size': 1000},
     ...     {'url': 'https://...', 'filename': 'file2.hdf', 'size': 2000},
     ... ]
-    >>> 
+    >>>
     >>> def progress_callback(progress):
     ...     print(f"{progress.overall_progress:.1%} - {progress.download_speed}")
-    >>> 
+    >>>
     >>> results = manager.download(
     ...     granules,
     ...     output_dir='/data/ecostress',
@@ -30,24 +30,14 @@ Example:
 """
 
 from .manager import DownloadManager
+from .progress import DownloadProgress
+from .resilience import (ExponentialBackoffRetry, ResilienceManager,
+                         ResumeConfig, RetryConfig, RetryStrategy)
+from .result import DownloadResult
 from .session import DownloadSession
 from .task import DownloadTask, TaskStatus
-from .progress import DownloadProgress
-from .result import DownloadResult
-from .resilience import (
-    RetryConfig,
-    RetryStrategy,
-    ResumeConfig,
-    ResilienceManager,
-    ExponentialBackoffRetry,
-)
-from .utils import (
-    format_bytes,
-    format_speed,
-    format_time,
-    get_partial_files,
-    cleanup_failed,
-)
+from .utils import (cleanup_failed, format_bytes, format_speed, format_time,
+                    get_partial_files)
 
 __all__ = [
     # Main API

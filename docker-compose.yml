@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  nasa-eo-data:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nasa-eo-data-dev
+    environment:
+      EARTHDATA_TOKEN: ${EARTHDATA_TOKEN:-your_token_here}
+      LOG_LEVEL: DEBUG
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./src:/app/src                # Code changes reflect immediately
+      - ./tests:/app/tests            # Tests also live mounted
+      - ./data:/app/data              # Persistent downloaded data
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"                  # API port
+    networks:
+      - nasa-network
+    command: python -m pytest tests/ -v  # Or any other command
+    stdin_open: true
+    tty: true
+
+  # Optional: PostgreSQL for metadata (Phase 3+)
+  postgres:
+    image: postgres:15-alpine
+    container_name: nasa-eo-data-db
+    environment:
+      POSTGRES_DB: nasa_eo_data
+      POSTGRES_USER: nasa
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - nasa-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nasa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  nasa-network:
+    driver: bridge

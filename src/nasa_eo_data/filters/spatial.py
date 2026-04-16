@@ -4,8 +4,8 @@ Spatial filters for geographic search constraints.
 Supports bounding box queries and future polygon/point+radius searches.
 """
 
-from typing import Dict, Any, Tuple
 import logging
+from typing import Any, Dict, Tuple
 
 from nasa_eo_data.filters.base import Filter
 
@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 class BoundingBox(Filter):
     """
     Geographic bounding box filter.
-    
+
     Constrains search to a rectangular region defined by min/max longitude and latitude.
-    
+
     Args:
         min_lon: Minimum longitude (-180 to 180)
         min_lat: Minimum latitude (-90 to 90)
         max_lon: Maximum longitude (-180 to 180), must be > min_lon
         max_lat: Maximum latitude (-90 to 90), must be > min_lat
-    
+
     Example:
         >>> # California bounding box
         >>> bbox = BoundingBox(-120, 30, -100, 40)
@@ -31,7 +31,7 @@ class BoundingBox(Filter):
         True
         >>> bbox.to_params()
         {'bounding_box': (-120, 30, -100, 40)}
-    
+
     Raises:
         ValueError: If coordinates are invalid or inverted
     """
@@ -52,34 +52,42 @@ class BoundingBox(Filter):
     def validate(self) -> bool:
         """
         Validate bounding box coordinates.
-        
+
         Returns:
             True if valid
-        
+
         Raises:
             ValueError: If invalid
         """
         # Check longitude range
         if not (-180 <= self.min_lon <= 180 and -180 <= self.max_lon <= 180):
-            raise ValueError(f"Longitude must be -180 to 180, got min={self.min_lon}, max={self.max_lon}")
+            raise ValueError(
+                f"Longitude must be -180 to 180, got min={self.min_lon}, max={self.max_lon}"
+            )
 
         # Check latitude range
         if not (-90 <= self.min_lat <= 90 and -90 <= self.max_lat <= 90):
-            raise ValueError(f"Latitude must be -90 to 90, got min={self.min_lat}, max={self.max_lat}")
+            raise ValueError(
+                f"Latitude must be -90 to 90, got min={self.min_lat}, max={self.max_lat}"
+            )
 
         # Check min < max
         if self.min_lon >= self.max_lon:
-            raise ValueError(f"min_lon ({self.min_lon}) must be less than max_lon ({self.max_lon})")
+            raise ValueError(
+                f"min_lon ({self.min_lon}) must be less than max_lon ({self.max_lon})"
+            )
 
         if self.min_lat >= self.max_lat:
-            raise ValueError(f"min_lat ({self.min_lat}) must be less than max_lat ({self.max_lat})")
+            raise ValueError(
+                f"min_lat ({self.min_lat}) must be less than max_lat ({self.max_lat})"
+            )
 
         return True
 
     def to_params(self) -> Dict[str, Any]:
         """
         Convert to provider search parameters.
-        
+
         Returns:
             Dictionary with 'bounding_box' key
         """
@@ -91,10 +99,10 @@ class BoundingBox(Filter):
     def center(self) -> Tuple[float, float]:
         """
         Get bounding box center coordinates.
-        
+
         Returns:
             (center_lon, center_lat) tuple
-        
+
         Example:
             >>> bbox = BoundingBox(-120, 30, -100, 40)
             >>> bbox.center()
@@ -107,10 +115,10 @@ class BoundingBox(Filter):
     def area(self) -> float:
         """
         Approximate area of bounding box in square degrees.
-        
+
         Returns:
             Area in square degrees
-        
+
         Example:
             >>> bbox = BoundingBox(-120, 30, -100, 40)
             >>> bbox.area()
@@ -122,16 +130,19 @@ class BoundingBox(Filter):
 
     def __repr__(self) -> str:
         """String representation."""
-        return (f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, "
-                f"lat: {self.min_lat}→{self.max_lat})")
+        return (
+            f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, "
+            f"lat: {self.min_lat}→{self.max_lat})"
+        )
 
 
 # Future filters (stubs for Phase 2B+)
 
+
 class Polygon(Filter):
     """
     Polygon spatial filter for complex regions.
-    
+
     Future implementation: Search within an arbitrary polygon boundary.
     """
 
@@ -153,7 +164,7 @@ class Polygon(Filter):
 class PointBuffer(Filter):
     """
     Point with buffer/radius spatial filter.
-    
+
     Future implementation: Search within X km of a point.
     """
 

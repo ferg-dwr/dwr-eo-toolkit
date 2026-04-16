@@ -11,18 +11,12 @@ Test coverage:
 - Parameter conversion
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from nasa_eo_data.filters import (
-    Filter,
-    BoundingBox,
-    DateRange,
-    CloudCover,
-    QualityFlag,
-    ProcessingLevel,
-    Query,
-)
+import pytest
+
+from nasa_eo_data.filters import (BoundingBox, CloudCover, DateRange, Filter,
+                                  ProcessingLevel, QualityFlag, Query)
 
 
 class TestBaseFilter:
@@ -350,7 +344,8 @@ class TestQuery:
 
     def test_method_chaining(self):
         """Should support fluent chaining."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
             .with_date_range("2023-01-01", "2023-12-31")
@@ -363,7 +358,7 @@ class TestQuery:
         """Should raise error if no product set."""
         query = Query().with_spatial_bounds(-120, 30, -100, 40)
         mock_provider = Mock()
-        
+
         with pytest.raises(ValueError, match="Product must be set"):
             query.execute(mock_provider)
 
@@ -371,15 +366,16 @@ class TestQuery:
         """Should execute query with product."""
         mock_provider = Mock()
         mock_provider.search.return_value = ([{"id": "g1"}], 1)
-        
-        query = (Query()
+
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
             .with_date_range("2023-01-01", "2023-12-31")
         )
-        
+
         results, total = query.execute(mock_provider)
-        
+
         assert len(results) == 1
         assert total == 1
         mock_provider.search.assert_called_once()
@@ -388,16 +384,17 @@ class TestQuery:
         """Should convert all filters to parameters."""
         mock_provider = Mock()
         mock_provider.search.return_value = ([], 0)
-        
-        query = (Query()
+
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
             .with_date_range("2023-01-01", "2023-12-31")
             .with_cloud_cover(10)
         )
-        
+
         query.execute(mock_provider)
-        
+
         call_args = mock_provider.search.call_args[1]
         assert call_args["product"] == "ECOSTRESS_L2_LSTE"
         assert "bounding_box" in call_args
@@ -406,12 +403,13 @@ class TestQuery:
 
     def test_to_params(self):
         """Should convert query to parameters dict."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
             .with_date_range("2023-01-01", "2023-12-31")
         )
-        
+
         params = query.to_params()
         assert params["product"] == "ECOSTRESS_L2_LSTE"
         assert "bounding_box" in params
@@ -419,36 +417,39 @@ class TestQuery:
 
     def test_filters_summary(self):
         """Should provide filter summary."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
         )
-        
+
         summary = query.filters_summary()
         assert "ECOSTRESS_L2_LSTE" in summary
         assert "BoundingBox" in summary
 
     def test_copy(self):
         """Should create independent copy."""
-        original = (Query()
+        original = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
         )
-        
+
         copy = original.copy().with_cloud_cover(10)
-        
+
         assert original.product == copy.product
         assert len(original.filters) == 1
         assert len(copy.filters) == 2
 
     def test_clear_filters(self):
         """Should clear filters but keep product."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
             .clear_filters()
         )
-        
+
         assert query.product == "ECOSTRESS_L2_LSTE"
         assert len(query.filters) == 0
 
@@ -459,7 +460,8 @@ class TestQuery:
 
     def test_repr(self):
         """Should have meaningful representation."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("ECOSTRESS_L2_LSTE")
             .with_spatial_bounds(-120, 30, -100, 40)
         )
@@ -473,26 +475,28 @@ class TestFilterComposition:
 
     def test_multiple_spatial_filters(self):
         """Should support multiple filters of same type."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("TEST")
             .with_cloud_cover(10)
             .with_cloud_cover(5)  # Second one should replace or add
         )
-        
+
         # Both cloud cover filters are added
         cloud_filters = [f for f in query.filters if isinstance(f, CloudCover)]
         assert len(cloud_filters) == 2
 
     def test_mixed_filter_types(self):
         """Should support mixed filter types."""
-        query = (Query()
+        query = (
+            Query()
             .with_product("TEST")
             .with_spatial_bounds(-120, 30, -100, 40)
             .with_date_range("2023-01-01", "2023-12-31")
             .with_cloud_cover(10)
             .with_processing_level("L2")
         )
-        
+
         assert len(query.filters) == 4
         assert any(isinstance(f, BoundingBox) for f in query.filters)
         assert any(isinstance(f, DateRange) for f in query.filters)

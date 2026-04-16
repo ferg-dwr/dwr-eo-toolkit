@@ -22,6 +22,9 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "black>=23.0.0",        # (code formatting)
+    "isort>=5.12.0",        # (import sorting)
+    "flake8>=6.0.0",        # (linting)
 ]
 
 [project.urls]
