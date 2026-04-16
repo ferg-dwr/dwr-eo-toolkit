@@ -2,8 +2,7 @@ name: Token Rotation Reminder
  
 on:
   schedule:
-    # Runs every 3 months (Jan 1, Apr 1, Jul 1, Oct 1)
-    - cron: '0 0 1 */3 * *'
+    - cron: cron: '0 0 1 1,4,7,10 *' # Jan, Apr, Jul, Oct 1st at midnight UTC
  
 jobs:
   reminder:
