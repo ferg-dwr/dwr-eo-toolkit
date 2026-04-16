@@ -569,18 +569,67 @@ For issues, questions, or feature requests:
 
 ---
 
+## Authentication
+
+### Getting Your NASA Earthdata Token
+
+1. Create account at: https://urs.earthdata.nasa.gov
+2. Go to: Settings → Applications → Authorized Apps
+3. Create new token
+4. Set environment variable:
+```bash
+   export EARTHDATA_TOKEN="your_token_here"
+```
+
+### For Docker Users
+
+1. Create Docker Hub account: https://hub.docker.com
+2. Go to: Settings → Security → Access Tokens
+3. Create new token (read & write)
+4. Set environment variable:
+```bash
+   export DOCKER_PASSWORD="your_token"
+```
+
+### Running the Code
+
+```bash
+# Set your tokens
+export EARTHDATA_TOKEN="your_earthdata_token"
+
+# Run code
+python examples/download_imagery.py
+```
+
+**Note:** You must create your own tokens. We do not share ours.
+
+
 ## Citation
 
-If you use this package in research, please cite:
+If you use this project in your research, please cite both this package and earthaccess:
 
 ```bibtex
 @software{nasa_eo_data,
   title={nasa-eo-data: NASA Earth Observation Data Access for Python},
-  author={Fernando E. Romero Galvan},
+  author={Romero Galvan, Fernando Emiliano},
   year={2026},
-  url={https://github.com/your-org/nasa-eo-data}
+  url={https://github.com/yourusername/nasa-eo-data},
+  doi={0000-0003-0664-8169},
+  orcid={YOUR-ORCID-HERE},
+  note={Wrapper around NASA's earthaccess library}
+}
+
+@software{earthaccess,
+  title={earthaccess: Simplifying NASA Earth Observational Data Discovery and Access},
+  author={NASA NSIDC DAAC and Contributors},
+  year={2023},
+  url={https://github.com/nsidc/earthaccess},
+  doi={10.5281/zenodo.8368432}
 }
 ```
+
+## Acknowledgments
+This project is built on NASA's excellent [earthaccess](https://github.com/nsidc/earthaccess) library.
 
 ---
 

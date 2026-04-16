@@ -1,0 +1,61 @@
+name: Token Rotation Reminder
+
+on:
+  schedule:
+    # Runs every 3 months (Jan 1, Apr 1, Jul 1, Oct 1)
+    - cron: '0 0 1 */3 * *'
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create token rotation reminder
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[Security] Rotate API tokens',
+              body: `
+# Token Rotation Required
+
+These tokens should be rotated quarterly for security:
+
+## Tasks
+
+- [ ] **NASA Earthdata Token**
+  - Go to: https://urs.earthdata.nasa.gov/user_settings/applications
+  - Create new token
+  - Copy token value
+  - Update GitHub Secret: EARTHDATA_TOKEN
+
+- [ ] **Docker Hub Token**
+  - Go to: https://hub.docker.com/settings/security
+  - Create new access token
+  - Copy token value
+  - Update GitHub Secret: DOCKER_PASSWORD
+
+- [ ] **Codecov Token** (if using)
+  - Go to: https://app.codecov.io/account
+  - Regenerate token
+  - Copy token value
+  - Update GitHub Secret: CODECOV_TOKEN
+
+## Instructions
+
+1. Generate new token from respective service
+2. Go to GitHub: Settings → Secrets and variables → Actions
+3. Click on the secret (e.g., EARTHDATA_TOKEN)
+4. Update value with new token
+5. Save
+6. Close this issue
+
+## Security Notes
+
+- Old token is automatically invalid after regeneration
+- New token only stored encrypted in GitHub
+- Keep tokens tied to your account/email
+- Consider setting calendar reminders too
+              `
+            })
