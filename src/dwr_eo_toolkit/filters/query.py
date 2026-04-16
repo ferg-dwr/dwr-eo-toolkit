@@ -268,9 +268,7 @@ class Query:
             filter_params = filter_obj.to_params()
             params.update(filter_params)
 
-        logger.info(
-            f"Executing query for {self.product} with {len(self.filters)} filters"
-        )
+        logger.info(f"Executing query for {self.product} with {len(self.filters)} filters")
         logger.debug(f"Query parameters: {params}")
 
         # Execute against provider

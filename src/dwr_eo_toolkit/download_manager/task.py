@@ -66,9 +66,7 @@ class DownloadTask:
             self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Stream download
-            response = requests.get(
-                self.url, timeout=timeout, stream=True, allow_redirects=True
-            )
+            response = requests.get(self.url, timeout=timeout, stream=True, allow_redirects=True)
             response.raise_for_status()
 
             # Download file in chunks
@@ -188,9 +186,7 @@ class DownloadTask:
 
     def save_metadata(self) -> None:
         """Save task metadata to .metadata file next to downloaded file."""
-        metadata_path = self.output_path.with_suffix(
-            self.output_path.suffix + ".metadata"
-        )
+        metadata_path = self.output_path.with_suffix(self.output_path.suffix + ".metadata")
 
         metadata = {
             "url": self.url,
@@ -209,8 +205,6 @@ class DownloadTask:
 
     def __str__(self) -> str:
         """User-friendly string representation."""
-        return f"""DownloadTask({
-            self.filename}, status={
-            self.status.value}, progress={
-            self.downloaded_bytes}/{
-                self.size or '?'})"""
+        return f"""DownloadTask({self.filename}, status={self.status.value}, progress={
+            self.downloaded_bytes
+        }/{self.size or "?"})"""

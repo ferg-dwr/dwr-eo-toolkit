@@ -102,9 +102,7 @@ class HTTPClient:
         else:
             self.verify_ssl = verify_ssl
             if verify_ssl is False:
-                logger.warning(
-                    "SSL verification is disabled - only use in trusted networks"
-                )
+                logger.warning("SSL verification is disabled - only use in trusted networks")
             else:
                 logger.debug(f"SSL verification enabled: {verify_ssl}")
 
@@ -220,9 +218,7 @@ class HTTPClient:
 
             # Handle authentication errors
             if response.status_code == 401:
-                raise AuthenticationError(
-                    "Authentication failed: Invalid or expired token"
-                )
+                raise AuthenticationError("Authentication failed: Invalid or expired token")
 
             # Handle forbidden
             if response.status_code == 403:

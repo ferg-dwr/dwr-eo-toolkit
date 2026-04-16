@@ -63,9 +63,7 @@ class ExponentialBackoffRetry:
             Delay in seconds
         """
         if self.config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-            delay = self.config.initial_delay * (
-                self.config.backoff_multiplier**self.attempt
-            )
+            delay = self.config.initial_delay * (self.config.backoff_multiplier**self.attempt)
         elif self.config.strategy == RetryStrategy.LINEAR_BACKOFF:
             delay = self.config.initial_delay * (self.attempt + 1)
         else:  # FIXED_DELAY

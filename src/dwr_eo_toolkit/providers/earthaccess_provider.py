@@ -145,9 +145,7 @@ class EarthAccessProvider(BaseProvider):
             logger.error(f"Search failed for {product}: {e}")
             raise
 
-    def download(
-        self, granules: List[Dict[str, Any]], output_dir: str, **kwargs
-    ) -> List[str]:
+    def download(self, granules: List[Dict[str, Any]], output_dir: str, **kwargs) -> List[str]:
         """
         Download granules.
 
@@ -162,9 +160,7 @@ class EarthAccessProvider(BaseProvider):
         logger.info(f"Downloading {len(granules)} granules to {output_dir}...")
 
         try:
-            files = earthaccess.download(
-                granules, output_dir, threads=kwargs.get("max_workers", 4)
-            )
+            files = earthaccess.download(granules, output_dir, threads=kwargs.get("max_workers", 4))
 
             logger.info(f"✅ Downloaded {len(files)} files")
             return files

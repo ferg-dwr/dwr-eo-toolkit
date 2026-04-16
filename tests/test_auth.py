@@ -146,9 +146,7 @@ class TestEarthDataLoginAuth:
             # Create mock .netrc
             netrc_path = Path(tmpdir) / ".netrc"
             netrc_path.write_text(
-                "machine urs.earthdata.nasa.gov\n"
-                "login netrcuser\n"
-                "password netrcpass\n"
+                "machine urs.earthdata.nasa.gov\nlogin netrcuser\npassword netrcpass\n"
             )
             netrc_path.chmod(0o600)
 

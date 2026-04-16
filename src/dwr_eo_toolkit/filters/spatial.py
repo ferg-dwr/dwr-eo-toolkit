@@ -73,14 +73,14 @@ class BoundingBox(Filter):
 
         # Check min < max
         if self.min_lon >= self.max_lon:
-            raise ValueError(f"""min_lon ({
-                self.min_lon}) must be less than max_lon ({
-                self.max_lon})""")
+            raise ValueError(
+                f"""min_lon ({self.min_lon}) must be less than max_lon ({self.max_lon})"""
+            )
 
         if self.min_lat >= self.max_lat:
-            raise ValueError(f"""min_lat ({
-                self.min_lat}) must be less than max_lat ({
-                self.max_lat})""")
+            raise ValueError(
+                f"""min_lat ({self.min_lat}) must be less than max_lat ({self.max_lat})"""
+            )
 
         return True
 
@@ -92,9 +92,7 @@ class BoundingBox(Filter):
             Dictionary with 'bounding_box' key
         """
         self.validate()
-        return {
-            "bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
-        }
+        return {"bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)}
 
     def center(self) -> Tuple[float, float]:
         """
@@ -131,8 +129,7 @@ class BoundingBox(Filter):
     def __repr__(self) -> str:
         """String representation."""
         return (
-            f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, "
-            f"lat: {self.min_lat}→{self.max_lat})"
+            f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, lat: {self.min_lat}→{self.max_lat})"
         )
 
 

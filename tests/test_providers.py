@@ -71,9 +71,7 @@ class TestBaseProvider:
 
         provider = CompleteProvider()
         assert provider.validate_product("ECOSTRESS_L2_LSTE")
-        assert provider.get_metadata("ECOSTRESS_L2_LSTE") == {
-            "product": "ECOSTRESS_L2_LSTE"
-        }
+        assert provider.get_metadata("ECOSTRESS_L2_LSTE") == {"product": "ECOSTRESS_L2_LSTE"}
         results, total = provider.search("ECOSTRESS_L2_LSTE")
         assert total == 1
         assert len(results) == 1

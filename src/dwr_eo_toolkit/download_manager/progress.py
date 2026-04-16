@@ -111,9 +111,7 @@ class DownloadProgress:
             return "0 B/s"
 
         file_downloaded = int(self.downloaded_bytes * self.current_file_progress)
-        bytes_per_second = (
-            file_downloaded / elapsed_seconds if elapsed_seconds > 0 else 0
-        )
+        bytes_per_second = file_downloaded / elapsed_seconds if elapsed_seconds > 0 else 0
         return self._format_speed(bytes_per_second)
 
     @staticmethod

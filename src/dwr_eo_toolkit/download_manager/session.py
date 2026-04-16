@@ -239,8 +239,7 @@ class DownloadSession:
         try:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 future_to_task = {
-                    executor.submit(self._download_task, task): task
-                    for task in self.tasks
+                    executor.submit(self._download_task, task): task for task in self.tasks
                 }
 
                 # Process completed tasks
@@ -289,9 +288,7 @@ class DownloadSession:
 
         return success
 
-    def _update_results(
-        self, task: DownloadTask, success: bool, error: Optional[str] = None
-    ):
+    def _update_results(self, task: DownloadTask, success: bool, error: Optional[str] = None):
         """Update results based on task completion.
 
         Args:
