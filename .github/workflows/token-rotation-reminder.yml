@@ -31,13 +31,12 @@ jobs:
                 repo: context.repo.repo,
                 title: title,
                 body: `Token rotation reminder:
+                        - NASA Earthdata: https://urs.earthdata.nasa.gov/user_settings/applications
+                        - Docker Hub: https://hub.docker.com/settings/security
+                        - Codecov: https://app.codecov.io/account
 
-- NASA Earthdata: https://urs.earthdata.nasa.gov/user_settings/applications
-- Docker Hub: https://hub.docker.com/settings/security
-- Codecov: https://app.codecov.io/account
+                        Update GitHub Secrets after creating new tokens.`
+                                      });
 
-Update GitHub Secrets after creating new tokens.`
-              });
-
-              console.log('Created new reminder issue.');
-            }
+                                      console.log('Created new reminder issue.');
+                                    }
