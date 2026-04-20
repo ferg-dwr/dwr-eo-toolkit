@@ -17,7 +17,7 @@ class PrioritizedTask:
     priority: Priority
     task: DownloadTask
 
-    def __lt__(self, other):
+    def __lt__(self, other: "PrioritizedTask") -> bool:  # ✅ Add type hints
         return self.priority.value < other.priority.value
 
 
@@ -25,11 +25,15 @@ class DownloadQueue:
     """Priority-based task queue for downloads."""
 
     def __init__(self, max_size: Optional[int] = None):
-        self.queue = PriorityQueue(maxsize=max_size or 0)
+        self.queue: PriorityQueue[PrioritizedTask] = PriorityQueue(
+            maxsize=max_size or 0
+        )  # ✅ Fixed
         self.total_enqueued = 0
         self.total_dequeued = 0
 
-    def enqueue(self, task: DownloadTask, priority: Priority = Priority.MEDIUM):
+    def enqueue(
+        self, task: DownloadTask, priority: Priority = Priority.MEDIUM
+    ) -> None:  # ✅ Add return type
         """Add task to queue with priority."""
         self.total_enqueued += 1
         self.queue.put(PrioritizedTask(priority, task))
@@ -50,7 +54,7 @@ class DownloadQueue:
         """Current queue size."""
         return self.queue.qsize()
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict:  # ✅ Could be dict[str, int] for better typing
         """Queue statistics."""
         return {
             "size": self.size(),

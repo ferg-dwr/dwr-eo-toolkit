@@ -225,3 +225,5 @@ ENV/
 *.zone.identifier
 .env
 .env
+.env
+.env

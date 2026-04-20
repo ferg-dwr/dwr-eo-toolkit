@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AdapterRegistry:
     """Registry for instrument adapters."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.adapters: Dict[str, InstrumentAdapter] = {}
         self._register_default_adapters()
 
@@ -57,7 +57,7 @@ class EarthAccessProvider(BaseProvider):
         >>> files = provider.download(granules, "./data")
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize provider with earthaccess."""
         self.adapter_registry = AdapterRegistry()
         self._ensure_authenticated()
@@ -67,9 +67,9 @@ class EarthAccessProvider(BaseProvider):
         if not earthaccess.login():
             logger.info("Logging in to earthaccess...")
             earthaccess.login(strategy="environment")
-            logger.info("✅ Authenticated with earthaccess")
+            logger.info("Authenticated with earthaccess")
 
-    def get_adapter(self, product: str):
+    def get_adapter(self, product: str) -> Optional[InstrumentAdapter]:
         """Get adapter for a product."""
         return self.adapter_registry.get_adapter(product)
 
@@ -79,8 +79,8 @@ class EarthAccessProvider(BaseProvider):
         bounding_box: Optional[Tuple[float, float, float, float]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        **kwargs,
-    ) -> Tuple[List[Dict[str, Any]], int]:
+        **kwargs: Any,
+    ) -> Tuple[List[Any], int]:
         """
         Search for granules.
 
@@ -145,7 +145,7 @@ class EarthAccessProvider(BaseProvider):
             logger.error(f"Search failed for {product}: {e}")
             raise
 
-    def download(self, granules: List[Dict[str, Any]], output_dir: str, **kwargs) -> List[str]:
+    def download(self, granules: List[Any], output_dir: str, **kwargs: Any) -> List[str]:
         """
         Download granules.
 
@@ -163,7 +163,7 @@ class EarthAccessProvider(BaseProvider):
             files = earthaccess.download(granules, output_dir, threads=kwargs.get("max_workers", 4))
 
             logger.info(f"✅ Downloaded {len(files)} files")
-            return files
+            return [str(f) for f in files]
 
         except Exception as e:
             logger.error(f"Download failed: {e}")
