@@ -223,7 +223,7 @@ ENV/
 :Zone.Identifier
 *:Zone.Identifier
 *.zone.identifier
-.env
-.env
-.env
-.env
+
+# runtime data and project management folders
+.dwr/
+vision/
