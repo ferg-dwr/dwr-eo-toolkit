@@ -63,19 +63,6 @@ def format_time(seconds: float) -> str:
     return " ".join(parts)
 
 
-def organize_by_date(output_dir: Path, date_format: str = "%Y/%m/%d") -> None:
-    """Organize downloaded files by date.
-
-    Args:
-        output_dir: Directory containing downloaded files
-        date_format: Date format for organization (default: YYYY/MM/DD)
-    """
-    # TODO:
-    # This is a placeholder for file organization logic
-    # Can be extended to parse filenames and organize by date
-    pass
-
-
 def load_metadata(metadata_path: Path) -> Dict[str, Any]:
     """Load metadata from .metadata file.
 
