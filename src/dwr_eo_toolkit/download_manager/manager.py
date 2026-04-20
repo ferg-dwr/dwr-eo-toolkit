@@ -88,7 +88,7 @@ class DownloadManager:
             progress_callback=progress_callback,
         )
 
-        return session.download_all()
+        return session.execute()
 
     def download_single(
         self,
