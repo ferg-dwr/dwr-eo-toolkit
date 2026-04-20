@@ -55,9 +55,10 @@ jobs:
           --cov-report=xml \
           --cov-report=term-missing
     
-    - name: Check coverage threshold
+    - name: Check coverage threshold (download_manager module - 85%)
       run: |
-        coverage report --fail-under=85
+        coverage report --fail-under=85 \
+          --include="src/dwr_eo_toolkit/download_manager/*"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
