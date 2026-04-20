@@ -302,7 +302,7 @@ class DownloadSession:
         with self._lock:
             self.progress.downloaded_bytes += task.downloaded_bytes
 
-        return success
+        return bool(success)
 
     def _update_results(self, task: DownloadTask, success: bool, error: Optional[str] = None):
         """Update results based on task completion.

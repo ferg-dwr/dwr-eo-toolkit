@@ -4,7 +4,7 @@ Utility functions for downloads module.
 
 import json
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 
 def format_bytes(num_bytes: float) -> str:
@@ -76,7 +76,7 @@ def organize_by_date(output_dir: Path, date_format: str = "%Y/%m/%d") -> None:
     pass
 
 
-def load_metadata(metadata_path: Path) -> dict:
+def load_metadata(metadata_path: Path) -> Dict[str, Any]:
     """Load metadata from .metadata file.
 
     Args:
@@ -90,12 +90,15 @@ def load_metadata(metadata_path: Path) -> dict:
 
     try:
         with open(metadata_path) as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            return {}
     except Exception:
         return {}
 
 
-def save_metadata(metadata_path: Path, metadata: dict) -> None:
+def save_metadata(metadata_path: Path, metadata: Dict[str, Any]) -> None:
     """Save metadata to .metadata file.
 
     Args:
