@@ -12,6 +12,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from .auth import AuthenticationError
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,12 +25,6 @@ class APIError(Exception):
 
 class RateLimitError(APIError):
     """Raised when rate limited (HTTP 429)."""
-
-    pass
-
-
-class AuthenticationError(APIError):
-    """Raised for authentication failures."""
 
     pass
 

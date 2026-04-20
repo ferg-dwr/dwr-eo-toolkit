@@ -4,7 +4,7 @@ Utility functions for downloads module.
 
 import json
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 
 def format_bytes(num_bytes: float) -> str:
@@ -63,20 +63,7 @@ def format_time(seconds: float) -> str:
     return " ".join(parts)
 
 
-def organize_by_date(output_dir: Path, date_format: str = "%Y/%m/%d") -> None:
-    """Organize downloaded files by date.
-
-    Args:
-        output_dir: Directory containing downloaded files
-        date_format: Date format for organization (default: YYYY/MM/DD)
-    """
-    # TODO:
-    # This is a placeholder for file organization logic
-    # Can be extended to parse filenames and organize by date
-    pass
-
-
-def load_metadata(metadata_path: Path) -> dict:
+def load_metadata(metadata_path: Path) -> Dict[str, Any]:
     """Load metadata from .metadata file.
 
     Args:
@@ -90,12 +77,15 @@ def load_metadata(metadata_path: Path) -> dict:
 
     try:
         with open(metadata_path) as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            return {}
     except Exception:
         return {}
 
 
-def save_metadata(metadata_path: Path, metadata: dict) -> None:
+def save_metadata(metadata_path: Path, metadata: Dict[str, Any]) -> None:
     """Save metadata to .metadata file.
 
     Args:

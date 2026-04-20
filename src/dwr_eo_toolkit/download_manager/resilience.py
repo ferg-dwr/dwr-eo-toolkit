@@ -54,7 +54,7 @@ class ExponentialBackoffRetry:
         """
         self.config = config
         self.attempt = 0
-        self.last_exception = None
+        self.last_exception: Optional[Exception] = None
 
     def get_delay(self) -> float:
         """Calculate delay for next attempt.

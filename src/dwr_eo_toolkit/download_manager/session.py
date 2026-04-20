@@ -69,6 +69,22 @@ class DownloadSession:
             resume_config=ResumeConfig(enable_resume=self.enable_resume),
         )
 
+    def add_task(self, task: DownloadTask) -> None:
+        """Add a task to the session.
+
+        Args:
+            task: DownloadTask to add to the session
+
+        Example:
+            >>> session = DownloadSession()
+            >>> task = DownloadTask(url="https://example.com/file.hdf", output_path=Path("file.hdf"))
+            >>> session.add_task(task)
+        """
+        with self._lock:
+            self.tasks.append(task)
+            self.progress.total_files = len(self.tasks)
+            self.progress.total_bytes += task.size or 0
+
     def save_state(self, session_path: Path) -> bool:
         """Save session state to JSON file for recovery.
 
@@ -227,7 +243,7 @@ class DownloadSession:
             most_common_errors=most_common_errors,
         )
 
-    def download_all(self) -> DownloadResult:
+    def execute(self) -> DownloadResult:
         """Download all tasks with parallel execution.
 
         Returns:
@@ -286,7 +302,7 @@ class DownloadSession:
         with self._lock:
             self.progress.downloaded_bytes += task.downloaded_bytes
 
-        return success
+        return bool(success)
 
     def _update_results(self, task: DownloadTask, success: bool, error: Optional[str] = None):
         """Update results based on task completion.

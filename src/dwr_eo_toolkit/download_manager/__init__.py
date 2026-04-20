@@ -1,36 +1,18 @@
 """
 Downloads Module - Download manager for NASA Earth observation data.
-
-Provides robust download capabilities with:
-- Single and batch downloads
-- Parallel execution with configurable workers
-- Progress tracking and callbacks
-- Automatic retry with exponential backoff
-- Resume capability for interrupted downloads
-- File verification with checksums
-
-Example:
-    >>> from dwr_eo_toolkit.downloads import DownloadManager
-    >>>
-    >>> manager = DownloadManager(max_workers=4)
-    >>> granules = [
-    ...     {'url': 'https://...', 'filename': 'file1.hdf', 'size': 1000},
-    ...     {'url': 'https://...', 'filename': 'file2.hdf', 'size': 2000},
-    ... ]
-    >>>
-    >>> def progress_callback(progress):
-    ...     print(f"{progress.overall_progress:.1%} - {progress.download_speed}")
-    >>>
-    >>> results = manager.download(
-    ...     granules,
-    ...     output_dir='/data/ecostress',
-    ...     progress_callback=progress_callback
-    ... )
-    >>> print(f"Downloaded: {results.successful}/{results.total}")
 """
 
+# Core session management
+# Advanced features
+from .batch_manager import BatchDownloadManager
+
+# Legacy API (for backward compatibility)
 from .manager import DownloadManager
+
+# Progress and results
 from .progress import DownloadProgress, DownloadStatistics
+
+# Resilience and retry logic
 from .resilience import (
     ExponentialBackoffRetry,
     ResilienceManager,
@@ -39,8 +21,11 @@ from .resilience import (
     RetryStrategy,
 )
 from .result import DownloadResult
+from .scheduler import DownloadScheduler
 from .session import DownloadSession
 from .task import DownloadTask, TaskStatus
+
+# Utilities
 from .utils import (
     cleanup_failed,
     format_bytes,
@@ -50,18 +35,13 @@ from .utils import (
 )
 
 __all__ = [
-    # Main API
-    "DownloadManager",
-    # Session management
+    # Session and tasks
     "DownloadSession",
-    # Tasks
     "DownloadTask",
     "TaskStatus",
-    # Progress
+    # Progress and results
     "DownloadProgress",
-    # Statistics
     "DownloadStatistics",
-    # Results
     "DownloadResult",
     # Resilience
     "RetryConfig",
@@ -69,13 +49,17 @@ __all__ = [
     "ResumeConfig",
     "ResilienceManager",
     "ExponentialBackoffRetry",
+    # Advanced features
+    "BatchDownloadManager",
+    "DownloadScheduler",
     # Utilities
     "format_bytes",
     "format_speed",
     "format_time",
     "get_partial_files",
     "cleanup_failed",
+    # Legacy API
+    "DownloadManager",
 ]
 
 __version__ = "0.3.0"
-__doc__ = """DWR Earth Observations Download Modules"""

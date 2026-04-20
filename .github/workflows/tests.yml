@@ -12,7 +12,8 @@ jobs:
     
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]  # ← YOUR Python versions
+        # Test on all supported Python versions (3.8+)
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     
     steps:
     - uses: actions/checkout@v3
@@ -22,7 +23,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    # ← ADD: Pip caching (speeds up builds)
     - name: Cache pip packages
       uses: actions/cache@v3
       with:
@@ -36,16 +36,29 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
     
-    # ← ADD: Code quality checks with Ruff
-    - name: Lint and format check with Ruff
+    - name: Lint with Ruff
       run: |
         ruff check src tests
+    
+    - name: Format check with Ruff
+      run: |
         ruff format --check src tests
     
-    # ← IMPROVE: Better coverage reporting
+    - name: Type check with MyPy
+      run: |
+        mypy src/dwr_eo_toolkit
+    
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src/dwr_eo_toolkit --cov-report=xml --cov-report=term-missing
+        pytest tests/ -v \
+          --cov=src/dwr_eo_toolkit \
+          --cov-report=xml \
+          --cov-report=term-missing
+    
+    - name: Check coverage threshold (download_manager module - 85%)
+      run: |
+        coverage report --fail-under=85 \
+          --include="src/dwr_eo_toolkit/download_manager/*"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -53,13 +66,13 @@ jobs:
         files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+        fail_ci_if_error: false  # Don't fail if Codecov has issues
       continue-on-error: true
 
-  # ← ADD: Optional Docker validation
   docker-build:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     
     steps:
     - uses: actions/checkout@v3
@@ -79,4 +92,11 @@ jobs:
     - name: Test Docker image
       run: |
         docker build -t dwr-eo-toolkit:test .
-        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit import DownloadManager; print('Docker build successful')"
+        docker run --rm dwr-eo-toolkit:test python -c "
+          from dwr_eo_toolkit.download_manager import (
+            BatchDownloadManager,
+            DownloadScheduler,
+            DownloadSession
+          )
+          print('✅ Core imports successful')
+        "
