@@ -1,7 +1,7 @@
-import pytest
+from pathlib import Path
+
 from dwr_eo_toolkit.download_manager.queue import DownloadQueue, Priority
 from dwr_eo_toolkit.download_manager.task import DownloadTask
-from pathlib import Path
 
 
 class TestDownloadQueue:

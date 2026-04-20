@@ -1,7 +1,7 @@
+from dataclasses import dataclass
 from enum import Enum
 from queue import PriorityQueue
 from typing import Optional
-from dataclasses import dataclass
 
 from .task import DownloadTask
 
