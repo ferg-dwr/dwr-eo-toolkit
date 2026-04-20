@@ -3,12 +3,14 @@ Downloads Module - Download manager for NASA Earth observation data.
 """
 
 # Core session management
-from .session import DownloadSession
-from .task import DownloadTask, TaskStatus
+# Advanced features
+from .batch_manager import BatchDownloadManager
+
+# Legacy API (for backward compatibility)
+from .manager import DownloadManager
 
 # Progress and results
 from .progress import DownloadProgress, DownloadStatistics
-from .result import DownloadResult
 
 # Resilience and retry logic
 from .resilience import (
@@ -18,10 +20,10 @@ from .resilience import (
     RetryConfig,
     RetryStrategy,
 )
-
-# Advanced features
-from .batch_manager import BatchDownloadManager
+from .result import DownloadResult
 from .scheduler import DownloadScheduler
+from .session import DownloadSession
+from .task import DownloadTask, TaskStatus
 
 # Utilities
 from .utils import (
@@ -31,9 +33,6 @@ from .utils import (
     format_time,
     get_partial_files,
 )
-
-# Legacy API (for backward compatibility)
-from .manager import DownloadManager
 
 __all__ = [
     # Session and tasks
