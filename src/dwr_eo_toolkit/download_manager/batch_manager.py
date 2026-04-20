@@ -10,7 +10,7 @@ from .session import DownloadSession
 class BatchDownloadManager:
     """Manage multiple parallel download sessions."""
 
-    def __init__(self,max_concurrent_sessions: int = 3, queue=None):
+    def __init__(self, max_concurrent_sessions: int = 3, queue=None):
         """
         Initialize batch manager.
 
@@ -39,10 +39,7 @@ class BatchDownloadManager:
 
         results: List[DownloadResult] = []
         with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
-            futures = {
-                executor.submit(session.execute): session
-                for session in self.sessions
-            }
+            futures = {executor.submit(session.execute): session for session in self.sessions}
 
             for future in futures:
                 try:

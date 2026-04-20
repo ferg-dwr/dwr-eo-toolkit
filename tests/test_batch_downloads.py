@@ -20,8 +20,7 @@ def mock_session():
     # Add some mock tasks
     for i in range(3):
         task = DownloadTask(
-            url=f"https://example.com/file{i}.hdf",
-            output_path=Path(f"test_file{i}.hdf")
+            url=f"https://example.com/file{i}.hdf", output_path=Path(f"test_file{i}.hdf")
         )
         session.add_task(task)
     return session
