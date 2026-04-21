@@ -43,7 +43,11 @@ jobs:
     - name: Format check with Ruff
       run: |
         ruff format --check src tests
-    
+
+    - name: Install type stubs for mypy
+      run: |
+        pip install types-requests
+
     - name: Type check with MyPy
       run: |
         mypy src/dwr_eo_toolkit
