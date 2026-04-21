@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Compressed files
+*.zip
+*.tar
+*.7zip
+
 # C extensions
 *.so
 
@@ -157,6 +162,7 @@ Thumbs.db
 # Test artifacts
 .pytest_cache/
 htmlcov/
+.ruff_cache
 
 # Coverage reports
 .coverage
