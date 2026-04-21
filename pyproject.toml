@@ -17,6 +17,7 @@ dependencies = [
     "requests>=2.28.0",
     "earthaccess>=0.7.0",
     "apscheduler>=3.10.0",
+    "types-requests>=2.28.0",
 ]
 
 
