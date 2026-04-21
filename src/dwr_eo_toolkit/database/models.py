@@ -1,7 +1,7 @@
 """SQLAlchemy models for the DWR EO Toolkit."""
 
 import uuid
-from datetime import datetime
+from datetime import timezone
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -31,8 +31,8 @@ class DownloadSession(Base):
     failed_files = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=timezone.utc, index=True)
+    updated_at = Column(DateTime, default=timezone.utc, onupdate=timezone.utc)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -72,8 +72,8 @@ class DownloadTask(Base):
     retry_count = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=timezone.utc, index=True)
+    updated_at = Column(DateTime, default=timezone.utc, onupdate=timezone.utc)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -110,8 +110,8 @@ class BatchOperation(Base):
     config = Column(JSON, default={})  # Any additional configuration
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=timezone.utc, index=True)
+    updated_at = Column(DateTime, default=timezone.utc, onupdate=timezone.utc)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -144,8 +144,8 @@ class ScheduledJob(Base):
     session_config = Column(JSON)  # Serialized DownloadSession config
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=timezone.utc, index=True)
+    updated_at = Column(DateTime, default=timezone.utc, onupdate=timezone.utc)
 
     def __repr__(self):
         return f"<ScheduledJob(id={self.id}, job_id={self.job_id}, status={self.status})>"
@@ -180,7 +180,7 @@ class DownloadResult(Base):
     error_message = Column(String, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=timezone.utc, index=True)
 
     def __repr__(self):
         return f"<DownloadResult(id={self.id}, result_id={self.result_id}, success={self.success})>"
