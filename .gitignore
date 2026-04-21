@@ -156,6 +156,11 @@ Thumbs.db
 .edl_token
 .earthdata_token
 
+# Log Stuff
+data/
+logs/
+.logs
+
 # Local NASA EO Data cache
 .dwr_eo_toolkit/
 
@@ -178,6 +183,7 @@ coverage.xml
 # IDE temporary files
 .vscode/settings.json
 .idea/workspace.xml
+.idea/
 
 # Downloaded data (if you're testing locally)
 data/
@@ -234,3 +240,8 @@ ENV/
 # runtime data and project management folders
 .dwr/
 vision/
+
+# For databases
+postgres_data/
+*.db
+*.sqlite
