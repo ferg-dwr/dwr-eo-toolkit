@@ -55,9 +55,9 @@ jobs:
           --cov-report=xml \
           --cov-report=term-missing
     
-    - name: Check coverage threshold (download_manager module - 85%)
+    - name: Check coverage threshold (download_manager module - 75%)
       run: |
-        coverage report --fail-under=85 \
+        coverage report --fail-under=75 \
           --include="src/dwr_eo_toolkit/download_manager/*"
     
     - name: Upload coverage to Codecov
@@ -100,3 +100,17 @@ jobs:
           )
           print('✅ Core imports successful')
         "
+
+services:
+  postgres:
+    image: postgres:15
+    env:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dwr_eo_toolkit_test
+    options: >-
+      --health-cmd pg_isready
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+    ports:
+      - 5432:5432

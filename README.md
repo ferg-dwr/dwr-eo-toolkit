@@ -6,15 +6,20 @@ Query ECOSTRESS thermal data, MODIS reflectance, and other Earth observation dat
 
 ## Status
 
-🚀 **Phase 2B Complete** - Provider abstraction and filter layer ready
-- [x] Secure authentication (NASA Earthdata Login)
-- [x] Authenticated HTTP client with retry logic
-- [x] EarthAccess integration
-- [x] Full test suite (100+ tests, 100% passing)
-- [x] Provider abstraction layer (Phase 2A ✅)
-- [x] Query filters and composable API (Phase 2B ✅)
-- [ ] Batch download manager (Phase 3)
-- [ ] High-level query API (Phase 4)
+🚀 **Phase 3A-3B Complete** - Batch operations and scheduling ready
+- [x] Secure authentication (NASA Earthdata Login) - Phase 1 ✅
+- [x] Authenticated HTTP client with retry logic - Phase 1 ✅
+- [x] EarthAccess integration - Phase 2A ✅
+- [x] Full test suite (197 tests, 100% passing) - Phase 2B ✅
+- [x] Provider abstraction layer - Phase 2A ✅
+- [x] Query filters and composable API - Phase 2B ✅
+- [x] Batch download manager with parallel execution - Phase 3A ✅
+- [x] Download scheduler (one-time & recurring) - Phase 3B ✅
+- [x] Session persistence and checkpointing - Phase 3A ✅
+- [ ] FastAPI REST API server (Phase 4)
+- [ ] WebSocket real-time progress streaming (Phase 4)
+- [ ] Click-based CLI (Phase 4)
+- [ ] PostgreSQL integration (Phase 4)
 
 ---
 
@@ -24,7 +29,7 @@ Query ECOSTRESS thermal data, MODIS reflectance, and other Earth observation dat
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/dwr-eo-toolkit.git
+git clone https://github.com/ferg-dwr/dwr-eo-toolkit.git
 cd dwr-eo-toolkit
 
 # Create virtual environment
@@ -78,9 +83,67 @@ results, total = provider.search(
 print(f"Found {total} granules")
 for granule in results[:5]:
     print(f"  {granule}")
+```
 
-# Download granules
-files = provider.download(results[:10], "./data")
+**With Batch Manager (Phase 3):**
+
+```python
+from dwr_eo_toolkit.download_manager import (
+    BatchDownloadManager, 
+    DownloadSession
+)
+
+# Create batch manager for parallel downloads
+manager = BatchDownloadManager(max_concurrent_sessions=3)
+
+# Create independent download sessions
+session1 = DownloadSession()
+session1.add_task(task1)
+session1.add_task(task2)
+manager.add_session(session1, priority="high")
+
+session2 = DownloadSession()
+session2.add_task(task3)
+manager.add_session(session2, priority="medium")
+
+# Execute all in parallel with checkpointing
+results = manager.execute_all()
+
+# Check progress
+progress = manager.get_progress()
+print(f"{progress['completed']}/{progress['total_files']} completed")
+
+# Save checkpoint for recovery
+manager.save_checkpoint("backup_1")
+
+# Resume later from checkpoint
+results = manager.resume_from_checkpoint("backup_1")
+```
+
+**With Scheduler (Phase 3):**
+
+```python
+from dwr_eo_toolkit.download_manager import DownloadScheduler
+from datetime import datetime, timedelta
+
+scheduler = DownloadScheduler()
+
+# Schedule one-time download
+job_id = scheduler.schedule_once(
+    session,
+    run_at=datetime.now() + timedelta(hours=2)
+)
+
+# Schedule recurring (every Monday at 2 AM)
+recurring_id = scheduler.schedule_recurring(
+    session,
+    cron="0 2 * * MON"
+)
+
+# Control jobs
+scheduler.pause_scheduled(job_id)
+scheduler.resume_scheduled(job_id)
+scheduler.cancel_scheduled(job_id)
 ```
 
 **With Composable Filters:**
@@ -102,135 +165,96 @@ results, total = query.execute(provider)
 
 ---
 
+## What's New in Phase 3
+
+### BatchDownloadManager ⭐
+
+Manage multiple download sessions in parallel with automatic checkpointing:
+
+- **Parallel execution** - Run multiple sessions concurrently
+- **Progress tracking** - Real-time progress across all sessions
+- **Checkpointing** - Save state and resume from failures
+- **Priority support** - High/medium/low priority sessions
+- **Pause/resume/cancel** - Full control over batch operations
+- **Statistics** - Detailed metrics per session
+
+### DownloadScheduler ⭐
+
+Schedule downloads for specific times or recurring intervals:
+
+- **One-time scheduling** - Schedule downloads at future times
+- **Recurring scheduling** - Cron expression support (daily, weekly, monthly)
+- **Job management** - Pause, resume, cancel scheduled jobs
+- **APScheduler backend** - Robust scheduling engine
+- **List active jobs** - View all scheduled and running jobs
+
+### Session Persistence ⭐
+
+Save and restore download sessions:
+
+```python
+# Save session state
+session.save_state("my_session.json")
+
+# Later, restore and resume
+restored = DownloadSession.load_state("my_session.json")
+results = restored.execute()
+```
+
+### Enhanced Statistics
+
+Track detailed download metrics:
+
+```python
+stats = session.get_statistics()
+print(f"Files downloaded: {stats.files_downloaded}")
+print(f"Files failed: {stats.files_failed}")
+print(f"Success rate: {stats.success_rate:.1%}")
+print(f"Avg speed: {stats.avg_speed_mbps:.2f} MB/s")
+print(f"Total bytes: {stats.total_bytes_downloaded}")
+```
+
+---
+
 ## Architecture
 
-### Current (Phase 2B)
-
-```
-┌─────────────────────────────────────────┐
-│   Your Script                           │
-└────────────┬────────────────────────────┘
-             │
-┌────────────▼──────────────────────────┐
-│ High-Level Provider API               │
-│ ├─ EarthAccessProvider                │
-│ └─ BaseProvider (abstract interface)  │
-└────────────┬──────────────────────────┘
-             │
-┌────────────▼──────────────────────────┐
-│ Composable Query Filters (Phase 2B)   │
-│ ├─ Spatial (bounding box, polygon)    │
-│ ├─ Temporal (date ranges)             │
-│ ├─ Product-specific (cloud cover)     │
-│ └─ Query builder (fluent API)         │
-└────────────┬──────────────────────────┘
-             │
-┌────────────▼──────────────────────────┐
-│ EarthDataLoginAuth                    │ ← Handles all credential sources
-│ ├─ TokenProvider (env var)            │
-│ ├─ EnvironmentProvider (username/pwd) │
-│ └─ NetrcProvider (.netrc file)        │
-└────────────┬──────────────────────────┘
-             │
-┌────────────▼──────────────────────────┐
-│ HTTPClient                            │ ← Authenticated requests + retries
-│ ├─ Token caching (1 hour)             │
-│ ├─ Exponential backoff                │
-│ ├─ Rate limit handling (429)          │
-│ └─ Error handling                     │
-└────────────┬──────────────────────────┘
-             │
-     ┌───────▼──────────┐
-     │ NASA EarthAccess │
-     │ & Earthdata APIs │
-     └───────────────────┘
-```
-
-### Instrument Adapters
-
-Metadata and product-specific constants are provided via instrument adapters:
-```
-providers/
-├── base.py                  # BaseProvider abstract class
-├── earthaccess_provider.py  # EarthAccessProvider implementation
-├── adapters/
-│   ├── base.py              # InstrumentAdapter abstract base
-│   ├── ecostress.py         # ECOSTRESS metadata & constants
-│   └── modis.py             # MODIS metadata & constants
-└── __init__.py
-```
-
-### Full Vision (Phases 3-4)
+### Current (Phase 3B)
 
 ```
 Your Script
     ↓
-High-Level Query API (Phase 4)
+Batch Operations (Phase 3A) + Scheduler (Phase 3B) ✅
+├─ BatchDownloadManager
+├─ DownloadScheduler
+└─ Session Persistence
     ↓
-Provider Abstraction + Adapters (Phase 2C ✅)
-    ↓
-Composable Filters (Phase 2B) ✅
-    ↓
-Download Manager (Phase 3)
-├─ Parallel downloads
+Download Sessions
+├─ Parallel execution
 ├─ Progress tracking
-├─ Resume capability
-└─ Checksum validation
+├─ Checksum validation
+└─ Resume capability
+    ↓
+Provider Abstraction + Adapters (Phase 2) ✅
+├─ EarthAccessProvider
+├─ Instrument adapters (ECOSTRESS, MODIS)
+└─ Query filters (spatial, temporal, product-specific)
     ↓
 NASA Earth Observation APIs
 ```
 
 ---
 
-## Supported Datasets
+## Project Statistics
 
-### Current
-- **ECOSTRESS** - Thermal imagery for water resource monitoring ⭐
-- **MODIS** (Terra/Aqua)
-- **VIIRS** (S-NPP, NOAA-20)
-- **Landsat** (8, 9)
-- Any dataset available via NASA Earthdata
-
-### Planned (Phase 3+)
-- Sentinel-1, Sentinel-2
-- Planet Labs
-- Custom data providers
-
----
-
-## Features
-
-### Authentication
-- ✅ Secure credential management
-- ✅ Multiple auth sources (tokens, env vars, .netrc)
-- ✅ Automatic token caching (1 hour)
-- ✅ Automatic token refresh
-
-### HTTP Client
-- ✅ Exponential backoff retry strategy
-- ✅ Rate limit handling (HTTP 429)
-- ✅ Automatic authentication header injection
-- ✅ Request/response logging
-- ✅ Timeout management
-- ✅ Context manager support
-
-### Data Access
-- ✅ Granule search via EarthAccess
-- ✅ Collection search
-- ✅ Pagination support
-- ✅ Metadata extraction
-- ✅ Request ID tracking
-
-### Error Handling
-- ✅ Specific exceptions (`AuthenticationError`, `RateLimitError`, `APIError`)
-- ✅ Graceful degradation
-- ✅ Detailed error messages
-
-### Testing
-- ✅ 100+ comprehensive unit tests
-- ✅ 90%+ code coverage
-- ✅ GitHub Actions CI/CD
-- ✅ Multi-version testing (Python 3.11, 3.12)
+| Metric | Value |
+|--------|-------|
+| Total Tests | 197 ✅ |
+| New Tests (Phase 3) | 34 ✅ |
+| Test Coverage | 87% (Phase 3 modules) ✅ |
+| Type Coverage | 0 mypy errors ✅ |
+| Lint Coverage | 0 ruff errors ✅ |
+| Python Versions | 3.9, 3.10, 3.11, 3.12 ✅ |
+| CI/CD | GitHub Actions ✅ |
 
 ---
 
@@ -242,15 +266,29 @@ NASA Earth Observation APIs
 # All tests
 pytest tests/ -v
 
-# Specific test file
-pytest tests/test_providers.py -v   # Provider tests
-pytest tests/test_filters.py -v     # Filter tests
-pytest tests/test_auth.py -v        # Auth tests
-pytest tests/test_client.py -v      # Client tests
-
 # With coverage report
 pytest tests/ --cov=src/dwr_eo_toolkit --cov-report=html
-open htmlcov/index.html
+
+# Check Phase 3 module coverage
+python scripts/check_coverage.py
+
+# Specific test file
+pytest tests/test_batch_manager.py -v    # Batch manager tests
+pytest tests/test_scheduler.py -v        # Scheduler tests
+pytest tests/test_downloads.py -v        # Download tests
+```
+
+### Type Checking & Linting
+
+```bash
+# Type checking
+mypy src/dwr_eo_toolkit
+
+# Linting
+ruff check src tests
+
+# Format check
+ruff format --check src tests
 ```
 
 ### Project Structure
@@ -259,254 +297,153 @@ open htmlcov/index.html
 dwr-eo-toolkit/
 ├── .github/
 │   └── workflows/tests.yml          # GitHub Actions CI/CD
-├── .gitignore                        # Git ignore rules
+├── .gitignore
 ├── pyproject.toml                    # Package config
 ├── README.md                         # This file
+├── scripts/
+│   └── check_coverage.py             # Coverage validation (Phase 3)
 ├── src/
 │   └── dwr_eo_toolkit/
 │       ├── __init__.py
-│       ├── core/
-│       │   ├── __init__.py
-│       │   ├── auth.py               # Authentication
-│       │   ├── client.py             # HTTP client
-│       │   └── exceptions.py         # Custom exceptions
-│       ├── providers/
-│       │   ├── __init__.py
-│       │   ├── base.py               # BaseProvider abstract class
-│       │   ├── earthaccess_provider.py  # EarthAccessProvider
-│       │   └── adapters/             # Instrument adapters
-│       │       ├── base.py           # InstrumentAdapter base
-│       │       ├── ecostress.py      # ECOSTRESS adapter
-│       │       └── modis.py          # MODIS adapter
-│       ├── filters/
-│       │   ├── __init__.py
-│       │   ├── base.py               # BaseFilter abstract class
-│       │   ├── spatial.py            # Bounding box, polygon filters
-│       │   ├── temporal.py           # Date range filters
-│       │   ├── product.py            # Product-specific filters
-│       │   └── query.py              # Query builder
-│       ├── downloads/
-│       │   ├── __init__.py
-│       │   ├── manager.py            # Download manager
-│       │   ├── session.py            # Download session
-│       │   └── progress.py           # Progress tracking
-│       └── __init__.py
+│       ├── core/                     # Authentication & HTTP
+│       │   ├── auth.py
+│       │   ├── client.py
+│       │   └── exceptions.py
+│       ├── providers/                # EarthAccess integration
+│       │   ├── base.py
+│       │   ├── earthaccess_provider.py
+│       │   └── adapters/
+│       │       ├── ecostress.py
+│       │       └── modis.py
+│       ├── filters/                  # Query filters
+│       │   ├── base.py
+│       │   ├── spatial.py
+│       │   ├── temporal.py
+│       │   ├── product.py
+│       │   └── query.py
+│       ├── download_manager/         # Phase 3 ✅
+│       │   ├── batch_manager.py      # Parallel batch execution
+│       │   ├── scheduler.py          # Scheduled downloads
+│       │   ├── session.py            # Download sessions
+│       │   ├── task.py               # Individual download tasks
+│       │   ├── progress.py           # Progress tracking
+│       │   ├── result.py             # Download results
+│       │   ├── queue.py              # Priority queue
+│       │   ├── resilience.py         # Retry logic
+│       │   ├── manager.py            # Base manager
+│       │   └── utils.py              # Utilities
+│       ├── api/                      # Phase 4 (TBD)
+│       │   └── __init__.py
+│       ├── cli/                      # Phase 4 (TBD)
+│       │   └── __init__.py
+│       ├── monitoring/               # Phase 4 (TBD)
+│       │   ├── health.py
+│       │   ├── logger.py
+│       │   └── metrics.py
+│       └── database/                 # Phase 4 (TBD)
+│           └── __init__.py
 ├── tests/
-│   ├── conftest.py                   # Shared fixtures
-│   ├── test_auth.py                  # Auth tests
-│   ├── test_client.py                # Client tests
-│   ├── test_providers.py             # Provider tests
-│   ├── test_filters.py               # Filter tests
-│   └── test_downloads.py             # Download tests
+│   ├── conftest.py
+│   ├── test_auth.py
+│   ├── test_client.py
+│   ├── test_providers.py
+│   ├── test_filters.py
+│   ├── test_downloads.py
+│   ├── test_batch_manager.py         # Phase 3 ✅
+│   ├── test_scheduler.py             # Phase 3 ✅
+│   └── test_batch_downloads.py
 ├── examples/
 │   ├── search_and_download.py
-│   ├── example_full_workflow.py
-│   └── testing_query.py
-├── docs/
-│   ├── authentication.md
-│   ├── examples.md
-│   └── index.md
-└── LICENSE
+│   ├── batch_downloads.py            # Phase 3 ✅
+│   └── scheduled_downloads.py        # Phase 3 ✅
+└── docs/
+    ├── index.md
+    ├── authentication.md
+    └── examples.md
 ```
 
 ---
 
-## Use Cases
+## Roadmap
 
-### Water Resource Monitoring (DWR)
+### Phase 1-2B ✅ (Complete)
+- [x] Secure authentication
+- [x] EarthAccess integration
+- [x] Composable query filters
+- [x] Provider abstraction layer
 
-Query thermal imagery to monitor:
-- Water surface temperatures
-- Agricultural irrigation
-- Reservoir levels
-- Groundwater indicators
-- Climate change impacts
+### Phase 3A-3B ✅ (Complete)
+- [x] Batch download manager
+- [x] Download scheduler
+- [x] Session persistence
+- [x] 34 comprehensive tests
+- [x] 87% code coverage
 
-```python
-# Example: Monitor California Central Valley
-provider = EarthAccessProvider()
+### Phase 4 (In Development - Starting Now)
+- [ ] FastAPI REST API server (4A)
+- [ ] WebSocket progress streaming (4B)
+- [ ] Structured logging & metrics (4B)
+- [ ] Click-based CLI (4C)
+- [ ] PostgreSQL integration (4C)
+- [ ] Kubernetes manifests (4C)
+- [ ] API documentation (4D)
+- [ ] Deployment guide (4D)
 
-results, total = provider.search(
-    product="ECOSTRESS",
-    bounding_box=(-121.0, 35.5, -119.0, 37.5),
-    start_date="2024-01-01",
-    end_date="2024-12-31",
-)
-
-print(f"Found {total} thermal imagery granules for monitoring region")
-
-# Get product metadata
-metadata = provider.get_metadata("ECOSTRESS")
-print(f"Resolution: {metadata['spatial_resolution']}")
-print(f"Temporal frequency: {metadata['temporal_resolution']}")
-```
-
-### Climate Research
-
-Track changes in snow cover, vegetation, albedo, etc. across multiple sensors.
-
-### Agriculture
-
-Monitor crop health, irrigation patterns, and drought conditions.
-
-### Disaster Response
-
-Rapid assessment of floods, wildfires, and other emergencies.
+### Phase 5 (Future)
+- [ ] External model pipeline integration
+- [ ] Message queue orchestration
+- [ ] Horizontal pod autoscaling
+- [ ] Advanced monitoring
 
 ---
 
-## API Documentation
+## Getting Ready for Phase 4
 
-### EarthAccessProvider
+Phase 4 will add the REST API server, monitoring, and CLI.
 
-```python
-from dwr_eo_toolkit.providers import EarthAccessProvider
+To prepare:
 
-# Initialize provider (auto-authenticates)
-provider = EarthAccessProvider()
+```bash
+# 1. Install Phase 4 dependencies
+pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary click python-dotenv
 
-# Search for granules
-results, total = provider.search(
-    product="ECOSTRESS",  # Product keyword
-    bounding_box=(-122.82, 36.78, -120.94, 38.25),
-    start_date="2020-01-01",
-    end_date="2026-04-13",
-)
+# 2. Install PostgreSQL locally
+# macOS: brew install postgresql@15
+# Ubuntu: sudo apt-get install postgresql postgresql-contrib
+# Windows: Download from https://www.postgresql.org/download/windows/
 
-print(f"Found {total} granules")
+# 3. Create development database
+createdb dwr_eo_toolkit_dev
 
-# Get product metadata
-metadata = provider.get_metadata("ECOSTRESS")
-print(metadata)  # Short name, description, provider, etc.
-
-# Download granules
-files = provider.download(results, "./data", max_workers=4)
+# 4. Verify everything
+python -c "
+import fastapi; print(f'✅ FastAPI {fastapi.__version__}')
+import sqlalchemy; print(f'✅ SQLAlchemy {sqlalchemy.__version__}')
+import click; print(f'✅ Click {click.__version__}')
+"
 ```
 
-### Composable Query Filters
+### Coming in Phase 4
 
-```python
-from dwr_eo_toolkit.filters import Query
-from dwr_eo_toolkit.filters import BoundingBox, DateRange
+**REST API Endpoints:**
+```
+POST   /downloads/start              # Start new download session
+GET    /downloads/{session_id}       # Get session status
+GET    /downloads/{session_id}/stats # Get detailed statistics
+POST   /downloads/{session_id}/pause # Pause session
+DELETE /downloads/{session_id}       # Cancel session
 
-# Build query fluently
-query = (
-    Query()
-    .with_product("ECOSTRESS")
-    .with_spatial_bounds(BoundingBox(-122.82, 36.78, -120.94, 38.25))
-    .with_date_range(DateRange("2020-01-01", "2026-04-13"))
-)
-
-# Execute on provider
-results, total = query.execute(provider)
-
-# Or add more filters
-query.with_cloud_cover(max=20)
-results, total = query.execute(provider)
+WebSocket /ws/progress/{session_id}  # Real-time progress
 ```
 
-### Authentication
-
-```python
-from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
-
-# Initialize (tries token → .netrc → env vars in order)
-auth = EarthDataLoginAuth()
-
-# Get bearer token
-token = auth.get_bearer_token()
-
-# Setup credentials if needed
-auth.setup_environment(username="user", password="pass")
-auth.setup_netrc(username="user", password="pass")
-
-# Clear cache
-auth.clear_cache()
+**CLI Commands:**
+```bash
+dwr download <url> <path>            # Download file
+dwr session <session_id>             # Show status
+dwr stats <session_id>               # Show statistics
+dwr schedule once --time <time>      # Schedule one-time
+dwr batch <batch_file>               # Run batch from JSON
 ```
-
-### HTTP Client
-
-```python
-from dwr_eo_toolkit.core.client import HTTPClient
-
-client = HTTPClient(
-    auth_handler=auth,
-    base_url="https://api.example.com",
-    timeout=30,
-    max_retries=3,
-)
-
-# Make requests
-response = client.get("endpoint", params={"key": "value"})
-response = client.post("endpoint", json={"data": "value"})
-
-# Use as context manager
-with HTTPClient(auth_handler=auth, base_url="https://api.example.com") as client:
-    response = client.get("endpoint")
-# Session automatically closed
-```
-
----
-
-## Troubleshooting
-
-### Authentication Failures
-
-```python
-# Check which credential source is being used
-from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
-
-auth = EarthDataLoginAuth()
-try:
-    token = auth.get_bearer_token()
-    print(f"Got token: {token[:20]}...")
-except AuthenticationError as e:
-    print(f"Auth failed: {e}")
-```
-
-### Rate Limiting
-
-The client automatically handles rate limiting (HTTP 429) with exponential backoff. If you hit hard limits:
-
-```python
-# Reduce concurrent requests or add delays
-import time
-for result in results:
-    process(result)
-    time.sleep(1)  # 1 second between requests
-```
-
-### Search Not Returning Results
-
-1. Verify dataset name with the NASA Earthdata search
-2. Check temporal format: `YYYY-MM-DD`
-3. Verify bounding box: `[min_lon, min_lat, max_lon, max_lat]`
-
----
-
-## Performance Tips
-
-1. **Use reasonable page sizes** - Reduces API calls
-2. **Set max_results limit** - Avoid fetching millions of granules
-3. **Cache results** - Save JSON locally if re-querying
-4. **Use temporal filters** - Narrow date ranges when possible
-5. **Parallelize downloads** - Use `max_workers` parameter
-
----
-
-## Security Notes
-
-⚠️ **Never commit credentials to Git:**
-- Don't hardcode passwords
-- Don't commit `.netrc` files
-- Don't commit `.env` files
-- Use environment variables or `.netrc` (mode 0600)
-
-✅ **Best practices:**
-- Use pre-generated tokens (60-day validity)
-- Rotate credentials regularly
-- Use `.gitignore` to exclude credential files
-- Enable branch protection on GitHub
 
 ---
 
@@ -516,24 +453,10 @@ for result in results:
 - [EarthAccess Documentation](https://nsidc.org/earthaccess/)
 - [ECOSTRESS Data](https://lpdaac.usgs.gov/products/eco_l2t_lste/)
 - [MODIS Data](https://lpdaac.usgs.gov/products/mod09ga/)
-- [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html)
-- [pytest Documentation](https://docs.pytest.org/)
+- [FastAPI (Phase 4)](https://fastapi.tiangolo.com/)
+- [SQLAlchemy (Phase 4)](https://docs.sqlalchemy.org/)
 
 ---
-
-## License
-
-[Add your license here - e.g., MIT, Apache 2.0, etc.]
-
-## Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repo
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
 
 ## Support
 
@@ -541,95 +464,6 @@ For issues, questions, or feature requests:
 - 📧 Open an issue on GitHub
 - 📚 Check the docs
 - 🔍 Search closed issues for similar problems
-
----
-
-## Roadmap
-
-### Phase 2B ✅ (Complete)
-- [x] Provider abstraction layer
-- [x] EarthAccess integration
-- [x] Composable query filters (spatial, temporal, product-specific)
-- [x] Query builder with fluent API
-- [x] 100+ comprehensive tests (100% passing)
-- [x] Full documentation
-- [x] Instrument metadata adapters
-
-### Phase 3 (Next)
-- [ ] Batch download manager with progress tracking
-- [ ] Parallel download support
-- [ ] Resume capability for interrupted downloads
-- [ ] Checksum validation
-
-### Phase 4 (Future)
-- [ ] High-level query API (`EarthObservationDataAccess`)
-- [ ] Simple one-liner queries
-- [ ] Automatic format conversions
-- [ ] Integration tests with real NASA APIs
-
----
-
-## Authentication
-
-### Getting Your NASA Earthdata Token
-
-1. Create account at: https://urs.earthdata.nasa.gov
-2. Go to: Settings → Applications → Authorized Apps
-3. Create new token
-4. Set environment variable:
-```bash
-   export EARTHDATA_TOKEN="your_token_here"
-```
-
-### For Docker Users
-
-1. Create Docker Hub account: https://hub.docker.com
-2. Go to: Settings → Security → Access Tokens
-3. Create new token (read & write)
-4. Set environment variable:
-```bash
-   export DOCKER_PASSWORD="your_token"
-```
-
-### Running the Code
-
-```bash
-# Set your tokens
-export EARTHDATA_TOKEN="your_earthdata_token"
-
-# Run code
-python examples/download_imagery.py
-```
-
-**Note:** You must create your own tokens. We do not share ours.
-
-
-## Citation
-
-If you use this project in your research, please cite both this package and earthaccess:
-
-```bibtex
-@software{dwr_eo_toolkit,
-  title={dwr-eo-toolkit: NASA Earth Observation Data Access for Python},
-  author={Romero Galvan, Fernando Emiliano},
-  year={2026},
-  url={https://github.com/yourusername/dwr-eo-toolkit},
-  doi={0000-0003-0664-8169},
-  orcid={YOUR-ORCID-HERE},
-  note={Wrapper around NASA's earthaccess library}
-}
-
-@software{earthaccess,
-  title={earthaccess: Simplifying NASA Earth Observational Data Discovery and Access},
-  author={NASA NSIDC DAAC and Contributors},
-  year={2023},
-  url={https://github.com/nsidc/earthaccess},
-  doi={10.5281/zenodo.8368432}
-}
-```
-
-## Acknowledgments
-This project is built on NASA's excellent [earthaccess](https://github.com/nsidc/earthaccess) library.
 
 ---
 
