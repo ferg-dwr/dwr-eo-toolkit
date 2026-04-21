@@ -9,17 +9,21 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip with mirror (bypasses certificate issues)
+RUN pip install --upgrade pip setuptools wheel \
+    -i https://mirrors.aliyun.com/pypi/simple/
+
 # Copy project files
 COPY . .
 
-# Install Python dependencies (with dev tools for testing)
-RUN pip install --no-cache-dir -e ".[dev]"
+# Install Python dependencies with mirror
+RUN pip install --no-cache-dir -e ".[dev]" \
+    -i https://mirrors.aliyun.com/pypi/simple/
 
-# Create non-root user for security (optional, can comment out for CI)
+# Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Default command - run tests
-# Phase 3: Runs test suite
-# Phase 4: Will run API server (CMD ["uvicorn", "dwr_eo_toolkit.api:app", "--host", "0.0.0.0"])
-CMD ["pytest", "tests/", "-v", "--tb=short"]
+# Phase 3: Run tests
+# Phase 4: Change to API
+CMD ["uvicorn", "dwr_eo_toolkit.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
