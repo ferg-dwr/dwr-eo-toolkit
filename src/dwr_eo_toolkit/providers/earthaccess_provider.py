@@ -162,7 +162,6 @@ class EarthAccessProvider(BaseProvider):
                 granules,
                 local_path=str(output_dir),  # Use 'local_path' parameter name!
                 threads=kwargs.get("max_workers", 4),
-                show_progress=kwargs.get("show_progress", True),
             )
 
             logger.info(f"✅ Downloaded {len(files)} files")

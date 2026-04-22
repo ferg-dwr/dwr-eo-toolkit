@@ -69,8 +69,7 @@ jobs:
         echo "No warnings or deprecations found"
 
     - name: Verify mypy type safety
-      run: |
-        mypy src/dwr_eo_toolkit --no-error-summary 2>&1 | grep -v "note:" | grep -i error && exit 1 || echo "✅ Type checking passed"
+      run: mypy src/dwr_eo_toolkit
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
