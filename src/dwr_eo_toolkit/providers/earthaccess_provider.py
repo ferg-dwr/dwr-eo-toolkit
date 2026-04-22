@@ -76,7 +76,7 @@ class EarthAccessProvider(BaseProvider):
     def search(
         self,
         product: str,
-        bounding_box: Optional[Tuple[float, float, float, float]] = None,
+        bounding_box: Optional[Tuple[float, ...]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         **kwargs: Any,
@@ -133,12 +133,8 @@ class EarthAccessProvider(BaseProvider):
 
             logger.info(f"Found {len(granules)} granules for {product}")
 
-            # Post-process with adapter if available
-            if adapter and granules:
-                results = [{"umm": g.get("umm", {})} for g in granules]
-                results = adapter.post_process_granules(results)
-                return results, len(results)
-
+            # Return raw granules (DataGranule objects) for download() to work
+            # Don't transform to dicts - that breaks earthaccess.download()
             return granules, len(granules)
 
         except Exception as e:
@@ -150,9 +146,9 @@ class EarthAccessProvider(BaseProvider):
         Download granules.
 
         Args:
-            granules: List of granules from search()
+            granules: List of granules from search() (must be DataGranule objects)
             output_dir: Directory to save files
-            **kwargs: Additional parameters
+            **kwargs: Additional parameters (max_workers, show_progress, etc.)
 
         Returns:
             List of downloaded file paths
@@ -160,7 +156,14 @@ class EarthAccessProvider(BaseProvider):
         logger.info(f"Downloading {len(granules)} granules to {output_dir}...")
 
         try:
-            files = earthaccess.download(granules, output_dir, threads=kwargs.get("max_workers", 4))
+            # earthaccess.download signature:
+            # download(granules, local_path=None, provider=None, threads=8, ...)
+            files = earthaccess.download(
+                granules,
+                local_path=str(output_dir),  # Use 'local_path' parameter name!
+                threads=kwargs.get("max_workers", 4),
+                show_progress=kwargs.get("show_progress", True),
+            )
 
             logger.info(f"✅ Downloaded {len(files)} files")
             return [str(f) for f in files]
