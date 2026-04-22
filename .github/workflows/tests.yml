@@ -63,10 +63,10 @@ jobs:
       run: |
         pytest tests/ --tb=no 2>&1 | tee test_output.log
         if grep -i "DeprecationWarning\|ResourceWarning" test_output.log; then
-          echo "❌ Tests generated warnings"
+          echo "Tests generated warnings"
           exit 1
         fi
-        echo "✅ No warnings or deprecations found"
+        echo "No warnings or deprecations found"
 
     - name: Verify mypy type safety
       run: |
@@ -110,5 +110,5 @@ jobs:
             DownloadScheduler,
             DownloadSession
           )
-          print('✅ Core imports successful')
+          print('Core imports successful')
         "
