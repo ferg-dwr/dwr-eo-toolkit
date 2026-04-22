@@ -5,15 +5,16 @@ This is the main FastAPI application for the DWR EO Toolkit.
 Provides REST endpoints for downloads, batch operations, and scheduled jobs.
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 # Import routers
-from .routes import downloads_router, batches_router, jobs_router
+from .routes import batches_router, downloads_router, jobs_router
 from .websocket import ws_router
 
 # Configure logging
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Application Startup/Shutdown
 # ============================================================================
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -33,9 +35,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting DWR EO Toolkit API")
     logger.info(f"Environment: {os.getenv('LOG_LEVEL', 'INFO')}")
     logger.info(f"Database: {os.getenv('POSTGRES_DB', 'dwr_eo_toolkit_dev')}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down DWR EO Toolkit API")
 
@@ -73,6 +75,7 @@ app.include_router(ws_router)
 # Health & Status Endpoints
 # ============================================================================
 
+
 @app.get("/health")
 async def health_check():
     """
@@ -82,7 +85,7 @@ async def health_check():
         "status": "healthy",
         "service": "dwr-eo-toolkit",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "database": "connected"
+        "database": "connected",
     }
 
 
@@ -105,7 +108,7 @@ async def status():
         "environment": {
             "log_level": os.getenv("LOG_LEVEL", "INFO"),
             "debug": os.getenv("DEBUG", "False") == "True",
-        }
+        },
     }
 
 
@@ -113,17 +116,18 @@ async def status():
 # API v1 Routes (Placeholder)
 # ============================================================================
 
+
 @app.get("/api/v1/downloads")
 async def list_downloads():
     """
     List all downloads for the authenticated user.
-    
+
     **Phase 4 TODO:** Implement with database queries
     """
     return {
         "downloads": [],
         "count": 0,
-        "message": "Downloads endpoint - Phase 4 implementation in progress"
+        "message": "Downloads endpoint - Phase 4 implementation in progress",
     }
 
 
@@ -131,13 +135,13 @@ async def list_downloads():
 async def create_download():
     """
     Create a new download session.
-    
+
     **Phase 4 TODO:** Implement with request validation and database storage
     """
     return {
         "id": "placeholder-id",
         "status": "created",
-        "message": "Download creation - Phase 4 implementation in progress"
+        "message": "Download creation - Phase 4 implementation in progress",
     }
 
 
@@ -145,13 +149,13 @@ async def create_download():
 async def get_download(download_id: str):
     """
     Get details of a specific download.
-    
+
     **Phase 4 TODO:** Implement with database queries
     """
     return {
         "id": download_id,
         "status": "placeholder",
-        "message": "Download details - Phase 4 implementation in progress"
+        "message": "Download details - Phase 4 implementation in progress",
     }
 
 
@@ -159,13 +163,13 @@ async def get_download(download_id: str):
 async def list_batches():
     """
     List all batch operations for the authenticated user.
-    
+
     **Phase 4 TODO:** Implement with database queries
     """
     return {
         "batches": [],
         "count": 0,
-        "message": "Batches endpoint - Phase 4 implementation in progress"
+        "message": "Batches endpoint - Phase 4 implementation in progress",
     }
 
 
@@ -173,13 +177,13 @@ async def list_batches():
 async def create_batch():
     """
     Create a new batch operation.
-    
+
     **Phase 4 TODO:** Implement with request validation and database storage
     """
     return {
         "id": "placeholder-id",
         "status": "created",
-        "message": "Batch creation - Phase 4 implementation in progress"
+        "message": "Batch creation - Phase 4 implementation in progress",
     }
 
 
@@ -187,33 +191,30 @@ async def create_batch():
 async def list_jobs():
     """
     List all scheduled jobs for the authenticated user.
-    
+
     **Phase 4 TODO:** Implement with database queries
     """
-    return {
-        "jobs": [],
-        "count": 0,
-        "message": "Jobs endpoint - Phase 4 implementation in progress"
-    }
+    return {"jobs": [], "count": 0, "message": "Jobs endpoint - Phase 4 implementation in progress"}
 
 
 @app.post("/api/v1/jobs/schedule")
 async def schedule_job():
     """
     Schedule a new download job.
-    
+
     **Phase 4 TODO:** Implement with request validation and database storage
     """
     return {
         "id": "placeholder-id",
         "scheduled": True,
-        "message": "Job scheduling - Phase 4 implementation in progress"
+        "message": "Job scheduling - Phase 4 implementation in progress",
     }
 
 
 # ============================================================================
 # Root Endpoint
 # ============================================================================
+
 
 @app.get("/")
 async def root():
@@ -233,13 +234,14 @@ async def root():
             "downloads": "/api/v1/downloads",
             "batches": "/api/v1/batches",
             "jobs": "/api/v1/jobs",
-        }
+        },
     }
 
 
 # ============================================================================
 # Error Handlers
 # ============================================================================
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
@@ -257,7 +259,7 @@ async def http_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
