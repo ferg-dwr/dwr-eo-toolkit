@@ -54,7 +54,10 @@ class ECOSTRESSAdapter(InstrumentAdapter):
     START_DATE = "2018-06-20"  # Mission start
     END_DATE = None  # Ongoing
 
-    def __init__(self):
+    # Declare long_name attribute for type checking
+    long_name: str
+
+    def __init__(self) -> None:
         """Initialize ECOSTRESS adapter."""
         super().__init__()
         self.long_name = "ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station"

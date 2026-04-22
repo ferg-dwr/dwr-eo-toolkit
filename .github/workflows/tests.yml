@@ -58,11 +58,59 @@ jobs:
           --cov=src/dwr_eo_toolkit \
           --cov-report=xml \
           --cov-report=term-missing
-    
-    - name: Check coverage threshold (download_manager module - 75%)
+
+    - name: Check coverage thresholds (per-module, target - 4%)
       run: |
-        coverage report --fail-under=75 \
-          --include="src/dwr_eo_toolkit/download_manager/*"
+        python3 << 'PYEOF'
+        import xml.etree.ElementTree as ET
+        import sys
+        
+        # Parse coverage XML
+        tree = ET.parse('coverage.xml')
+        root = tree.getroot()
+        
+        # Define minimum coverage by package (current - 4%)
+        # These thresholds prevent regressions while allowing healthy refactoring
+        thresholds = {
+            'dwr_eo_toolkit': 78,                           # 82.0% - 4%
+            'dwr_eo_toolkit.providers': 92,                 # 96.5% - 4%
+            'dwr_eo_toolkit.download_manager': 85,          # 89.1% - 4%
+            'dwr_eo_toolkit.core': 84,                      # 88.9% - 4%
+            'dwr_eo_toolkit.filters': 77,                   # 81.8% - 4%
+        }
+        
+        # Extract package coverages from XML
+        packages = {}
+        for package in root.findall('.//package'):
+            pkg_name = package.get('name')
+            line_rate = float(package.get('line-rate', 0))
+            coverage_pct = line_rate * 100
+            packages[pkg_name] = coverage_pct
+        
+        # Check thresholds
+        failed = False
+        print("\n" + "="*70)
+        print("COVERAGE THRESHOLD CHECK (Per-Module, Current - 4%)")
+        print("="*70 + "\n")
+        
+        for pkg, threshold in thresholds.items():
+            actual = packages.get(pkg, 0)
+            status = "✅ PASS" if actual >= threshold else "❌ FAIL"
+            print(f"{status} | {pkg:<45} {actual:>6.1f}% (min: {threshold}%)")
+            if actual < threshold:
+                failed = True
+        
+        print("\n" + "="*70)
+        
+        if failed:
+            print("❌ COVERAGE CHECK FAILED - Some modules below minimum threshold")
+            print("   Run: pytest --cov-report=html")
+            print("   Then: open htmlcov/index.html")
+            sys.exit(1)
+        else:
+            print("✅ ALL COVERAGE THRESHOLDS PASSED")
+            sys.exit(0)
+        PYEOF
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -105,6 +153,7 @@ jobs:
           print('✅ Core imports successful')
         "
 
+  # Uncomment when Phase 4 database layer is ready:
   # services:
   #   postgres:
   #     image: postgres:15

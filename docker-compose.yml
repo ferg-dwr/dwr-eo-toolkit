@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   dwr-eo-toolkit:
     build:
@@ -7,60 +5,65 @@ services:
       dockerfile: Dockerfile
     container_name: dwr-eo-toolkit-dev
     
+    # Phase 4: API Server
+    command: uvicorn dwr_eo_toolkit.api:app --host 0.0.0.0 --port 8000 --reload
+    
+    ports:
+      - "8000:8000"
+    
     environment:
-      EARTHDATA_TOKEN: ${EARTHDATA_TOKEN:-your_token_here}
-      LOG_LEVEL: DEBUG
-      PYTHONUNBUFFERED: 1
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
+      EARTHDATA_TOKEN: ${EARTHDATA_TOKEN}
+      SECRET_KEY: ${SECRET_KEY}
+      API_HOST: ${API_HOST}
+      API_PORT: ${API_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      PYTHONUNBUFFERED: ${PYTHONUNBUFFERED}
     
     volumes:
-      - .:/app                   # Mount entire project for live reload
-      - /app/.venv               # Exclude virtual env from host
+      - .:/app
+      - /app/.venv
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
     
     networks:
       - dwr-network
     
-    # Phase 3: Run tests
-    command: pytest tests/ -v --cov=src/dwr_eo_toolkit --tb=short
-    
-    # Phase 4: Change to API
-    # command: uvicorn dwr_eo_toolkit.api:app --host 0.0.0.0 --port 8000 --reload
-    # ports:
-    #   - "8000:8000"
-    
     stdin_open: true
     tty: true
 
-# Phase 3: Comment out PostgreSQL (not needed yet)
-# Phase 4: Uncomment for database support
-#
-#  postgres:
-#    image: postgres:15-alpine
-#    container_name: dwr-eo-toolkit-db
-#    
-#    environment:
-#      POSTGRES_DB: dwr_eo_toolkit
-#      POSTGRES_USER: dwr
-#      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
-#    
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-#    
-#    ports:
-#      - "5432:5432"
-#    
-#    networks:
-#      - dwr-network
-#    
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U dwr"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
+  postgres:
+    image: postgres:15-alpine
+    container_name: dwr-eo-toolkit-db
+    
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    ports:
+      - "5432:5432"
+    
+    networks:
+      - dwr-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-# Only needed if using PostgreSQL (Phase 4+)
-# volumes:
-#   postgres_data:
-#     driver: local
+volumes:
+  postgres_data:
+    driver: local
 
 networks:
   dwr-network:

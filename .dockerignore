@@ -56,7 +56,9 @@ site/
 # Kubernetes
 kubernetes/
 *.yaml
-*.yml
+docker-compose*.yml  # Only docker-compose files
+kubernetes/        # Only kubernetes yamls
+
 
 # Miscellaneous
 Makefile

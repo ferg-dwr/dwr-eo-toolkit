@@ -50,7 +50,10 @@ class MODISAdapter(InstrumentAdapter):
     START_DATE = "2000-02-24"  # Terra launch
     END_DATE = None  # Ongoing
 
-    def __init__(self):
+    # Declare long_name attribute for type checking
+    long_name: str
+
+    def __init__(self) -> None:
         """Initialize MODIS adapter (stub)."""
         super().__init__()
         self.long_name = "Moderate Resolution Imaging Spectroradiometer"
