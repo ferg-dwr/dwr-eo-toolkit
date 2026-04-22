@@ -52,25 +52,33 @@ jobs:
       run: |
         mypy src/dwr_eo_toolkit
     
-    - name: Run tests with pytest
+    - name: Run all tests with pytest
       run: |
         pytest tests/ -v \
           --cov=src/dwr_eo_toolkit \
-          --cov-report=xml \
-          --cov-report=term-missing
-    
-    - name: Check coverage threshold (download_manager module - 75%)
+          --cov-report=term-missing \
+          --cov-fail-under=75
+
+    - name: Check for test warnings and deprecations
       run: |
-        coverage report --fail-under=75 \
-          --include="src/dwr_eo_toolkit/download_manager/*"
-    
+        pytest tests/ --tb=no 2>&1 | tee test_output.log
+        if grep -i "DeprecationWarning\|ResourceWarning" test_output.log; then
+          echo "Tests generated warnings"
+          exit 1
+        fi
+        echo "No warnings or deprecations found"
+
+    - name: Verify mypy type safety
+      run: |
+        mypy src/dwr_eo_toolkit --no-error-summary 2>&1 | grep -v "note:" | grep -i error && exit 1 || echo "✅ Type checking passed"
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false  # Don't fail if Codecov has issues
+        fail_ci_if_error: false
       continue-on-error: true
 
   docker-build:
@@ -102,19 +110,5 @@ jobs:
             DownloadScheduler,
             DownloadSession
           )
-          print('✅ Core imports successful')
+          print('Core imports successful')
         "
-
-  # services:
-  #   postgres:
-  #     image: postgres:15
-  #     env:
-  #       POSTGRES_PASSWORD: postgres
-  #       POSTGRES_DB: dwr_eo_toolkit_test
-  #     options: >-
-  #       --health-cmd pg_isready
-  #       --health-interval 10s
-  #       --health-timeout 5s
-  #       --health-retries 5
-  #     ports:
-  #       - 5432:5432

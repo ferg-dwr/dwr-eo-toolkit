@@ -307,5 +307,103 @@ class TestEarthDataLoginAuth:
             assert not auth.token_cache_file.exists()
 
 
+class TestAuthCoverageExtra:
+    """Cover auth.py lines 207-209, 223-226, 291-292, 304, 310-311, 328,
+    356-364, 373-374."""
+
+    def test_get_token_uses_pre_generated_token(self, tmp_path):
+        """get_token returns env token when token_provider gives a string (lines 207-209)."""
+        auth = EarthDataLoginAuth()
+        auth._cached_token = None
+        auth._token_expiry = None
+        auth.token_cache_file = tmp_path / "cache.json"
+
+        with patch.object(auth.token_provider, "get_credentials", return_value="pre_generated_tok"):
+            token = auth.get_token()
+
+        assert token == "pre_generated_tok"
+
+    def test_get_token_requests_and_caches_new_token(self, tmp_path):
+        """get_token calls _request_token and caches result (lines 223-226)."""
+        auth = EarthDataLoginAuth()
+        auth._cached_token = None
+        auth._token_expiry = None
+        auth.token_cache_file = tmp_path / "cache.json"
+
+        with patch.object(auth.token_provider, "get_credentials", return_value=None):
+            with patch.object(auth, "_request_token", return_value="new_token"):
+                with patch.object(auth, "_save_cached_token") as mock_save:
+                    token = auth.get_token()
+
+        assert token == "new_token"
+        mock_save.assert_called_once_with("new_token")
+
+    def test_get_credentials_falls_back_to_env_provider(self):
+        """_get_credentials falls back to env when netrc returns None (lines 291-292)."""
+        auth = EarthDataLoginAuth()
+
+        with patch.object(auth.netrc_provider, "get_credentials", return_value=None):
+            with patch.object(
+                auth.env_provider, "get_credentials", return_value=("envuser", "envpass")
+            ):
+                creds = auth._get_credentials()
+
+        assert creds == ("envuser", "envpass")
+
+    def test_load_cached_token_returns_none_when_file_missing(self, tmp_path):
+        """_load_cached_token returns None when cache file doesn't exist (line 304)."""
+        auth = EarthDataLoginAuth()
+        auth.token_cache_file = tmp_path / "no_cache.json"
+        result = auth._load_cached_token()
+        assert result is None
+
+    def test_load_cached_token_handles_corrupt_file(self, tmp_path):
+        """_load_cached_token returns None on malformed JSON (lines 310-311)."""
+        auth = EarthDataLoginAuth()
+        cache = tmp_path / "bad_cache.json"
+        cache.write_text("{{invalid")
+        auth.token_cache_file = cache
+        result = auth._load_cached_token()
+        assert result is None
+
+    def test_setup_netrc_writes_credentials(self, tmp_path):
+        """setup_netrc creates/updates .netrc file (line 328 area)."""
+        auth = EarthDataLoginAuth()
+        netrc_path = tmp_path / ".netrc"
+
+        with patch("dwr_eo_toolkit.core.auth.Path.home", return_value=tmp_path):
+            auth.setup_netrc("myuser", "mypass")
+
+        assert netrc_path.exists()
+        content = netrc_path.read_text()
+        assert "myuser" in content
+        assert "mypass" in content
+
+    def test_setup_environment_prints_commands_with_token(self, capsys):
+        """setup_environment prints export commands including token (lines 356-364)."""
+        auth = EarthDataLoginAuth()
+        auth.setup_environment("user1", "pass1", token="mytoken")
+        out = capsys.readouterr().out
+        assert "EARTHDATA_USERNAME=user1" in out
+        assert "EARTHDATA_TOKEN=mytoken" in out
+
+    def test_setup_environment_prints_commands_without_token(self, capsys):
+        """setup_environment prints commands without token when not supplied."""
+        auth = EarthDataLoginAuth()
+        auth.setup_environment("user1", "pass1")
+        out = capsys.readouterr().out
+        assert "EARTHDATA_USERNAME=user1" in out
+        assert "EARTHDATA_TOKEN" not in out
+
+    def test_clear_cache_handles_unlink_error(self, tmp_path):
+        """clear_cache swallows errors when deleting cache file (lines 373-374)."""
+        auth = EarthDataLoginAuth()
+        auth.token_cache_file = tmp_path / "cache.json"
+        auth.token_cache_file.write_text('{"token":"t","timestamp":"2024-01-01T00:00:00+00:00"}')
+
+        with patch.object(Path, "unlink", side_effect=OSError("locked")):
+            auth.clear_cache()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

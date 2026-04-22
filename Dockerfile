@@ -9,17 +9,61 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
+# Upgrade pip setuptools wheel
+RUN pip install --upgrade pip setuptools wheel \
+    -i https://mirrors.aliyun.com/pypi/simple/
+
+# Copy project files EARLY so we can install dependencies
 COPY . .
 
-# Install Python dependencies (with dev tools for testing)
-RUN pip install --no-cache-dir -e ".[dev]"
+# Install Python dependencies (DO THIS AS ROOT before switching users!)
+# Install main dependencies from pyproject.toml
+RUN pip install --no-cache-dir -e . \
+    -i https://mirrors.aliyun.com/pypi/simple/
 
-# Create non-root user for security (optional, can comment out for CI)
+# Install dev dependencies (needed for any development tools)
+RUN pip install --no-cache-dir -e ".[dev]" \
+    -i https://mirrors.aliyun.com/pypi/simple/
+
+# Verify uvicorn is installed
+RUN which uvicorn && uvicorn --version
+
+# Create non-root user for security (AFTER pip install!)
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Default command - run tests
-# Phase 3: Runs test suite
-# Phase 4: Will run API server (CMD ["uvicorn", "dwr_eo_toolkit.api:app", "--host", "0.0.0.0"])
-CMD ["pytest", "tests/", "-v", "--tb=short"]
+# Phase 4: Run API
+CMD ["uvicorn", "dwr_eo_toolkit.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -512,3 +512,204 @@ class TestFilterComposition:
         assert any(isinstance(f, DateRange) for f in query.filters)
         assert any(isinstance(f, CloudCover) for f in query.filters)
         assert any(isinstance(f, ProcessingLevel) for f in query.filters)
+
+
+class TestStubFiltersCoverage:
+    """Cover stub filter classes: Polygon, PointBuffer, Season, YearMonthRange,
+    Orbit, Instrument — and Filter.__repr__ via uninherited subclass."""
+
+    def test_filter_repr_via_subclass(self):
+        """Filter.__repr__ returns class name + to_params (base.py line 59)."""
+
+        class SimpleFilter(Filter):
+            def validate(self) -> bool:
+                return True
+
+            def to_params(self):
+                return {"key": "value"}
+
+        f = SimpleFilter()
+        r = repr(f)
+        assert "SimpleFilter" in r
+        assert "key" in r
+
+    def test_polygon_instantiation_and_validate(self):
+        """Polygon can be created and validate() returns True (spatial.py 148, 153)."""
+        from dwr_eo_toolkit.filters.spatial import Polygon
+
+        p = Polygon([(0, 0), (1, 0), (1, 1)])
+        assert p.validate() is True
+
+    def test_polygon_to_params_raises_not_implemented(self):
+        """Polygon.to_params raises NotImplementedError (spatial.py 158)."""
+        from dwr_eo_toolkit.filters.spatial import Polygon
+
+        p = Polygon([(0, 0), (1, 0), (1, 1)])
+        with pytest.raises(NotImplementedError):
+            p.to_params()
+
+    def test_point_buffer_instantiation_and_validate(self):
+        """PointBuffer can be created and validate() returns True (spatial.py 170-172, 177)."""
+        from dwr_eo_toolkit.filters.spatial import PointBuffer
+
+        pb = PointBuffer(lon=-120.0, lat=38.0, radius_km=50.0)
+        assert pb.lon == -120.0
+        assert pb.lat == 38.0
+        assert pb.radius_km == 50.0
+        assert pb.validate() is True
+
+    def test_point_buffer_to_params_raises_not_implemented(self):
+        """PointBuffer.to_params raises NotImplementedError (spatial.py 182)."""
+        from dwr_eo_toolkit.filters.spatial import PointBuffer
+
+        pb = PointBuffer(lon=-120.0, lat=38.0, radius_km=50.0)
+        with pytest.raises(NotImplementedError):
+            pb.to_params()
+
+    def test_season_validate_valid(self):
+        """Season.validate returns True for valid season (temporal.py 161-164)."""
+        from dwr_eo_toolkit.filters.temporal import Season
+
+        s = Season("summer")
+        assert s.validate() is True
+
+    def test_season_validate_invalid_raises(self):
+        """Season.validate raises ValueError for invalid season."""
+        from dwr_eo_toolkit.filters.temporal import Season
+
+        s = Season("monsoon")
+        with pytest.raises(ValueError):
+            s.validate()
+
+    def test_season_to_params_raises_not_implemented(self):
+        """Season.to_params raises NotImplementedError (temporal.py 156-157, 169)."""
+        from dwr_eo_toolkit.filters.temporal import Season
+
+        s = Season("spring")
+        with pytest.raises(NotImplementedError):
+            s.to_params()
+
+    def test_year_month_range_instantiation(self):
+        """YearMonthRange stores all init params (temporal.py 181-184)."""
+        from dwr_eo_toolkit.filters.temporal import YearMonthRange
+
+        ymr = YearMonthRange(2022, 1, 2023, 12)
+        assert ymr.start_year == 2022
+        assert ymr.start_month == 1
+        assert ymr.end_year == 2023
+        assert ymr.end_month == 12
+
+    def test_year_month_range_validate_returns_true(self):
+        """YearMonthRange.validate returns True (temporal.py 189)."""
+        from dwr_eo_toolkit.filters.temporal import YearMonthRange
+
+        ymr = YearMonthRange(2022, 1, 2023, 12)
+        assert ymr.validate() is True
+
+    def test_year_month_range_to_params_raises(self):
+        """YearMonthRange.to_params raises NotImplementedError (temporal.py 194)."""
+        from dwr_eo_toolkit.filters.temporal import YearMonthRange
+
+        ymr = YearMonthRange(2022, 1, 2023, 12)
+        with pytest.raises(NotImplementedError):
+            ymr.to_params()
+
+    def test_cloud_cover_type_error_for_non_int(self):
+        """CloudCover.validate raises TypeError when max_percent is not int (product.py 52)."""
+        from dwr_eo_toolkit.filters.product import CloudCover
+
+        cloud = CloudCover(max_percent=10.5)  # type: ignore[arg-type]
+        with pytest.raises(TypeError, match="must be int"):
+            cloud.validate()
+
+    def test_orbit_instantiation_and_validate(self):
+        """Orbit can be created and validate returns True (product.py 204-206, 211)."""
+        from dwr_eo_toolkit.filters.product import Orbit
+
+        o = Orbit(orbit_number=100, track=5)
+        assert o.orbit_number == 100
+        assert o.validate() is True
+
+    def test_orbit_to_params_raises(self):
+        """Orbit.to_params raises NotImplementedError (product.py 216)."""
+        from dwr_eo_toolkit.filters.product import Orbit
+
+        o = Orbit()
+        with pytest.raises(NotImplementedError):
+            o.to_params()
+
+    def test_instrument_instantiation_and_validate(self):
+        """Instrument can be created and validate returns True (product.py 228, 233)."""
+        from dwr_eo_toolkit.filters.product import Instrument
+
+        i = Instrument("TIR")
+        assert i.instrument_name == "TIR"
+        assert i.validate() is True
+
+    def test_instrument_to_params_raises(self):
+        """Instrument.to_params raises NotImplementedError (product.py 238)."""
+        from dwr_eo_toolkit.filters.product import Instrument
+
+        i = Instrument("TIR")
+        with pytest.raises(NotImplementedError):
+            i.to_params()
+
+    def test_date_range_parse_iso_with_z(self):
+        """DateRange._parse_date handles ISO format with Z suffix (temporal.py 102-104)."""
+        from dwr_eo_toolkit.filters.temporal import DateRange
+
+        dr = DateRange("2023-01-01T00:00:00Z", "2023-12-31T23:59:59Z")
+        assert dr.validate() is True
+
+    def test_date_range_parse_iso_invalid_after_t_raises(self):
+        """DateRange._parse_date hits except ValueError on bad T-format (temporal.py 105-106)."""
+        from dwr_eo_toolkit.filters.temporal import DateRange
+
+        dr = DateRange("2023-01-01Tbadtime", "2023-12-31")
+        with pytest.raises(ValueError):
+            dr.validate()
+
+
+class TestQueryCoverageExtra:
+    """Cover query.py lines 103-106, 123-126, 164-167, 279-281, 313, 328."""
+
+    def test_with_polygon_adds_filter(self):
+        """with_polygon appends a Polygon filter (query.py 103-106)."""
+        from dwr_eo_toolkit.filters.spatial import Polygon
+
+        q = Query().with_polygon([(0, 0), (1, 0), (1, 1)])
+        assert any(isinstance(f, Polygon) for f in q.filters)
+
+    def test_with_point_buffer_adds_filter(self):
+        """with_point_buffer appends a PointBuffer filter (query.py 123-126)."""
+        from dwr_eo_toolkit.filters.spatial import PointBuffer
+
+        q = Query().with_point_buffer(-120.0, 38.0, 50.0)
+        assert any(isinstance(f, PointBuffer) for f in q.filters)
+
+    def test_with_season_adds_filter(self):
+        """with_season appends a Season filter (query.py 164-167)."""
+        from dwr_eo_toolkit.filters.temporal import Season
+
+        q = Query().with_season("summer")
+        assert any(isinstance(f, Season) for f in q.filters)
+
+    def test_execute_raises_when_provider_fails(self):
+        """execute propagates exceptions from provider.search (query.py 279-281)."""
+        provider = Mock()
+        provider.search.side_effect = RuntimeError("provider error")
+        q = Query(product="MODIS").with_date_range("2023-01-01", "2023-12-31")
+        with pytest.raises(RuntimeError, match="provider error"):
+            q.execute(provider)
+
+    def test_to_params_raises_when_no_product(self):
+        """to_params raises ValueError when product is not set (query.py 313)."""
+        q = Query()
+        with pytest.raises(ValueError, match="Product must be set"):
+            q.to_params()
+
+    def test_repr_includes_product_and_filters(self):
+        """__repr__ returns a human-readable string (query.py 328)."""
+        q = Query(product="ECOSTRESS").with_date_range("2023-01-01", "2023-12-31")
+        r = repr(q)
+        assert "ECOSTRESS" in r

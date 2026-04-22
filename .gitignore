@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Compressed files
+*.zip
+*.tar
+*.7zip
+
 # C extensions
 *.so
 
@@ -97,6 +102,9 @@ celerybeat.pid
 
 # Environments
 .env
+.env.prod
+.env.staging
+.env.dev
 .venv
 env/
 venv/
@@ -151,12 +159,18 @@ Thumbs.db
 .edl_token
 .earthdata_token
 
+# Log Stuff
+data/
+logs/
+.logs
+
 # Local NASA EO Data cache
 .dwr_eo_toolkit/
 
 # Test artifacts
 .pytest_cache/
 htmlcov/
+.ruff_cache
 
 # Coverage reports
 .coverage
@@ -172,6 +186,7 @@ coverage.xml
 # IDE temporary files
 .vscode/settings.json
 .idea/workspace.xml
+.idea/
 
 # Downloaded data (if you're testing locally)
 data/
@@ -228,3 +243,11 @@ ENV/
 # runtime data and project management folders
 .dwr/
 vision/
+
+# Claude Code local config
+.claude/
+
+# For databases
+postgres_data/
+*.db
+*.sqlite

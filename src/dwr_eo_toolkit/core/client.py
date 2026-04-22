@@ -13,14 +13,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .auth import AuthenticationError
+from .exceptions import APIError
 
 logger = logging.getLogger(__name__)
-
-
-class APIError(Exception):
-    """Raised for API errors."""
-
-    pass
 
 
 class RateLimitError(APIError):
@@ -174,11 +169,6 @@ class HTTPClient:
                 self.CLIENT_ID_HEADER: self.client_id,
             }
         )
-
-        # Add authentication token if available
-        print("In Request!")
-        print(f"auth_handler: {self.auth_handler}")
-        print(f"auth_handler type: {type(self.auth_handler)}")
 
         # Add authentication token if available
         if self.auth_handler:
