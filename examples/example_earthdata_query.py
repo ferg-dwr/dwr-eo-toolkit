@@ -2,8 +2,10 @@
 Working example: Query and download imagery
 Fixed version - handles earthaccess DataGranule objects correctly
 """
+
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 from dwr_eo_toolkit.providers import EarthAccessProvider
@@ -25,7 +27,7 @@ BBOX = tuple(map(float, BBOX_STR.split(",")))
 # Setup
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-print(f"Configuration loaded from .env:")
+print("Configuration loaded from .env:")
 print(f"  Product: {DEFAULT_PRODUCT}")
 print(f"  Date range: {DEFAULT_START_DATE} to {DEFAULT_END_DATE}")
 print(f"  Bounding box: {BBOX}")
@@ -58,9 +60,9 @@ if not results:
     print("No results found. Try adjusting search parameters.")
     exit(0)
 
-print(f"First 3 granules:")
+print("First 3 granules:")
 for i, granule in enumerate(results[:3]):
-    print(f"  {i+1}. {granule}")
+    print(f"  {i + 1}. {granule}")
 
 # Step 2: Download using the provider's download method
 print(f"\nDownloading {min(len(results), 3)} granules...")
@@ -70,19 +72,20 @@ try:
     downloaded_files = provider.download(
         results[:3],  # Download first 3
         str(DOWNLOAD_DIR),
-        max_workers=3
+        max_workers=3,
     )
-    
-    print(f"\nDownload Complete!")
+
+    print("\nDownload Complete!")
     print(f"  Downloaded: {len(downloaded_files)} files")
-    
+
     for file_path in downloaded_files:
         file_size = Path(file_path).stat().st_size / 1024 / 1024
         print(f"    - {Path(file_path).name} ({file_size:.2f} MB)")
-    
+
 except Exception as e:
     print(f"Download failed: {e}")
     import traceback
+
     traceback.print_exc()
     exit(1)
 

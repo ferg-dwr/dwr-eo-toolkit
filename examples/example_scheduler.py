@@ -6,13 +6,14 @@ Just straight through - no functions, just imports and comments.
 Read line by line like a Jupyter notebook.
 """
 
+from datetime import datetime, timedelta
+from pathlib import Path
+
 from dwr_eo_toolkit.download_manager import (
     DownloadScheduler,
     DownloadSession,
     DownloadTask,
 )
-from datetime import datetime, timedelta
-from pathlib import Path
 
 # Create downloads directory
 Path("./downloads").mkdir(exist_ok=True)
@@ -21,21 +22,21 @@ Path("./downloads").mkdir(exist_ok=True)
 # Example 1: Create a DownloadScheduler
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 1: Create a Scheduler")
-print("="*80)
+print("=" * 80)
 
 # Create a scheduler to manage scheduled downloads
 scheduler = DownloadScheduler()
-print(f"✓ Created DownloadScheduler")
+print("✓ Created DownloadScheduler")
 
 # ============================================================================
 # Example 2: Schedule a one-time download
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 2: One-Time Download (in 2 hours)")
-print("="*80)
+print("=" * 80)
 
 # Create a download session
 session_onetime = DownloadSession()
@@ -48,7 +49,7 @@ session_onetime.add_task(task_onetime)
 # Schedule it for 2 hours from now
 run_time = datetime.now() + timedelta(hours=2)
 job_id_onetime = scheduler.schedule_once(session_onetime, run_at=run_time)
-print(f"✓ Scheduled one-time download")
+print("✓ Scheduled one-time download")
 print(f"  Job ID: {job_id_onetime}")
 print(f"  Will run at: {run_time}")
 
@@ -56,9 +57,9 @@ print(f"  Will run at: {run_time}")
 # Example 3: Schedule a daily download at 6 AM
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 3: Daily Download at 6 AM")
-print("="*80)
+print("=" * 80)
 
 # Create session for daily downloads
 session_daily = DownloadSession()
@@ -73,17 +74,17 @@ job_id_daily = scheduler.schedule_recurring(
     session_daily,
     cron="0 6 * * *",
 )
-print(f"Scheduled daily download")
+print("Scheduled daily download")
 print(f"  Job ID: {job_id_daily}")
-print(f"  Cron: 0 6 * * * (every day at 6 AM)")
+print("  Cron: 0 6 * * * (every day at 6 AM)")
 
 # ============================================================================
 # Example 4: Schedule a weekly download on Monday at 10 AM
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 4: Weekly Download (Mondays at 10 AM)")
-print("="*80)
+print("=" * 80)
 
 # Create session for weekly downloads
 session_weekly = DownloadSession()
@@ -98,17 +99,17 @@ job_id_weekly = scheduler.schedule_recurring(
     session_weekly,
     cron="0 10 * * MON",
 )
-print(f"Scheduled weekly download")
+print("Scheduled weekly download")
 print(f"  Job ID: {job_id_weekly}")
-print(f"  Cron: 0 10 * * MON (every Monday at 10 AM)")
+print("  Cron: 0 10 * * MON (every Monday at 10 AM)")
 
 # ============================================================================
 # Example 5: Schedule a monthly download on the 1st
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 5: Monthly Download (1st of month at midnight)")
-print("="*80)
+print("=" * 80)
 
 # Create session for monthly downloads
 session_monthly = DownloadSession()
@@ -123,17 +124,17 @@ job_id_monthly = scheduler.schedule_recurring(
     session_monthly,
     cron="0 0 1 * *",
 )
-print(f"✓ Scheduled monthly download")
+print("✓ Scheduled monthly download")
 print(f"  Job ID: {job_id_monthly}")
-print(f"  Cron: 0 0 1 * * (1st of each month at midnight)")
+print("  Cron: 0 0 1 * * (1st of each month at midnight)")
 
 # ============================================================================
 # Example 6: List all scheduled jobs
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 6: List All Scheduled Jobs")
-print("="*80)
+print("=" * 80)
 
 all_jobs = scheduler.list_jobs()
 print(f"Total scheduled jobs: {len(all_jobs)}")
@@ -143,9 +144,9 @@ for job_id, job_info in all_jobs.items():
     print(f"Job ID: {job_id}")
     print(f"  Type: {job_info.get('type', 'unknown')}")
     print(f"  Status: {job_info.get('status', 'unknown')}")
-    if job_info.get('next_run_time'):
+    if job_info.get("next_run_time"):
         print(f"  Next run: {job_info['next_run_time']}")
-    if job_info.get('cron'):
+    if job_info.get("cron"):
         print(f"  Cron: {job_info['cron']}")
     print()
 
@@ -153,9 +154,9 @@ for job_id, job_info in all_jobs.items():
 # Example 7: Pause a job
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 7: Pause a Job")
-print("="*80)
+print("=" * 80)
 
 paused = scheduler.pause_scheduled(job_id_daily)
 if paused:
@@ -167,9 +168,9 @@ else:
 # Example 8: Resume a paused job
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 8: Resume a Paused Job")
-print("="*80)
+print("=" * 80)
 
 resumed = scheduler.resume_scheduled(job_id_daily)
 if resumed:
@@ -181,9 +182,9 @@ else:
 # Example 9: Cancel a job
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 9: Cancel a Job")
-print("="*80)
+print("=" * 80)
 
 cancelled = scheduler.cancel_scheduled(job_id_onetime)
 if cancelled:
@@ -195,9 +196,9 @@ else:
 # Example 10: Cron Expression Reference
 # ============================================================================
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Example 10: Cron Expression Reference")
-print("="*80)
+print("=" * 80)
 
 print("Cron Format: MM HH DD MM DOW")
 print("  MM  = Minute (0-59)")
@@ -217,6 +218,6 @@ print("  0 9 * * MON-FRI  = Weekdays at 9 AM")
 print("  0 0 * * 0        = Every Sunday at midnight")
 print("  30 14 * * *      = Every day at 2:30 PM")
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("Done! DownloadScheduler Example Complete")
-print("="*80)
+print("=" * 80)

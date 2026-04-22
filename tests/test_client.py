@@ -499,5 +499,88 @@ class TestIntegration:
         return auth
 
 
+class TestClientCoverageExtra:
+    """Cover client.py lines 99-103, 248-249, 265-266, 287, 291."""
+
+    def test_init_with_explicit_verify_ssl_false(self):
+        """Explicit verify_ssl=False triggers warning branch (lines 99-103)."""
+        from unittest.mock import Mock
+
+        from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+        from dwr_eo_toolkit.core.client import HTTPClient
+
+        mock_auth = Mock(spec=EarthDataLoginAuth)
+        mock_auth.get_token.return_value = "tok"
+        client = HTTPClient(
+            auth_handler=mock_auth,
+            base_url="https://example.com",
+            verify_ssl=False,
+        )
+        assert client.verify_ssl is False
+
+    def test_init_with_explicit_verify_ssl_true(self):
+        """Explicit verify_ssl=True triggers the else-debug branch (lines 99-103)."""
+        from unittest.mock import Mock
+
+        from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
+        from dwr_eo_toolkit.core.client import HTTPClient
+
+        mock_auth = Mock(spec=EarthDataLoginAuth)
+        mock_auth.get_token.return_value = "tok"
+        client = HTTPClient(
+            auth_handler=mock_auth,
+            base_url="https://example.com",
+            verify_ssl=True,
+        )
+        assert client.verify_ssl is True
+
+    def test_request_raises_api_error_on_generic_request_exception(self, http_client):
+        """Generic RequestException raises APIError (lines 248-249)."""
+        import requests
+
+        from dwr_eo_toolkit.core.exceptions import APIError
+
+        with patch.object(
+            http_client.session,
+            "request",
+            side_effect=requests.exceptions.RequestException("generic error"),
+        ):
+            with pytest.raises(APIError, match="Request failed"):
+                http_client.get("/endpoint")
+
+    def test_handle_rate_limit_non_numeric_retry_after(self, http_client):
+        """_handle_rate_limit defaults to 60s when Retry-After is non-numeric (lines 265-266)."""
+        from unittest.mock import Mock
+
+        response = Mock()
+        response.headers = {"Retry-After": "not-a-number"}
+        http_client._handle_rate_limit(response)
+        assert http_client._rate_limit_reset_time is not None
+
+    def test_put_method(self, http_client):
+        """put() delegates to request() (line 287)."""
+        from unittest.mock import Mock
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {}
+
+        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
+            http_client.put("/resource", {"key": "val"})
+            mock_req.assert_called_once_with("PUT", "/resource", json={"key": "val"})
+
+    def test_delete_method(self, http_client):
+        """delete() delegates to request() (line 291)."""
+        from unittest.mock import Mock
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {}
+
+        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
+            http_client.delete("/resource")
+            mock_req.assert_called_once_with("DELETE", "/resource")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

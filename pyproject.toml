@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dwr-eo-toolkit"
-version = "0.3.0"
-description = "Department of Water Resources Earth Observation Toolkit"
+version = "0.4.0"
+description = "Department of Water Resources Earth Observation Toolkit - FastAPI REST API with batch download management"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
@@ -35,17 +35,7 @@ dev = [
     "pytest-mock>=3.10",
     "ruff>=0.1.0",
     "mypy>=1.0",
-]
-
-phase4 = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "sqlalchemy>=2.0",
-    "alembic>=1.13",
-    "psycopg2-binary>=2.9",
-    "click>=8.0",
-    "python-dotenv>=1.0",
-    "pydantic>=2.0",
+    "types-requests>=2.31.0",
 ]
 
 [project.urls]
@@ -73,6 +63,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false  # Set to true once all defs are typed
 ignore_missing_imports = true
+exclude = ["tests/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

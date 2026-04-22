@@ -29,11 +29,11 @@ def mock_auth():
     Provide a mock EarthDataLoginAuth for tests.
 
     Returns a Mock with:
-    - get_bearer_token() returning a test token
+    - get_token() returning a test token
     - Other methods callable but not configured
     """
     auth = Mock(spec=EarthDataLoginAuth)
-    auth.get_bearer_token.return_value = "test_bearer_token_12345"
+    auth.get_token.return_value = "test_bearer_token_12345"
     return auth
 
 
