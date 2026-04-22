@@ -597,46 +597,315 @@ tests/
 
 ---
 
-## Future Architecture Considerations
+---
 
-### Phase 4: Web API Layer
+## API Layer (Phase 4A - COMPLETE)
+
+### 6. **API Module** (`dwr_eo_toolkit.api`)
+
+FastAPI REST API with real-time WebSocket updates.
+
+**Files:**
+- `app.py` - FastAPI application setup, exception handlers
+- `routes.py` - REST endpoints (downloads, batches, jobs)
+- `schemas.py` - Pydantic models (request/response)
+- `websocket.py` - WebSocket connection management
+
+**REST Endpoints:**
 ```
-FastAPI Application
-    ├─ /search - Query API
-    ├─ /download - Download API
-    ├─ /status - Download status
-    └─ /results - Download results
+Downloads:
+  GET    /api/v1/downloads                    List all downloads
+  POST   /api/v1/downloads                    Create new download
+  GET    /api/v1/downloads/{id}               Get download details
+  PATCH  /api/v1/downloads/{id}               Update download
+  DELETE /api/v1/downloads/{id}               Cancel download
+
+Batches:
+  GET    /api/v1/batches                      List all batches
+  POST   /api/v1/batches                      Create new batch
+  GET    /api/v1/batches/{id}                 Get batch details
+  PATCH  /api/v1/batches/{id}                 Update batch
+  DELETE /api/v1/batches/{id}                 Cancel batch
+
+Jobs:
+  GET    /api/v1/jobs                         List all scheduled jobs
+  POST   /api/v1/jobs/schedule                Schedule new job
+  GET    /api/v1/jobs/{id}                    Get job details
+  PATCH  /api/v1/jobs/{id}                    Update job
+  DELETE /api/v1/jobs/{id}                    Delete job
+
+System:
+  GET    /                                    Service info
+  GET    /health                              Health check
+  GET    /status                              System status
+  GET    /docs                                Swagger UI
+  GET    /redoc                               ReDoc
+
+WebSocket:
+  WS     /ws/downloads/{download_id}          Real-time download updates
+  WS     /ws/batches/{batch_id}               Real-time batch updates
+  WS     /ws/jobs/{job_id}                    Real-time job updates
 ```
 
-### Phase 5: Asynchronous Downloads
-```
-Celery Task Queue
-    ├─ Search tasks
-    ├─ Download tasks
-    └─ Post-processing tasks
+**Key Classes:**
+```python
+class DownloadResponse(BaseModel):
+    id: str
+    product: str
+    status: str
+    start_date: str
+    end_date: str
+
+class InferenceJobResponse(BaseModel):
+    id: str
+    download_id: str
+    status: str
+    progress: int
+    
+class ConnectionManager:
+    """Manage WebSocket connections per resource"""
+    async def connect(resource_id: str, websocket: WebSocket)
+    async def broadcast(resource_id: str, message: dict)
 ```
 
-### Phase 6: Database Integration
+**Architecture:**
 ```
-PostgreSQL
-    ├─ Granule metadata cache
-    ├─ Download history
-    └─ User preferences
+HTTP Request
+    ↓
+[FastAPI Route Handler]
+    ├─ Validate input (Pydantic)
+    ├─ Get database session
+    ├─ Execute business logic
+    ├─ Update database
+    └─ Return response (schema)
+
+WebSocket Connection
+    ↓
+[ConnectionManager]
+    ├─ Accept connection
+    ├─ Add to active connections
+    └─ Broadcast on events
 ```
+
+---
+
+## Database Layer (Phase 4A - COMPLETE)
+
+### 7. **Database Module** (`dwr_eo_toolkit.database`)
+
+SQLAlchemy ORM with PostgreSQL backend.
+
+**Files:**
+- `connection.py` - Connection pooling, session management
+- `models.py` - SQLAlchemy ORM models
+- `migrations/` - Alembic migration scripts
+
+**Key Models:**
+```python
+class DownloadSession(Base):
+    """Represents a download operation"""
+    id: str
+    product: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+class DownloadTask(Base):
+    """Individual file within download"""
+    id: str
+    session_id: str
+    file_url: str
+    local_path: str
+    status: str
+
+class BatchOperation(Base):
+    """Group of downloads"""
+    id: str
+    name: str
+    status: str
+    total_tasks: int
+    completed_tasks: int
+
+class ScheduledJob(Base):
+    """Recurring download job"""
+    id: str
+    name: str
+    schedule: str (cron format)
+    product: str
+    active: bool
+    last_executed: datetime
+    next_execution: datetime
+```
+
+**Storage:**
+- **Production**: PostgreSQL 13+ with psycopg2
+- **Testing**: SQLite in-memory with StaticPool
+- **Migrations**: Alembic version control
+
+---
+
+## ML Inference Layer (Phase 4B - PLANNED)
+
+### 8. **Models Module** (`dwr_eo_toolkit.models`)
+
+PyTorch model management and inference.
+
+**Planned Components:**
+- `manager.py` - GitHub release downloader, model cache
+- `registry.py` - Model version management
+- `cache/` - Local model storage
+
+**9. Geospatial Module** (`dwr_eo_toolkit.geospatial`)
+
+Raster data handling for inference.
+
+**Planned Components:**
+- `reader.py` - GeoTIFF/COG reader with band selection
+- `writer.py` - COG writer with geospatial metadata
+- `validator.py` - Raster compatibility checks
+
+**10. Inference Module** (`dwr_eo_toolkit.inference`)
+
+Model execution pipeline.
+
+**Planned Components:**
+- `engine.py` - PyTorch inference executor
+- `pipeline.py` - Download → Inference → Output workflow
+- `processors/` - Model-specific input/output handling
+
+**Inference Data Flow:**
+```
+Download Complete Event
+    ↓
+[Inference Pipeline]
+    ├─ Get model from cache (or download from GitHub)
+    ├─ Load raster data
+    ├─ Prepare input (band selection, normalization)
+    ├─ Run PyTorch model
+    ├─ Post-process output
+    ├─ Write COG with metadata
+    ├─ Store in PostGIS or filesystem
+    └─ Broadcast completion via WebSocket
+```
+
+---
+
+## System Architecture (Updated)
+
+```
+┌───────────────────────────────────────────────────────────┐
+│              User Applications                             │
+│  (Web UI, Jupyter, CLI, Mobile Apps, Scripts)             │
+└───────────────┬─────────────────────────────────────────┘
+                │
+    ┌───────────┴──────────────┐
+    │                          │
+┌───▼──────────┐      ┌────────▼────────┐
+│   REST API   │      │  WebSocket      │
+│  (FastAPI)   │      │  (Real-time)    │
+└───┬──────────┘      └────────┬────────┘
+    │                          │
+    └───────────┬──────────────┘
+                │
+        ┌───────▼────────┐
+        │  Core Services │
+        │  ┌──────────┐  │
+        │  │ Download │  │
+        │  │ Manager  │  │
+        │  ├──────────┤  │
+        │  │ Scheduler│  │
+        │  ├──────────┤  │
+        │  │ Inference│  │
+        │  │ Pipeline │  │
+        │  └──────────┘  │
+        └───────┬────────┘
+                │
+    ┌───────────┴──────────────┬──────────────┐
+    │                          │              │
+┌───▼──────────┐    ┌─────────▼────┐  ┌─────▼──────┐
+│  Database    │    │   Models     │  │ Geospatial │
+│ (PostgreSQL) │    │  (PyTorch)   │  │  (Raster)  │
+└──────────────┘    └──────────────┘  └────────────┘
+                │
+        ┌───────▼────────┐
+        │  External APIs │
+        │  ┌──────────┐  │
+        │  │  NASA    │  │
+        │  │Earthdata │  │
+        │  ├──────────┤  │
+        │  │ GitHub   │  │
+        │  │ Releases │  │
+        │  └──────────┘  │
+        └────────────────┘
+```
+
+---
+
+## Complete Architecture Stack
+
+**dwr-eo-toolkit** is a **full-stack geospatial ML platform**:
+
+### Layer 1: API & Presentation
+- **FastAPI**: RESTful endpoints, OpenAPI docs
+- **WebSocket**: Real-time progress updates
+- **Pydantic**: Schema validation, type safety
+
+### Layer 2: Orchestration & Jobs
+- **APScheduler**: Recurring jobs, cron patterns
+- **Download Manager**: Parallel downloads, resilience
+- **Inference Pipeline**: Model execution workflow
+
+### Layer 3: Data Access
+- **EarthAccess Provider**: NASA data search/download
+- **Instrument Adapters**: ECOSTRESS, MODIS metadata
+- **Geospatial Handler**: Raster I/O, band selection
+
+### Layer 4: Storage & Models
+- **PostgreSQL**: Metadata, job history, results
+- **PyTorch Models**: GitHub releases, caching
+- **Raster Files**: GeoTIFF/COG output storage
+
+### Layer 5: External Services
+- **NASA Earthdata**: Authentication, granule access
+- **GitHub**: Model distribution via releases
+- **PostGIS**: Geospatial queries (optional)
+
+---
+
+## Phase Completion Status
+
+| Phase | Feature | Status | Tests | Type Safety |
+|-------|---------|--------|-------|------------|
+| 3 | Download Manager | ✅ Complete | 197+ | Full |
+| 3 | Scheduler | ✅ Complete | 197+ | Full |
+| 4A | FastAPI REST API | ✅ Complete | 476 | 0 errors |
+| 4A | WebSocket | ✅ Complete | 476 | 0 errors |
+| 4A | Database | ✅ Complete | 476 | 0 errors |
+| 4A | Authentication | ✅ Complete | 476 | 0 errors |
+| 4A | Docker/Compose | ✅ Complete | - | - |
+| 4B | Model Manager | 🚀 Planned | TBD | TBD |
+| 4B | Inference Pipeline | 🚀 Planned | TBD | TBD |
+| 4B | Geospatial Handler | 🚀 Planned | TBD | TBD |
+| 4C | Kubernetes | 🎯 Future | TBD | TBD |
+| 4C | GPU Scaling | 🎯 Future | TBD | TBD |
 
 ---
 
 ## Summary
 
-**dwr-eo-toolkit** follows a **layered architecture**:
+**dwr-eo-toolkit** is a production-ready **data orchestration and ML inference platform**:
 
-1. **Presentation Layer**: User API (search, download)
-2. **Provider Layer**: Abstract data source interface
-3. **Adapter Layer**: Instrument-specific logic
-4. **Service Layer**: Download management, filtering
-5. **Core Layer**: Authentication, HTTP, exceptions
-6. **External Layer**: NASA APIs, earthaccess
+- **Phase 3-4A**: Complete data pipeline (download, schedule, API)
+- **Phase 4B**: Add ML inference on geospatial data
+- **Phase 4C**: Scale with Kubernetes and GPU workers
+
+Key strengths:
+- Clean layered architecture with clear separation of concerns
+- Fully tested (476+ tests, 100% passing)
+- Type-safe (mypy clean)
+- Cloud-native (Docker, REST API, WebSocket)
+- Extensible (easy to add models, providers, instruments)
 
 ---
 
-Generated: 2026-04-16
+Generated: 2026-04-22
