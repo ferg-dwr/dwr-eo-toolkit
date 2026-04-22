@@ -28,7 +28,7 @@ class ConnectionManager:
     - Implement message queuing
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: Dict[str, Set[WebSocket]] = {}
 
     async def connect(self, resource_id: str, websocket: WebSocket) -> None:
@@ -93,7 +93,7 @@ manager = ConnectionManager()
 
 
 @ws_router.websocket("/downloads/{download_id}")
-async def websocket_download(websocket: WebSocket, download_id: str):
+async def websocket_download(websocket: WebSocket, download_id: str) -> None:
     """
     WebSocket endpoint for real-time download updates.
 
@@ -155,7 +155,7 @@ async def websocket_download(websocket: WebSocket, download_id: str):
 
 
 @ws_router.websocket("/batches/{batch_id}")
-async def websocket_batch(websocket: WebSocket, batch_id: str):
+async def websocket_batch(websocket: WebSocket, batch_id: str) -> None:
     """
     WebSocket endpoint for real-time batch operation updates.
 
@@ -212,7 +212,7 @@ async def websocket_batch(websocket: WebSocket, batch_id: str):
 
 
 @ws_router.websocket("/jobs/{job_id}")
-async def websocket_job(websocket: WebSocket, job_id: str):
+async def websocket_job(websocket: WebSocket, job_id: str) -> None:
     """
     WebSocket endpoint for real-time scheduled job updates.
 

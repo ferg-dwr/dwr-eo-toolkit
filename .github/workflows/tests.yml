@@ -12,8 +12,8 @@ jobs:
     
     strategy:
       matrix:
-        # Test on all supported Python versions (3.8+)
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        # Test on supported Python versions (3.11+)
+        python-version: ["3.11", "3.12"]
     
     steps:
     - uses: actions/checkout@v3
@@ -69,8 +69,7 @@ jobs:
         echo "No warnings or deprecations found"
 
     - name: Verify mypy type safety
-      run: |
-        mypy src/dwr_eo_toolkit --no-error-summary 2>&1 | grep -v "note:" | grep -i error && exit 1 || echo "✅ Type checking passed"
+      run: mypy src/dwr_eo_toolkit
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
