@@ -72,20 +72,29 @@ jobs:
         # Define minimum coverage by package (current - 4%)
         # These thresholds prevent regressions while allowing healthy refactoring
         thresholds = {
-            'dwr_eo_toolkit': 78,                           # 82.0% - 4%
-            'dwr_eo_toolkit.providers': 92,                 # 96.5% - 4%
-            'dwr_eo_toolkit.download_manager': 85,          # 89.1% - 4%
-            'dwr_eo_toolkit.core': 84,                      # 88.9% - 4%
-            'dwr_eo_toolkit.filters': 77,                   # 81.8% - 4%
+            'src.dwr_eo_toolkit': 78,                           # 82.0% - 4%
+            'src.dwr_eo_toolkit.providers': 92,                 # 96.5% - 4%
+            'src.dwr_eo_toolkit.download_manager': 85,          # 89.1% - 4%
+            'src.dwr_eo_toolkit.core': 84,                      # 88.9% - 4%
+            'src.dwr_eo_toolkit.filters': 77,                   # 81.8% - 4%
         }
         
         # Extract package coverages from XML
+        # Coverage XML format: <package name="src.dwr_eo_toolkit" line-rate="0.82" ...>
         packages = {}
         for package in root.findall('.//package'):
             pkg_name = package.get('name')
             line_rate = float(package.get('line-rate', 0))
             coverage_pct = line_rate * 100
             packages[pkg_name] = coverage_pct
+            print(f"Found package: {pkg_name} = {coverage_pct:.1f}%")
+        
+        # If no packages found, check if coverage XML has data at all
+        if not packages:
+            print("\n⚠️  WARNING: No packages found in coverage.xml")
+            print("Available XML structure:")
+            for elem in root.iter():
+                print(f"  {elem.tag}: {elem.attrib}")
         
         # Check thresholds
         failed = False
