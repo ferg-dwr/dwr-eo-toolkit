@@ -1,40 +1,29 @@
 """Database connection and session management."""
 
 import os
-from typing import Generator
+from typing import Generator, Optional
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# Load environment variables from .env.phase4
-load_dotenv(".env.phase4")
+load_dotenv()
 
-# Get database URL from environment
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise ValueError(
-        "DATABASE_URL environment variable is not set. Please check your .env.phase4 file."
-    )
+engine: Optional[Engine] = None
+SessionLocal: Optional[sessionmaker] = None
 
-# Create SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,  # Set to True for SQL debugging
-    pool_pre_ping=True,  # Verify connections before using them
-)
-
-# Create session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:
     """Get a database session (for FastAPI dependency injection)."""
+    if SessionLocal is None:
+        raise RuntimeError("Database not configured. Set DATABASE_URL environment variable.")
     db = SessionLocal()
     try:
         yield db
@@ -46,16 +35,20 @@ def init_db():
     """Initialize the database (create all tables)."""
     from .models import Base
 
+    if engine is None:
+        raise RuntimeError("Database not configured. Set DATABASE_URL environment variable.")
     Base.metadata.create_all(bind=engine)
 
 
 if __name__ == "__main__":
-    # Test the connection
-    try:
-        with engine.connect() as conn:
-            print("Successfully connected to PostgreSQL!")
-            print(
-                f"   Database URL: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'localhost'}"
-            )
-    except Exception as e:
-        print(f"Failed to connect: {e}")
+    if not DATABASE_URL or engine is None:
+        print("DATABASE_URL not set.")
+    else:
+        try:
+            with engine.connect() as conn:
+                print("Successfully connected to PostgreSQL!")
+                print(
+                    f"   Database URL: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'localhost'}"
+                )
+        except Exception as e:
+            print(f"Failed to connect: {e}")

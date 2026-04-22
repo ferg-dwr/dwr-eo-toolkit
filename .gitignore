@@ -244,6 +244,9 @@ ENV/
 .dwr/
 vision/
 
+# Claude Code local config
+.claude/
+
 # For databases
 postgres_data/
 *.db

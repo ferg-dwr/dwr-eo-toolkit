@@ -16,10 +16,6 @@ logger = logging.getLogger(__name__)
 # Router for WebSocket endpoints
 ws_router = APIRouter(prefix="/ws", tags=["websocket"])
 
-# ============================================================================
-# WebSocket Connection Management
-# ============================================================================
-
 
 class ConnectionManager:
     """
@@ -35,7 +31,7 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
 
-    async def connect(self, resource_id: str, websocket: WebSocket):
+    async def connect(self, resource_id: str, websocket: WebSocket) -> None:
         """
         Accept and register a WebSocket connection.
 
@@ -51,7 +47,7 @@ class ConnectionManager:
         self.active_connections[resource_id].add(websocket)
         logger.info(f"✅ WebSocket connected: {resource_id}")
 
-    def disconnect(self, resource_id: str, websocket: WebSocket):
+    def disconnect(self, resource_id: str, websocket: WebSocket) -> None:
         """
         Unregister a WebSocket connection.
 
@@ -67,7 +63,7 @@ class ConnectionManager:
 
         logger.info(f"❌ WebSocket disconnected: {resource_id}")
 
-    async def broadcast(self, resource_id: str, message: dict):
+    async def broadcast(self, resource_id: str, message: dict) -> None:
         """
         Send a message to all connected clients for a resource.
 
@@ -94,11 +90,6 @@ class ConnectionManager:
 
 # Global connection manager instance
 manager = ConnectionManager()
-
-
-# ============================================================================
-# WebSocket Endpoints
-# ============================================================================
 
 
 @ws_router.websocket("/downloads/{download_id}")
@@ -278,12 +269,7 @@ async def websocket_job(websocket: WebSocket, job_id: str):
         )
 
 
-# ============================================================================
-# Helper Functions
-# ============================================================================
-
-
-async def notify_download_update(download_id: str, status: str, progress: int):
+async def notify_download_update(download_id: str, status: str, progress: int) -> None:
     """
     Notify all clients about a download progress update.
 
@@ -302,7 +288,7 @@ async def notify_download_update(download_id: str, status: str, progress: int):
     await manager.broadcast(download_id, message)
 
 
-async def notify_batch_update(batch_id: str, progress: int, task_status: dict):
+async def notify_batch_update(batch_id: str, progress: int, task_status: dict) -> None:
     """
     Notify all clients about batch operation update.
 
@@ -320,7 +306,7 @@ async def notify_batch_update(batch_id: str, progress: int, task_status: dict):
     await manager.broadcast(batch_id, message)
 
 
-async def notify_job_executed(job_id: str, execution_status: str, next_run: str):
+async def notify_job_executed(job_id: str, execution_status: str, next_run: str) -> None:
     """
     Notify all clients about job execution.
 
@@ -337,10 +323,6 @@ async def notify_job_executed(job_id: str, execution_status: str, next_run: str)
 
     await manager.broadcast(job_id, message)
 
-
-# ============================================================================
-# Export
-# ============================================================================
 
 __all__ = [
     "ws_router",

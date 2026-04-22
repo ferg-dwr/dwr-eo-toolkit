@@ -69,7 +69,7 @@ search_configs = {
 search_results = {}
 
 for product_name, config in search_configs.items():
-    print(f"🔍 Searching for {product_name}...")
+    print(f"Searching for {product_name}...")
     try:
         results, total = provider.search(
             product=config["product"],

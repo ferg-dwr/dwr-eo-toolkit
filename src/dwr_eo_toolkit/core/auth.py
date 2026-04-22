@@ -367,8 +367,9 @@ class EarthDataLoginAuth:
         """Clear all cached tokens."""
         try:
             self.token_cache_file.unlink(missing_ok=True)
-            self._cached_token = None
-            self._token_expiry = None
-            logger.info("Cleared cached tokens")
         except Exception as e:
             logger.warning(f"Could not clear cache: {e}")
+
+        self._cached_token = None
+        self._token_expiry = None
+        logger.info("Cleared cached tokens")

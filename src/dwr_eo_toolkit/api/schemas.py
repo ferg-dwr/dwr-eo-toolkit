@@ -9,11 +9,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
-# ============================================================================
-# Enums
-# ============================================================================
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DownloadStatus(str, Enum):
@@ -48,11 +44,6 @@ class JobStatus(str, Enum):
     DISABLED = "disabled"
 
 
-# ============================================================================
-# Download Schemas
-# ============================================================================
-
-
 class DownloadCreate(BaseModel):
     """
     Schema for creating a new download.
@@ -64,14 +55,15 @@ class DownloadCreate(BaseModel):
     - Add output format options
     """
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        }
+    )
+
     product: str = Field(..., description="Product name (e.g., MODIS, ECOSTRESS)")
     start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
     end_date: str = Field(..., description="End date (YYYY-MM-DD)")
-
-    class Config:
-        json_schema_extra = {
-            "example": {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
-        }
 
 
 class DownloadResponse(BaseModel):
@@ -84,15 +76,9 @@ class DownloadResponse(BaseModel):
     - Add nested task information
     """
 
-    id: str = Field(..., description="Unique download ID")
-    status: DownloadStatus
-    product: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "status": "downloading",
@@ -100,7 +86,14 @@ class DownloadResponse(BaseModel):
                 "created_at": "2024-01-15T10:30:00Z",
                 "updated_at": "2024-01-15T10:35:00Z",
             }
-        }
+        },
+    )
+
+    id: str = Field(..., description="Unique download ID")
+    status: DownloadStatus
+    product: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class DownloadListResponse(BaseModel):
@@ -109,11 +102,6 @@ class DownloadListResponse(BaseModel):
     downloads: List[DownloadResponse]
     count: int
     total: Optional[int] = None  # For pagination
-
-
-# ============================================================================
-# Batch Schemas
-# ============================================================================
 
 
 class BatchCreate(BaseModel):
@@ -126,21 +114,24 @@ class BatchCreate(BaseModel):
     - Add priority/scheduling
     """
 
-    name: str = Field(..., description="Batch operation name")
-    downloads: Optional[List[DownloadCreate]] = None
-    description: Optional[str] = None
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "January 2024 MODIS Downloads",
                 "description": "Monthly MODIS collection for Q1 analysis",
             }
         }
+    )
+
+    name: str = Field(..., description="Batch operation name")
+    downloads: Optional[List[DownloadCreate]] = None
+    description: Optional[str] = None
 
 
 class BatchResponse(BaseModel):
     """Schema for batch operation response."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     id: str
     name: str
@@ -152,20 +143,12 @@ class BatchResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class BatchListResponse(BaseModel):
     """Response for listing batches."""
 
     batches: List[BatchResponse]
     count: int
-
-
-# ============================================================================
-# Job Schemas
-# ============================================================================
 
 
 class ScheduleType(str, Enum):
@@ -187,14 +170,8 @@ class JobCreate(BaseModel):
     - Add job parameters
     """
 
-    name: str = Field(..., description="Job name")
-    product: str = Field(..., description="Product to download")
-    schedule_type: ScheduleType
-    start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
-    end_date: Optional[str] = None
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Weekly MODIS Download",
                 "product": "MODIS",
@@ -202,10 +179,19 @@ class JobCreate(BaseModel):
                 "start_date": "2024-01-01",
             }
         }
+    )
+
+    name: str = Field(..., description="Job name")
+    product: str = Field(..., description="Product to download")
+    schedule_type: ScheduleType
+    start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
+    end_date: Optional[str] = None
 
 
 class JobResponse(BaseModel):
     """Schema for scheduled job response."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     id: str
     name: str
@@ -217,20 +203,12 @@ class JobResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class JobListResponse(BaseModel):
     """Response for listing jobs."""
 
     jobs: List[JobResponse]
     count: int
-
-
-# ============================================================================
-# Error Schemas
-# ============================================================================
 
 
 class ErrorResponse(BaseModel):
@@ -250,11 +228,6 @@ class ValidationError(BaseModel):
     type: str
 
 
-# ============================================================================
-# Health Check Schemas
-# ============================================================================
-
-
 class HealthResponse(BaseModel):
     """Schema for health check response."""
 
@@ -271,10 +244,6 @@ class StatusResponse(BaseModel):
     database: dict
     environment: dict
 
-
-# ============================================================================
-# Export all schemas
-# ============================================================================
 
 __all__ = [
     # Enums

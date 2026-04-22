@@ -1,7 +1,5 @@
 """
-FastAPI REST API Application
-
-This is the main FastAPI application for the DWR EO Toolkit.
+FastAPI REST API Application for the DWR EO Toolkit.
 Provides REST endpoints for downloads, batch operations, and scheduled jobs.
 """
 
@@ -10,41 +8,25 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-# Import routers
 from .routes import batches_router, downloads_router, jobs_router
 from .websocket import ws_router
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# ============================================================================
-# Application Startup/Shutdown
-# ============================================================================
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Manage application lifecycle (startup and shutdown).
-    """
-    # Startup
     logger.info("Starting DWR EO Toolkit API")
     logger.info(f"Environment: {os.getenv('LOG_LEVEL', 'INFO')}")
     logger.info(f"Database: {os.getenv('POSTGRES_DB', 'dwr_eo_toolkit_dev')}")
-
     yield
-
-    # Shutdown
     logger.info("Shutting down DWR EO Toolkit API")
 
-
-# ============================================================================
-# FastAPI Application
-# ============================================================================
 
 app = FastAPI(
     title="DWR EO Toolkit API",
@@ -53,47 +35,48 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add CORS middleware
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this!
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ============================================================================
-# Register API Routers
-# ============================================================================
 
 app.include_router(downloads_router)
 app.include_router(batches_router)
 app.include_router(jobs_router)
 app.include_router(ws_router)
 
-# ============================================================================
-# Health & Status Endpoints
-# ============================================================================
-
 
 @app.get("/health")
 async def health_check():
-    """
-    Health check endpoint. Returns API status and database connectivity.
-    """
+    """Health check endpoint. Returns API status and database connectivity."""
+    from ..database.connection import engine
+
+    db_status = "not_configured"
+    if engine is not None:
+        try:
+            from sqlalchemy import text
+
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            db_status = "connected"
+        except Exception:
+            db_status = "error"
+
     return {
         "status": "healthy",
         "service": "dwr-eo-toolkit",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "database": "connected",
+        "database": db_status,
     }
 
 
 @app.get("/status")
 async def status():
-    """
-    Detailed status endpoint with API and database information.
-    """
+    """Detailed status endpoint with API and database information."""
     return {
         "api": {
             "status": "running",
@@ -112,115 +95,9 @@ async def status():
     }
 
 
-# ============================================================================
-# API v1 Routes (Placeholder)
-# ============================================================================
-
-
-@app.get("/api/v1/downloads")
-async def list_downloads():
-    """
-    List all downloads for the authenticated user.
-
-    **Phase 4 TODO:** Implement with database queries
-    """
-    return {
-        "downloads": [],
-        "count": 0,
-        "message": "Downloads endpoint - Phase 4 implementation in progress",
-    }
-
-
-@app.post("/api/v1/downloads")
-async def create_download():
-    """
-    Create a new download session.
-
-    **Phase 4 TODO:** Implement with request validation and database storage
-    """
-    return {
-        "id": "placeholder-id",
-        "status": "created",
-        "message": "Download creation - Phase 4 implementation in progress",
-    }
-
-
-@app.get("/api/v1/downloads/{download_id}")
-async def get_download(download_id: str):
-    """
-    Get details of a specific download.
-
-    **Phase 4 TODO:** Implement with database queries
-    """
-    return {
-        "id": download_id,
-        "status": "placeholder",
-        "message": "Download details - Phase 4 implementation in progress",
-    }
-
-
-@app.get("/api/v1/batches")
-async def list_batches():
-    """
-    List all batch operations for the authenticated user.
-
-    **Phase 4 TODO:** Implement with database queries
-    """
-    return {
-        "batches": [],
-        "count": 0,
-        "message": "Batches endpoint - Phase 4 implementation in progress",
-    }
-
-
-@app.post("/api/v1/batches")
-async def create_batch():
-    """
-    Create a new batch operation.
-
-    **Phase 4 TODO:** Implement with request validation and database storage
-    """
-    return {
-        "id": "placeholder-id",
-        "status": "created",
-        "message": "Batch creation - Phase 4 implementation in progress",
-    }
-
-
-@app.get("/api/v1/jobs")
-async def list_jobs():
-    """
-    List all scheduled jobs for the authenticated user.
-
-    **Phase 4 TODO:** Implement with database queries
-    """
-    return {"jobs": [], "count": 0, "message": "Jobs endpoint - Phase 4 implementation in progress"}
-
-
-@app.post("/api/v1/jobs/schedule")
-async def schedule_job():
-    """
-    Schedule a new download job.
-
-    **Phase 4 TODO:** Implement with request validation and database storage
-    """
-    return {
-        "id": "placeholder-id",
-        "scheduled": True,
-        "message": "Job scheduling - Phase 4 implementation in progress",
-    }
-
-
-# ============================================================================
-# Root Endpoint
-# ============================================================================
-
-
 @app.get("/")
 async def root():
-    """
-    Root endpoint with API documentation links.
-    """
+    """Root endpoint with API documentation links."""
     return {
         "service": "DWR EO Toolkit API",
         "version": "1.0.0",
@@ -238,32 +115,20 @@ async def root():
     }
 
 
-# ============================================================================
-# Error Handlers
-# ============================================================================
-
-
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(request: Request, exc: HTTPException):
     """Custom HTTP exception handler."""
-    return {
-        "error": exc.detail,
-        "status_code": exc.status_code,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
 
-
-# ============================================================================
-# Main Entry Point (for local development)
-# ============================================================================
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info",
-    )
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
