@@ -7,7 +7,7 @@ name = "dwr-eo-toolkit"
 version = "0.4.0"
 description = "Department of Water Resources Earth Observation Toolkit - FastAPI REST API with batch download management"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     {name = "Fernando Emiliano Romero Galvan", email = "fernando.romerogalvan@gmail.com"},
 ]
@@ -36,6 +36,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0",
     "types-requests>=2.31.0",
+    "httpx>=0.24.0",
 ]
 
 [project.urls]
@@ -58,7 +59,7 @@ ignore = [
 known-first-party = ["dwr_eo_toolkit"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
