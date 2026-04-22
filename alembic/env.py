@@ -64,10 +64,10 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
-
+ 
     In this scenario we need to create an Engine
     and associate a connection with the context.
-
+ 
     """
     # Get configuration section
     configuration = config.get_section(config.config_ini_section)
@@ -75,6 +75,9 @@ def run_migrations_online() -> None:
     # Override sqlalchemy.url with environment variable if available
     database_url = os.getenv('DATABASE_URL')
     if database_url:
+        # Fix for Docker: Replace localhost with postgres service name
+        if "localhost" in database_url:
+            database_url = database_url.replace("localhost", "postgres")
         configuration['sqlalchemy.url'] = database_url
     
     connectable = engine_from_config(
@@ -82,16 +85,14 @@ def run_migrations_online() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
+ 
     with connectable.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
         )
-
+ 
         with context.begin_transaction():
             context.run_migrations()
-
-
 if context.is_offline_mode():
     run_migrations_offline()
 else:

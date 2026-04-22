@@ -12,7 +12,6 @@ authors = [
     {name = "Fernando Emiliano Romero Galvan", email = "fernando.romerogalvan@gmail.com"},
 ]
 license = {text = "MIT"}
-[project]
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
