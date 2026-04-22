@@ -1,6 +1,6 @@
 """
 Working example: Query and download imagery
-Corrected to work with actual earthaccess granule objects
+Fixed version - handles earthaccess DataGranule objects correctly
 """
 import os
 from pathlib import Path
@@ -49,9 +49,9 @@ try:
         start_date=DEFAULT_START_DATE,
         end_date=DEFAULT_END_DATE,
     )
-    print(f"✅ Found {total} granules")
+    print(f"Found {total} granules")
 except Exception as e:
-    print(f"❌ Search failed: {e}")
+    print(f"Search failed: {e}")
     exit(1)
 
 if not results:
@@ -63,25 +63,28 @@ for i, granule in enumerate(results[:3]):
     print(f"  {i+1}. {granule}")
 
 # Step 2: Download using the provider's download method
-print(f"\n📥 Downloading {min(len(results), 3)} granules...")
+print(f"\nDownloading {min(len(results), 3)} granules...")
 
 try:
-    # Use the provider's download method which handles earthaccess granules
+    # Use the provider's download method which handles earthaccess DataGranule objects
     downloaded_files = provider.download(
         results[:3],  # Download first 3
         str(DOWNLOAD_DIR),
         max_workers=3
     )
-    print("\n✅ Download Complete!")
+    
+    print(f"\nDownload Complete!")
     print(f"  Downloaded: {len(downloaded_files)} files")
+    
     for file_path in downloaded_files:
         file_size = Path(file_path).stat().st_size / 1024 / 1024
         print(f"    - {Path(file_path).name} ({file_size:.2f} MB)")
+    
 except Exception as e:
-    print(f"❌ Download failed: {e}")
+    print(f"Download failed: {e}")
     import traceback
     traceback.print_exc()
     exit(1)
 
-print(f"\n📁 Files saved to: {DOWNLOAD_DIR}")
-print("✅ Done!")
+print(f"\nFiles saved to: {DOWNLOAD_DIR}")
+print("Done!")
