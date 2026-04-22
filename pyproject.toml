@@ -12,14 +12,22 @@ authors = [
     {name = "Fernando Emiliano Romero Galvan", email = "fernando.romerogalvan@gmail.com"},
 ]
 license = {text = "MIT"}
-
+[project]
 dependencies = [
-    "requests>=2.28.0",
-    "earthaccess>=0.7.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.13.0",
+    "pydantic>=2.0.0",
+    "earthaccess>=0.6.0",
+    "requests>=2.31.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
     "apscheduler>=3.10.0",
-    "types-requests>=2.28.0",
+    "click>=8.0",
+    "python-dotenv>=1.0",
 ]
-
 
 [project.optional-dependencies]
 dev = [
@@ -29,6 +37,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0",
 ]
+
 phase4 = [
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
@@ -39,6 +48,11 @@ phase4 = [
     "python-dotenv>=1.0",
     "pydantic>=2.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ferg-dwr/dwr-eo-toolkit"
+Documentation = "https://github.com/ferg-dwr/dwr-eo-toolkit"
+Repository = "https://github.com/ferg-dwr/dwr-eo-toolkit.git"
 
 [tool.ruff]
 line-length = 100
@@ -71,11 +85,6 @@ markers = [
     "integration: marks tests as integration tests",
     "slow: marks tests as slow",
 ]
-
-[project.urls]
-Homepage = "https://github.com/ferg-dwr/dwr-eo-toolkit"
-Documentation = "https://github.com/ferg-dwr/dwr-eo-toolkit"
-Repository = "https://github.com/ferg-dwr/dwr-eo-toolkit.git"
 
 [tool.setuptools]
 packages = ["dwr_eo_toolkit"]
