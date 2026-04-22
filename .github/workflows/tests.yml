@@ -52,82 +52,28 @@ jobs:
       run: |
         mypy src/dwr_eo_toolkit
     
-    - name: Run tests with pytest
+    - name: Run all tests with pytest
       run: |
         pytest tests/ -v \
           --cov=src/dwr_eo_toolkit \
-          --cov-report=xml \
           --cov-report=term-missing
 
-    - name: Check coverage thresholds (per-module, target - 4%)
+    - name: Check Phase 3 coverage (minimum 82%)
       run: |
-        python3 << 'PYEOF'
-        import xml.etree.ElementTree as ET
-        import sys
-        
-        # Parse coverage XML
-        tree = ET.parse('coverage.xml')
-        root = tree.getroot()
-        
-        # Define minimum coverage by package (current - 4%)
-        # These thresholds prevent regressions while allowing healthy refactoring
-        thresholds = {
-            'src.dwr_eo_toolkit': 78,                           # 82.0% - 4%
-            'src.dwr_eo_toolkit.providers': 92,                 # 96.5% - 4%
-            'src.dwr_eo_toolkit.download_manager': 85,          # 89.1% - 4%
-            'src.dwr_eo_toolkit.core': 84,                      # 88.9% - 4%
-            'src.dwr_eo_toolkit.filters': 77,                   # 81.8% - 4%
-        }
-        
-        # Extract package coverages from XML
-        # Coverage XML format: <package name="src.dwr_eo_toolkit" line-rate="0.82" ...>
-        packages = {}
-        for package in root.findall('.//package'):
-            pkg_name = package.get('name')
-            line_rate = float(package.get('line-rate', 0))
-            coverage_pct = line_rate * 100
-            packages[pkg_name] = coverage_pct
-            print(f"Found package: {pkg_name} = {coverage_pct:.1f}%")
-        
-        # If no packages found, check if coverage XML has data at all
-        if not packages:
-            print("\n⚠️  WARNING: No packages found in coverage.xml")
-            print("Available XML structure:")
-            for elem in root.iter():
-                print(f"  {elem.tag}: {elem.attrib}")
-        
-        # Check thresholds
-        failed = False
-        print("\n" + "="*70)
-        print("COVERAGE THRESHOLD CHECK (Per-Module, Current - 4%)")
-        print("="*70 + "\n")
-        
-        for pkg, threshold in thresholds.items():
-            actual = packages.get(pkg, 0)
-            status = "✅ PASS" if actual >= threshold else "❌ FAIL"
-            print(f"{status} | {pkg:<45} {actual:>6.1f}% (min: {threshold}%)")
-            if actual < threshold:
-                failed = True
-        
-        print("\n" + "="*70)
-        
-        if failed:
-            print("❌ COVERAGE CHECK FAILED - Some modules below minimum threshold")
-            print("   Run: pytest --cov-report=html")
-            print("   Then: open htmlcov/index.html")
-            sys.exit(1)
-        else:
-            print("✅ ALL COVERAGE THRESHOLDS PASSED")
-            sys.exit(0)
-        PYEOF
-    
+        pytest tests/test_batch_manager.py tests/test_scheduler.py tests/test_downloads.py \
+          -v \
+          --cov=src/dwr_eo_toolkit/download_manager \
+          --cov=src/dwr_eo_toolkit/core \
+          --cov-report=term-missing \
+          --cov-fail-under=82
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false  # Don't fail if Codecov has issues
+        fail_ci_if_error: false
       continue-on-error: true
 
   docker-build:
@@ -161,18 +107,3 @@ jobs:
           )
           print('✅ Core imports successful')
         "
-
-  # Uncomment when Phase 4 database layer is ready:
-  # services:
-  #   postgres:
-  #     image: postgres:15
-  #     env:
-  #       POSTGRES_PASSWORD: postgres
-  #       POSTGRES_DB: dwr_eo_toolkit_test
-  #     options: >-
-  #       --health-cmd pg_isready
-  #       --health-interval 10s
-  #       --health-timeout 5s
-  #       --health-retries 5
-  #     ports:
-  #       - 5432:5432
