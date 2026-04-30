@@ -1,24 +1,181 @@
 """
-API Routes — REST endpoints for downloads, batches, and scheduled jobs.
+API Routes — REST endpoints for downloads, batches, scheduled jobs, and search.
 """
 
-from typing import Any, Dict, cast
+from datetime import datetime
+from typing import Any, Dict, List, Tuple, cast
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from ..database.connection import get_db
 from ..database.models import BatchOperation, DownloadSession, ScheduledJob
+from ..providers import EarthAccessProvider
 from .schemas import BatchCreate, DownloadCreate, JobCreate
+
+
+class SearchRequest(BaseModel):
+    """Request model for search endpoint"""
+
+    product: str = Field(..., description="Product name (e.g., 'ECOSTRESS', 'MODIS')")
+    min_lon: float = Field(..., description="Min longitude")
+    min_lat: float = Field(..., description="Min latitude")
+    max_lon: float = Field(..., description="Max longitude")
+    max_lat: float = Field(..., description="Max latitude")
+    start_date: str = Field(..., description="Start date YYYY-MM-DD")
+    end_date: str = Field(..., description="End date YYYY-MM-DD")
+    max_results: int = Field(100, description="Max granules to return", ge=1, le=2000)
+
+    @field_validator("product")
+    @classmethod
+    def validate_product(cls, v):
+        """Validate product is supported"""
+        valid_products = ["ECOSTRESS", "MODIS"]
+        if v.upper() not in valid_products:
+            raise ValueError(f"Product must be one of {valid_products}")
+        return v.upper()
+
+    @field_validator("min_lon", "min_lat", "max_lon", "max_lat")
+    @classmethod
+    def validate_coords(cls, v):
+        """Validate coordinates are reasonable"""
+        if not -180 <= v <= 180:
+            raise ValueError("Coordinate must be between -180 and 180")
+        return v
+
+    @field_validator("start_date", "end_date")
+    @classmethod
+    def validate_date_format(cls, v):
+        """Validate date format"""
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("Date must be in format YYYY-MM-DD")
+        return v
+
+    @field_validator("end_date")
+    @classmethod
+    def validate_date_range(cls, v, info):
+        """Ensure end_date >= start_date"""
+        if "start_date" in info.data:
+            start = datetime.strptime(info.data["start_date"], "%Y-%m-%d")
+            end = datetime.strptime(v, "%Y-%m-%d")
+            if end < start:
+                raise ValueError("end_date must be >= start_date")
+        return v
+
+    def get_bbox(self) -> Tuple[float, float, float, float]:
+        """Get bounding box as tuple"""
+        return (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
+
+
+class SearchResponse(BaseModel):
+    """Response model for search endpoint"""
+
+    success: bool
+    message: str
+    total: int = Field(0, description="Total granules found")
+    returned: int = Field(0, description="Granules returned in this response")
+    granules: List[dict] = Field(default_factory=list, description="Granule data")
+    request_summary: dict = Field(default_factory=dict, description="Echo of request params")
+
 
 downloads_router = APIRouter(prefix="/api/v1/downloads", tags=["downloads"])
 batches_router = APIRouter(prefix="/api/v1/batches", tags=["batches"])
 jobs_router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 
+# Initialize provider (once at startup)
+_provider = None
 
-# ---------------------------------------------------------------------------
-# Downloads
-# ---------------------------------------------------------------------------
+
+def get_provider() -> EarthAccessProvider:
+    """Get or create provider instance"""
+    global _provider
+    if _provider is None:
+        _provider = EarthAccessProvider()
+    return _provider
+
+
+@downloads_router.post(
+    "/search",
+    response_model=SearchResponse,
+    summary="Search for imagery granules",
+    description="""
+    Search for NASA Earth observation granules by product, location, and date range.
+
+    Returns metadata about available granules that match the search criteria.
+    """,
+)
+async def search_imagery(request: SearchRequest) -> SearchResponse:
+    """
+    Search for imagery granules.
+
+    Args:
+        request: Search parameters (product, bbox, dates, etc.)
+
+    Returns:
+        SearchResponse with matching granules
+
+    Raises:
+        HTTPException: If search fails
+    """
+    try:
+        provider = get_provider()
+
+        # Log the request
+        print(f"🔍 Search request: {request.product}")
+        print(f"   Bbox: {request.get_bbox()}")
+        print(f"   Dates: {request.start_date} to {request.end_date}")
+
+        # Execute search
+        granules, total = provider.search(
+            product=request.product,
+            bounding_box=request.get_bbox(),
+            start_date=request.start_date,
+            end_date=request.end_date,
+            max_results=request.max_results,
+        )
+
+        print(f"   ✅ Found {total} granules (returning {len(granules)})")
+
+        # Build response
+        return SearchResponse(
+            success=True,
+            message=f"Found {total} granules matching criteria",
+            total=total,
+            returned=len(granules),
+            granules=[
+                {
+                    "id": str(g),
+                    "title": str(g),
+                    "raw": str(g),
+                }
+                for g in granules
+            ],
+            request_summary={
+                "product": request.product,
+                "bbox": request.get_bbox(),
+                "start_date": request.start_date,
+                "end_date": request.end_date,
+            },
+        )
+
+    except ValueError as e:
+        # Validation error
+        print(f"❌ Validation error: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
+    except Exception as e:
+        # Search failed
+        print(f"❌ Search failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Search failed: {str(e)}",
+        )
 
 
 @downloads_router.get("")
@@ -77,11 +234,6 @@ async def cancel_download(download_id: str, db: Session = Depends(get_db)):
     db.commit()
 
 
-# ---------------------------------------------------------------------------
-# Batches
-# ---------------------------------------------------------------------------
-
-
 @batches_router.get("")
 async def list_batches(db: Session = Depends(get_db)):
     """List all batch operations."""
@@ -133,11 +285,6 @@ async def cancel_batch(batch_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found")
     batch.status = "cancelled"  # type: ignore[assignment]
     db.commit()
-
-
-# ---------------------------------------------------------------------------
-# Jobs
-# ---------------------------------------------------------------------------
 
 
 @jobs_router.get("")
