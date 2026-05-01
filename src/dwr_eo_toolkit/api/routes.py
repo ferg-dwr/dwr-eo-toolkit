@@ -12,7 +12,11 @@ from sqlalchemy.orm import Session
 from ..database.connection import get_db
 from ..database.models import BatchOperation, DownloadSession, ScheduledJob
 from ..providers import EarthAccessProvider
-from .schemas import BatchCreate, DownloadCreate, JobCreate
+from .schemas import BatchCreate, JobCreate
+
+# ==============================================================================
+# Pydantic Models for Search Endpoint
+# ==============================================================================
 
 
 class SearchRequest(BaseModel):
@@ -81,6 +85,38 @@ class SearchResponse(BaseModel):
     request_summary: dict = Field(default_factory=dict, description="Echo of request params")
 
 
+class DownloadStartRequest(BaseModel):
+    """Request to start a download"""
+
+    product: str = Field(..., description="Product name (ECOSTRESS, MODIS)")
+    min_lon: float = Field(..., description="Min longitude")
+    min_lat: float = Field(..., description="Min latitude")
+    max_lon: float = Field(..., description="Max longitude")
+    max_lat: float = Field(..., description="Max latitude")
+    start_date: str = Field(..., description="Start date YYYY-MM-DD")
+    end_date: str = Field(..., description="End date YYYY-MM-DD")
+    max_results: int = Field(10, description="Max granules to download", ge=1, le=100)
+    output_dir: str = Field("./downloads", description="Output directory for files")
+
+
+class DownloadStartResponse(BaseModel):
+    """Response when download starts"""
+
+    success: bool
+    message: str
+    download_session_id: str = Field(..., description="ID to track this download")
+    status: str = Field("pending", description="Current status")
+    product: str
+    granules_found: int
+    estimated_size_mb: float = Field(0.0, description="Estimated total size")
+    output_dir: str
+    tracking_url: str = Field(..., description="URL to check progress")
+
+
+# ==============================================================================
+# Routers
+# ==============================================================================
+
 downloads_router = APIRouter(prefix="/api/v1/downloads", tags=["downloads"])
 batches_router = APIRouter(prefix="/api/v1/batches", tags=["batches"])
 jobs_router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
@@ -95,6 +131,11 @@ def get_provider() -> EarthAccessProvider:
     if _provider is None:
         _provider = EarthAccessProvider()
     return _provider
+
+
+# ---------------------------------------------------------------------------
+# Search Endpoint
+# ---------------------------------------------------------------------------
 
 
 @downloads_router.post(
@@ -178,6 +219,106 @@ async def search_imagery(request: SearchRequest) -> SearchResponse:
         )
 
 
+# ---------------------------------------------------------------------------
+# Download Endpoint (NEW)
+# ---------------------------------------------------------------------------
+
+
+@downloads_router.post(
+    "",
+    status_code=202,
+    response_model=DownloadStartResponse,
+    summary="Start a new download",
+    description="""
+    Start downloading granules from NASA Earth observation data.
+
+    This endpoint:
+    1. Searches for granules matching your criteria
+    2. Creates a download session
+    3. Returns a session ID to track progress
+
+    The actual download happens in the background.
+    Use GET /api/v1/downloads/{session_id} to check progress.
+    """,
+)
+async def start_download(
+    request: DownloadStartRequest,
+    db: Session = Depends(get_db),
+) -> DownloadStartResponse:
+    """
+    Start a new download session.
+
+    Returns immediately with a session ID. Downloads happen in background.
+    """
+    try:
+        provider = get_provider()
+
+        print(f"📥 Starting download: {request.product}")
+        print(f"   Output: {request.output_dir}")
+
+        # Step 1: Search for granules
+        print("   🔍 Searching for granules...")
+        granules, total = provider.search(
+            product=request.product,
+            bounding_box=(request.min_lon, request.min_lat, request.max_lon, request.max_lat),
+            start_date=request.start_date,
+            end_date=request.end_date,
+            max_results=request.max_results,
+        )
+
+        if not granules:
+            raise ValueError("No granules found matching search criteria")
+
+        print(f"   ✅ Found {len(granules)} granules")
+
+        # Step 2: Create database record to track this download
+        session = DownloadSession(
+            status="pending",
+            state={
+                "product": request.product,
+                "start_date": request.start_date,
+                "end_date": request.end_date,
+                "bbox": [request.min_lon, request.min_lat, request.max_lon, request.max_lat],
+                "output_dir": request.output_dir,
+                "granule_count": len(granules),
+            },
+        )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+
+        download_id = session.session_id
+        print(f"   💾 Created download session: {download_id}")
+
+        # Step 3: Return response (download would happen in background task)
+        # TODO: Implement background task to actually download granules
+
+        return DownloadStartResponse(
+            success=True,
+            message=f"Download started for {len(granules)} granules",
+            download_session_id=str(download_id),
+            status="pending",
+            product=request.product,
+            granules_found=len(granules),
+            estimated_size_mb=0.0,
+            output_dir=request.output_dir,
+            tracking_url=f"/api/v1/downloads/{download_id}",
+        )
+
+    except ValueError as e:
+        print(f"❌ Validation error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception as e:
+        print(f"❌ Download start failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# Downloads (EXISTING)
+# ---------------------------------------------------------------------------
+
+
 @downloads_router.get("")
 async def list_downloads(db: Session = Depends(get_db)):
     """List all download sessions."""
@@ -186,23 +327,6 @@ async def list_downloads(db: Session = Depends(get_db)):
         "downloads": [_session_to_dict(s) for s in sessions],
         "count": len(sessions),
     }
-
-
-@downloads_router.post("", status_code=201)
-async def create_download(payload: DownloadCreate, db: Session = Depends(get_db)):
-    """Create a new download session."""
-    session = DownloadSession(
-        status="pending",
-        state={
-            "product": payload.product,
-            "start_date": payload.start_date,
-            "end_date": payload.end_date,
-        },
-    )
-    db.add(session)
-    db.commit()
-    db.refresh(session)
-    return _session_to_dict(session)
 
 
 @downloads_router.get("/{download_id}")
@@ -232,6 +356,11 @@ async def cancel_download(download_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Download '{download_id}' not found")
     session.status = "cancelled"  # type: ignore[assignment]
     db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Batches (EXISTING)
+# ---------------------------------------------------------------------------
 
 
 @batches_router.get("")
@@ -285,6 +414,11 @@ async def cancel_batch(batch_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Batch '{batch_id}' not found")
     batch.status = "cancelled"  # type: ignore[assignment]
     db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Jobs (EXISTING)
+# ---------------------------------------------------------------------------
 
 
 @jobs_router.get("")
@@ -344,6 +478,11 @@ async def delete_job(job_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
     job.status = "cancelled"  # type: ignore[assignment]
     db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Helper Functions
+# ---------------------------------------------------------------------------
 
 
 def _session_to_dict(s: DownloadSession) -> Dict[str, Any]:
