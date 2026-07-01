@@ -92,7 +92,9 @@ class BoundingBox(Filter):
             Dictionary with 'bounding_box' key
         """
         self.validate()
-        return {"bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)}
+        return {
+            "bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
+        }
 
     def center(self) -> Tuple[float, float]:
         """
@@ -128,9 +130,7 @@ class BoundingBox(Filter):
 
     def __repr__(self) -> str:
         """String representation."""
-        return (
-            f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, lat: {self.min_lat}→{self.max_lat})"
-        )
+        return f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, lat: {self.min_lat}→{self.max_lat})"
 
 
 # Future filters (stubs for Phase 2B+)

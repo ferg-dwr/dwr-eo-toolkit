@@ -328,7 +328,9 @@ class EarthDataLoginAuth:
             existing_lines = netrc_path.read_text().splitlines()
 
         # Remove any existing urs.earthdata.nasa.gov entry
-        new_lines = [line for line in existing_lines if "urs.earthdata.nasa.gov" not in line]
+        new_lines = [
+            line for line in existing_lines if "urs.earthdata.nasa.gov" not in line
+        ]
 
         # Add new entry
         new_lines.extend(
@@ -344,7 +346,9 @@ class EarthDataLoginAuth:
         netrc_path.chmod(0o600)  # .netrc must be readable only by owner
         logger.info(f"Updated {netrc_path} with Earthdata Login credentials")
 
-    def setup_environment(self, username: str, password: str, token: Optional[str] = None) -> None:
+    def setup_environment(
+        self, username: str, password: str, token: Optional[str] = None
+    ) -> None:
         """
         Print shell commands to set up environment variables.
 

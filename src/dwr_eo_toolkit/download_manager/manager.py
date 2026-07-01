@@ -144,7 +144,9 @@ class DownloadManager:
                     raise ValueError(f"Granule {i} missing required 'url' field")
 
                 if not isinstance(url, str):
-                    raise ValueError(f"Granule {i} 'url' must be string, got {type(url)}")
+                    raise ValueError(
+                        f"Granule {i} 'url' must be string, got {type(url)}"
+                    )
 
                 task = DownloadTask(
                     url=url,

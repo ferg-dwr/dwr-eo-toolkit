@@ -75,7 +75,9 @@ class InstrumentAdapter(ABC):
         """
         pass
 
-    def post_process_granules(self, granules: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
+    def post_process_granules(
+        self, granules: list[Dict[str, Any]]
+    ) -> list[Dict[str, Any]]:
         """
         Post-process granules (optional).
 

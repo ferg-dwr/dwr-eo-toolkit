@@ -176,7 +176,9 @@ class YearMonthRange(Filter):
     Future implementation: Search by year and month ranges.
     """
 
-    def __init__(self, start_year: int, start_month: int, end_year: int, end_month: int):
+    def __init__(
+        self, start_year: int, start_month: int, end_year: int, end_month: int
+    ):
         """Initialize year-month range."""
         self.start_year = start_year
         self.start_month = start_month

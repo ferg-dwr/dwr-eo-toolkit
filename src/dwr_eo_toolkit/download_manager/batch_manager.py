@@ -28,7 +28,9 @@ class CheckpointData:
 class BatchDownloadManager:
     """Manage multiple parallel download sessions."""
 
-    def __init__(self, max_concurrent_sessions: int = 3, queue: Optional[Any] = None) -> None:
+    def __init__(
+        self, max_concurrent_sessions: int = 3, queue: Optional[Any] = None
+    ) -> None:
         """
         Initialize batch manager.
 
@@ -144,7 +146,9 @@ class BatchDownloadManager:
             )
 
             checkpoint_file = self.checkpoint_dir / f"{checkpoint_id}.json"
-            checkpoint_file.write_text(json.dumps(checkpoint_data.__dict__, indent=2, default=str))
+            checkpoint_file.write_text(
+                json.dumps(checkpoint_data.__dict__, indent=2, default=str)
+            )
 
             logger.debug(f"Checkpoint saved: {checkpoint_file}")
             return checkpoint_file
@@ -153,7 +157,9 @@ class BatchDownloadManager:
             logger.error(f"Failed to save checkpoint {checkpoint_id}: {e}")
             raise
 
-    def resume_from_checkpoint(self, checkpoint_id: str) -> Optional[List[DownloadResult]]:
+    def resume_from_checkpoint(
+        self, checkpoint_id: str
+    ) -> Optional[List[DownloadResult]]:
         """
         Resume from checkpoint.
 
@@ -306,10 +312,14 @@ class BatchDownloadManager:
                         "total_files": stats.total_files,
                         "files_downloaded": stats.files_downloaded,
                         "files_failed": stats.files_failed,
-                        "duration": str(stats.duration) if hasattr(stats, "duration") else None,
-                        "avg_speed_mbps": stats.avg_speed_mbps
-                        if hasattr(stats, "avg_speed_mbps")
-                        else None,
+                        "duration": (
+                            str(stats.duration) if hasattr(stats, "duration") else None
+                        ),
+                        "avg_speed_mbps": (
+                            stats.avg_speed_mbps
+                            if hasattr(stats, "avg_speed_mbps")
+                            else None
+                        ),
                     }
                 )
             except Exception as e:

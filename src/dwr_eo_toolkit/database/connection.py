@@ -23,7 +23,9 @@ if DATABASE_URL:
 def get_db() -> Generator[Session, None, None]:
     """Get a database session (for FastAPI dependency injection)."""
     if SessionLocal is None:
-        raise RuntimeError("Database not configured. Set DATABASE_URL environment variable.")
+        raise RuntimeError(
+            "Database not configured. Set DATABASE_URL environment variable."
+        )
     db = SessionLocal()
     try:
         yield db
@@ -36,7 +38,9 @@ def init_db():
     from .models import Base
 
     if engine is None:
-        raise RuntimeError("Database not configured. Set DATABASE_URL environment variable.")
+        raise RuntimeError(
+            "Database not configured. Set DATABASE_URL environment variable."
+        )
     Base.metadata.create_all(bind=engine)
 
 
