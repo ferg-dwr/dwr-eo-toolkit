@@ -2,17 +2,18 @@
 Batch Download Example
 Download multiple products in parallel with progress tracking and checkpointing
 """
-import os
+
 import json
+import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
-from dwr_eo_toolkit.providers import EarthAccessProvider
 from dwr_eo_toolkit.download_manager import (
     BatchDownloadManager,
     DownloadSession,
-    DownloadTask,
 )
+from dwr_eo_toolkit.providers import EarthAccessProvider
 
 # Load environment variables
 load_dotenv()
@@ -44,9 +45,9 @@ if not EARTHDATA_TOKEN:
 # ==============================================================================
 # Step 1: Search for multiple products
 # ==============================================================================
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("STEP 1: SEARCH FOR IMAGERY")
-print("="*70 + "\n")
+print("=" * 70 + "\n")
 
 provider = EarthAccessProvider()
 
@@ -87,9 +88,9 @@ for product_name, config in search_configs.items():
 # ==============================================================================
 # Step 2: Create batch manager and download sessions
 # ==============================================================================
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("STEP 2: CREATE DOWNLOAD SESSIONS")
-print("="*70 + "\n")
+print("=" * 70 + "\n")
 
 # Create batch manager (max 3 concurrent downloads)
 manager = BatchDownloadManager(max_concurrent_sessions=3)
@@ -105,14 +106,14 @@ for product_name, granules in search_results.items():
         continue
 
     print(f"Creating session for {product_name}...")
-    
+
     # Create output directory for this product
     product_dir = DOWNLOAD_DIR / product_name.lower()
     product_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create a download session
     session = DownloadSession()
-    
+
     # Add granules to session
     for i, granule in enumerate(granules):
         try:
@@ -122,7 +123,7 @@ for product_name, granules in search_results.items():
             pass
         except Exception as e:
             print(f"  Error adding granule: {e}")
-    
+
     # Instead of trying to split granules into DownloadTask,
     # we'll download them directly and track metadata
     metadata["products"][product_name] = {
@@ -130,15 +131,15 @@ for product_name, granules in search_results.items():
         "download_dir": str(product_dir),
         "granules": [str(g) for g in granules],
     }
-    
+
     print(f"  Session created with {len(granules)} granules")
 
 # ==============================================================================
 # Step 3: Download all products
 # ==============================================================================
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("STEP 3: EXECUTE PARALLEL DOWNLOADS")
-print("="*70 + "\n")
+print("=" * 70 + "\n")
 
 download_summary = {
     "total_products": 0,
@@ -151,13 +152,13 @@ download_summary = {
 for product_name, granules in search_results.items():
     if not granules:
         continue
-    
+
     product_dir = DOWNLOAD_DIR / product_name.lower()
-    
+
     print(f"\n Downloading {product_name}...")
     print(f"   Destination: {product_dir}")
     print(f"   Granules: {len(granules)}")
-    
+
     try:
         # Use provider's download method directly
         # (Better for earthaccess DataGranule objects)
@@ -167,19 +168,19 @@ for product_name, granules in search_results.items():
             max_workers=3,
             show_progress=True,
         )
-        
+
         download_summary["total_products"] += 1
         download_summary["total_files"] += len(files)
         download_summary["successful"] += len(files)
-        
+
         print(f"   Downloaded {len(files)} files")
-        
+
         # Track file details
         download_summary["products"][product_name] = {
             "downloaded": len(files),
             "files": [str(Path(f).name) for f in files],
         }
-        
+
         # Print file details
         for file_path in files:
             try:
@@ -187,7 +188,7 @@ for product_name, granules in search_results.items():
                 print(f"      - {Path(file_path).name} ({file_size:.2f} MB)")
             except:
                 print(f"      - {Path(file_path).name}")
-    
+
     except Exception as e:
         print(f"   Download failed: {e}")
         download_summary["products"][product_name] = {
@@ -196,14 +197,15 @@ for product_name, granules in search_results.items():
         }
         download_summary["failed"] += 1
         import traceback
+
         traceback.print_exc()
 
 # ==============================================================================
 # Step 4: Summary and metadata
 # ==============================================================================
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("STEP 4: SUMMARY")
-print("="*70 + "\n")
+print("=" * 70 + "\n")
 
 print(f"""
 BATCH DOWNLOAD COMPLETE!
@@ -217,7 +219,7 @@ Summary:
 
 # Save metadata
 metadata_file = DOWNLOAD_DIR / "batch_metadata.json"
-with open(metadata_file, 'w') as f:
+with open(metadata_file, "w") as f:
     json.dump(download_summary, f, indent=2)
 
 print(f"Metadata saved to: {metadata_file}")
@@ -226,20 +228,24 @@ print(f"Files saved to: {DOWNLOAD_DIR}")
 # ==============================================================================
 # Step 5: Advanced - Checkpoint and Resume (if needed)
 # ==============================================================================
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("ADVANCED: CHECKPOINT & RESUME")
-print("="*70 + "\n")
+print("=" * 70 + "\n")
 
 checkpoint_file = DOWNLOAD_DIR / "checkpoint.json"
-with open(checkpoint_file, 'w') as f:
-    json.dump({
-        "batch_config": {
-            "bbox": BBOX,
-            "download_dir": str(DOWNLOAD_DIR),
+with open(checkpoint_file, "w") as f:
+    json.dump(
+        {
+            "batch_config": {
+                "bbox": BBOX,
+                "download_dir": str(DOWNLOAD_DIR),
+            },
+            "products_downloaded": list(search_results.keys()),
+            "summary": download_summary,
         },
-        "products_downloaded": list(search_results.keys()),
-        "summary": download_summary,
-    }, f, indent=2)
+        f,
+        indent=2,
+    )
 
 print(f"Checkpoint saved: {checkpoint_file}")
 print("""

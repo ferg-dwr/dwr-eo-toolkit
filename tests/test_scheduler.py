@@ -30,7 +30,9 @@ def mock_session():
 @pytest.fixture
 def scheduler():
     """Create a DownloadScheduler instance with proper Mock job IDs."""
-    with patch("dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler") as mock_bg_class:
+    with patch(
+        "dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler"
+    ) as mock_bg_class:
         mock_scheduler = Mock()
         mock_bg_class.return_value = mock_scheduler
 
@@ -57,7 +59,9 @@ class TestDownloadSchedulerBasics:
 
     def test_scheduler_initialization(self):
         """Should initialize with BackgroundScheduler."""
-        with patch("dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler") as mock_bg:
+        with patch(
+            "dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler"
+        ) as mock_bg:
             scheduler = DownloadScheduler()
 
             assert scheduler.scheduler is not None
@@ -120,7 +124,9 @@ class TestSchedulerJobLifecycle:
 
     def test_pause_scheduled_job(self, scheduler, mock_session):
         """Should pause a scheduled job."""
-        job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         mock_job = Mock()
         scheduler.scheduler.get_job.return_value = mock_job
 
@@ -148,7 +154,9 @@ class TestSchedulerJobLifecycle:
 
     def test_resume_scheduled_job(self, scheduler, mock_session):
         """Should resume a paused job."""
-        job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         scheduler.jobs[job_id]["status"] = "paused"
 
         mock_job = Mock()
@@ -170,7 +178,9 @@ class TestSchedulerJobLifecycle:
 
     def test_cancel_scheduled_job(self, scheduler, mock_session):
         """Should cancel and remove a scheduled job."""
-        job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
 
         result = scheduler.cancel_scheduled(job_id)
 
@@ -188,7 +198,9 @@ class TestSchedulerJobLifecycle:
 
     def test_cancel_removes_from_tracking(self, scheduler, mock_session):
         """Should remove job from internal tracking on cancel."""
-        job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         assert job_id in scheduler.jobs
 
         scheduler.cancel_scheduled(job_id)
@@ -225,7 +237,9 @@ class TestSchedulerJobRetrieval:
 
     def test_list_jobs_returns_all(self, scheduler, mock_session):
         """Should return all scheduled jobs."""
-        job_id_1 = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id_1 = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         job_id_2 = scheduler.schedule_recurring(mock_session, "0 6 * * *")
 
         jobs = scheduler.list_jobs()
@@ -262,7 +276,9 @@ class TestSchedulerCronPatterns:
             ("0 0 * * SUN", "Weekly on Sunday midnight"),
         ],
     )
-    def test_schedule_various_cron_patterns(self, scheduler, mock_session, cron, description):
+    def test_schedule_various_cron_patterns(
+        self, scheduler, mock_session, cron, description
+    ):
         """Should schedule with various cron patterns."""
         job_id = scheduler.schedule_recurring(mock_session, cron)
 
@@ -271,7 +287,9 @@ class TestSchedulerCronPatterns:
 
     def test_invalid_cron_expression(self, scheduler, mock_session):
         """Should fail gracefully with invalid cron."""
-        with patch.object(scheduler.scheduler, "add_job", side_effect=ValueError("Invalid cron")):
+        with patch.object(
+            scheduler.scheduler, "add_job", side_effect=ValueError("Invalid cron")
+        ):
             with pytest.raises(ValueError):
                 scheduler.schedule_recurring(mock_session, "invalid cron")
 
@@ -299,7 +317,9 @@ class TestSchedulerIntegration:
     def test_complete_job_lifecycle(self, scheduler, mock_session):
         """Should handle complete job lifecycle: schedule -> pause -> resume -> cancel."""
         # Schedule
-        job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        job_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         assert scheduler.jobs[job_id]["status"] == "scheduled"
 
         # Pause
@@ -320,7 +340,9 @@ class TestSchedulerIntegration:
         """Should handle multiple concurrent scheduled jobs."""
         job_ids = []
         for i in range(5):
-            job_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=i + 1))
+            job_id = scheduler.schedule_once(
+                mock_session, datetime.now() + timedelta(hours=i + 1)
+            )
             job_ids.append(job_id)
 
         all_jobs = scheduler.list_jobs()
@@ -331,7 +353,9 @@ class TestSchedulerIntegration:
 
     def test_mixed_job_types(self, scheduler, mock_session):
         """Should handle mix of one-time and recurring jobs."""
-        once_id = scheduler.schedule_once(mock_session, datetime.now() + timedelta(hours=1))
+        once_id = scheduler.schedule_once(
+            mock_session, datetime.now() + timedelta(hours=1)
+        )
         recurring_id = scheduler.schedule_recurring(mock_session, "0 6 * * *")
 
         all_jobs = scheduler.list_jobs()
@@ -345,7 +369,9 @@ class TestSchedulerCleanup:
 
     def test_scheduler_shutdown_on_deletion(self):
         """Should shutdown scheduler when deleted."""
-        with patch("dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler") as mock_bg:
+        with patch(
+            "dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler"
+        ) as mock_bg:
             mock_scheduler = Mock()
             mock_bg.return_value = mock_scheduler
             mock_scheduler.running = True
@@ -357,7 +383,9 @@ class TestSchedulerCleanup:
 
     def test_scheduler_cleanup_skips_if_not_running(self):
         """Should skip shutdown if scheduler not running."""
-        with patch("dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler") as mock_bg:
+        with patch(
+            "dwr_eo_toolkit.download_manager.scheduler.BackgroundScheduler"
+        ) as mock_bg:
             mock_scheduler = Mock()
             mock_bg.return_value = mock_scheduler
             mock_scheduler.running = False

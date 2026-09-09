@@ -439,7 +439,11 @@ class TestQuery:
 
     def test_filters_summary(self):
         """Should provide filter summary."""
-        query = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
+        query = (
+            Query()
+            .with_product("ECOSTRESS_L2_LSTE")
+            .with_spatial_bounds(-120, 30, -100, 40)
+        )
 
         summary = query.filters_summary()
         assert "ECOSTRESS_L2_LSTE" in summary
@@ -447,7 +451,11 @@ class TestQuery:
 
     def test_copy(self):
         """Should create independent copy."""
-        original = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
+        original = (
+            Query()
+            .with_product("ECOSTRESS_L2_LSTE")
+            .with_spatial_bounds(-120, 30, -100, 40)
+        )
 
         copy = original.copy().with_cloud_cover(10)
 
@@ -474,7 +482,11 @@ class TestQuery:
 
     def test_repr(self):
         """Should have meaningful representation."""
-        query = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
+        query = (
+            Query()
+            .with_product("ECOSTRESS_L2_LSTE")
+            .with_spatial_bounds(-120, 30, -100, 40)
+        )
         repr_str = repr(query)
         assert "Query" in repr_str
         assert "ECOSTRESS_L2_LSTE" in repr_str
