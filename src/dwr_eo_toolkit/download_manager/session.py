@@ -5,11 +5,12 @@ DownloadSession - Manage multiple downloads with parallel execution.
 import json
 import threading
 from collections import Counter
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Optional
 
 from .progress import DownloadProgress, DownloadStatistics
 from .resilience import ResilienceManager, ResumeConfig, RetryConfig
@@ -21,7 +22,7 @@ from .task import DownloadTask, TaskStatus
 class DownloadSession:
     """Manage multiple downloads with parallel execution."""
 
-    tasks: List[DownloadTask] = field(default_factory=list)
+    tasks: list[DownloadTask] = field(default_factory=list)
     """List of DownloadTask objects to execute."""
 
     max_workers: int = 4
@@ -39,7 +40,7 @@ class DownloadSession:
     enable_resume: bool = True
     """Whether to resume interrupted downloads."""
 
-    progress_callback: Optional[Callable[[DownloadProgress], None]] = None
+    progress_callback: Callable[[DownloadProgress], None] | None = None
     """Callback function for progress updates."""
 
     progress: DownloadProgress = field(default_factory=DownloadProgress)
@@ -255,8 +256,7 @@ class DownloadSession:
         try:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 future_to_task = {
-                    executor.submit(self._download_task, task): task
-                    for task in self.tasks
+                    executor.submit(self._download_task, task): task for task in self.tasks
                 }
 
                 # Process completed tasks
@@ -305,9 +305,7 @@ class DownloadSession:
 
         return bool(success)
 
-    def _update_results(
-        self, task: DownloadTask, success: bool, error: Optional[str] = None
-    ):
+    def _update_results(self, task: DownloadTask, success: bool, error: str | None = None):
         """Update results based on task completion.
 
         Args:

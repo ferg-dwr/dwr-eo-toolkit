@@ -4,7 +4,7 @@ API Routes — REST endpoints for downloads, batches, scheduled jobs, and search
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -77,7 +77,7 @@ class GranuleQueryRequest(BaseModel):
         BoundingBox(self.min_lon, self.min_lat, self.max_lon, self.max_lat).validate()
         return self
 
-    def get_bbox(self) -> Tuple[float, float, float, float]:
+    def get_bbox(self) -> tuple[float, float, float, float]:
         return (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
 
 
@@ -94,7 +94,7 @@ class SearchResponse(BaseModel):
     message: str
     total: int = Field(0, description="Total granules found")
     returned: int = Field(0, description="Granules returned in this response")
-    granules: List[dict] = Field(default_factory=list)
+    granules: list[dict] = Field(default_factory=list)
     request_summary: dict = Field(default_factory=dict)
 
 
@@ -118,7 +118,7 @@ class DownloadStartResponse(BaseModel):
     files_downloaded: int
     files_failed: int
     output_dir: str
-    downloaded_files: List[str] = Field(default_factory=list)
+    downloaded_files: list[str] = Field(default_factory=list)
     tracking_url: str
 
 
@@ -534,8 +534,8 @@ async def delete_job(job_id: str, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 
-def _session_to_dict(s: DownloadSession) -> Dict[str, Any]:
-    state: Dict[str, Any] = cast(Dict[str, Any], s.state) or {}
+def _session_to_dict(s: DownloadSession) -> dict[str, Any]:
+    state: dict[str, Any] = cast(dict[str, Any], s.state) or {}
     return {
         "id": s.session_id,
         "status": s.status,
@@ -551,7 +551,7 @@ def _session_to_dict(s: DownloadSession) -> Dict[str, Any]:
     }
 
 
-def _batch_to_dict(b: BatchOperation) -> Dict[str, Any]:
+def _batch_to_dict(b: BatchOperation) -> dict[str, Any]:
     return {
         "id": b.batch_id,
         "name": b.name,
@@ -565,7 +565,7 @@ def _batch_to_dict(b: BatchOperation) -> Dict[str, Any]:
     }
 
 
-def _job_to_dict(j: ScheduledJob) -> Dict[str, Any]:
+def _job_to_dict(j: ScheduledJob) -> dict[str, Any]:
     return {
         "id": j.job_id,
         "name": j.name,

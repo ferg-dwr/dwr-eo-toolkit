@@ -62,9 +62,21 @@ ALLOWED_IMPORTS: dict[str, set[str]] = {
 BASE_ONLY_SUBPACKAGES = ["core", "providers", "filters", "monitoring"]
 
 THIRD_PARTY = {
-    "fastapi", "uvicorn", "sqlalchemy", "psycopg2", "alembic", "pydantic",
-    "earthaccess", "requests", "numpy", "pandas", "apscheduler", "click",
-    "dotenv", "starlette", "httpx",
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psycopg2",
+    "alembic",
+    "pydantic",
+    "earthaccess",
+    "requests",
+    "numpy",
+    "pandas",
+    "apscheduler",
+    "click",
+    "dotenv",
+    "starlette",
+    "httpx",
 }
 
 
@@ -111,7 +123,7 @@ def test_wheel_contains_all_subpackages(wheel_names: list[str], subpackage: str)
     matching = [n for n in wheel_names if n.startswith(prefix) and n.endswith(".py")]
     assert matching, (
         f"No modules from {prefix} in the wheel. Check that pyproject.toml uses\n"
-        f"    [tool.setuptools.packages.find]\n    where = [\"src\"]\n"
+        f'    [tool.setuptools.packages.find]\n    where = ["src"]\n'
         f"rather than an explicit `packages = [...]` list."
     )
 
@@ -121,9 +133,7 @@ def test_wheel_contains_all_subpackages(wheel_names: list[str], subpackage: str)
 def test_wheel_module_count_matches_source(wheel_names: list[str]) -> None:
     """The wheel ships as many modules as the source tree holds."""
     on_disk = {
-        p.relative_to(SRC).as_posix()
-        for p in SRC.rglob("*.py")
-        if "__pycache__" not in p.parts
+        p.relative_to(SRC).as_posix() for p in SRC.rglob("*.py") if "__pycache__" not in p.parts
     }
     in_wheel = {n for n in wheel_names if n.endswith(".py")}
     missing = sorted(on_disk - in_wheel)
@@ -217,8 +227,7 @@ def test_init_has_no_eager_subpackage_imports() -> None:
     offenders = [
         ast.unparse(node)
         for node in tree.body  # module scope only
-        if isinstance(node, (ast.Import, ast.ImportFrom))
-        and PACKAGE in ast.unparse(node)
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and PACKAGE in ast.unparse(node)
     ]
     assert not offenders, (
         "eager subpackage import(s) at module scope in __init__.py: "

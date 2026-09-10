@@ -23,9 +23,9 @@ _LAZY: dict[str, tuple[str, str | None]] = {
 __all__ = list(_LAZY)
 
 if TYPE_CHECKING:  # keeps mypy and IDE completion working
-    from dwr_eo_toolkit.core.auth import EarthDataLoginAuth
-    from dwr_eo_toolkit.download_manager import DownloadManager
-    from dwr_eo_toolkit.providers import EarthAccessProvider
+    from dwr_eo_toolkit.core.auth import EarthDataLoginAuth  # noqa: F401
+    from dwr_eo_toolkit.download_manager import DownloadManager  # noqa: F401
+    from dwr_eo_toolkit.providers import EarthAccessProvider  # noqa: F401
 
 
 def __getattr__(name: str):

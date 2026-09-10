@@ -6,8 +6,7 @@ Provides WebSocket endpoints for real-time updates on downloads and batch operat
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Dict, Set
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -29,7 +28,7 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self.active_connections: Dict[str, Set[WebSocket]] = {}
+        self.active_connections: dict[str, set[WebSocket]] = {}
 
     async def connect(self, resource_id: str, websocket: WebSocket) -> None:
         """
@@ -137,7 +136,7 @@ async def websocket_download(websocket: WebSocket, download_id: str) -> None:
                 "type": "message",
                 "download_id": download_id,
                 "content": data,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             await manager.broadcast(download_id, message)
@@ -152,7 +151,7 @@ async def websocket_download(websocket: WebSocket, download_id: str) -> None:
             download_id,
             {
                 "type": "user_disconnected",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -200,7 +199,7 @@ async def websocket_batch(websocket: WebSocket, batch_id: str) -> None:
                 "type": "message",
                 "batch_id": batch_id,
                 "content": data,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             await manager.broadcast(batch_id, message)
@@ -212,7 +211,7 @@ async def websocket_batch(websocket: WebSocket, batch_id: str) -> None:
             batch_id,
             {
                 "type": "user_disconnected",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -261,7 +260,7 @@ async def websocket_job(websocket: WebSocket, job_id: str) -> None:
                 "type": "message",
                 "job_id": job_id,
                 "content": data,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             await manager.broadcast(job_id, message)
@@ -273,7 +272,7 @@ async def websocket_job(websocket: WebSocket, job_id: str) -> None:
             job_id,
             {
                 "type": "user_disconnected",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -291,7 +290,7 @@ async def notify_download_update(download_id: str, status: str, progress: int) -
         "download_id": download_id,
         "status": status,
         "progress": progress,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     await manager.broadcast(download_id, message)
@@ -309,15 +308,13 @@ async def notify_batch_update(batch_id: str, progress: int, task_status: dict) -
         "batch_id": batch_id,
         "progress": progress,
         "task_status": task_status,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     await manager.broadcast(batch_id, message)
 
 
-async def notify_job_executed(
-    job_id: str, execution_status: str, next_run: str
-) -> None:
+async def notify_job_executed(job_id: str, execution_status: str, next_run: str) -> None:
     """
     Notify all clients about job execution.
 
@@ -329,7 +326,7 @@ async def notify_job_executed(
         "job_id": job_id,
         "status": execution_status,
         "next_run_time": next_run,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     await manager.broadcast(job_id, message)

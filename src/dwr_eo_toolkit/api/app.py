@@ -6,7 +6,7 @@ Provides REST endpoints for downloads, batch operations, and scheduled jobs.
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -69,7 +69,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "dwr-eo-toolkit",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "database": db_status,
     }
 
@@ -81,7 +81,7 @@ async def status():
         "api": {
             "status": "running",
             "version": "1.0.0",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
         "database": {
             "status": "connected",
@@ -123,11 +123,12 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         content={
             "error": exc.detail,
             "status_code": exc.status_code,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

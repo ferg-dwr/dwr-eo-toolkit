@@ -8,9 +8,7 @@ class TestDownloadQueue:
     def test_enqueue_dequeue(self):
         """Test basic enqueue/dequeue."""
         queue = DownloadQueue()
-        task = DownloadTask(
-            url="https://example.com/file.hdf", output_path=Path("file.hdf")
-        )
+        task = DownloadTask(url="https://example.com/file.hdf", output_path=Path("file.hdf"))
 
         queue.enqueue(task, Priority.HIGH)
         retrieved = queue.dequeue()
@@ -22,15 +20,11 @@ class TestDownloadQueue:
         queue = DownloadQueue()
 
         # Add LOW first
-        task_low = DownloadTask(
-            url="https://example.com/low.hdf", output_path=Path("low.hdf")
-        )
+        task_low = DownloadTask(url="https://example.com/low.hdf", output_path=Path("low.hdf"))
         queue.enqueue(task_low, Priority.LOW)
 
         # Add HIGH second
-        task_high = DownloadTask(
-            url="https://example.com/high.hdf", output_path=Path("high.hdf")
-        )
+        task_high = DownloadTask(url="https://example.com/high.hdf", output_path=Path("high.hdf"))
         queue.enqueue(task_high, Priority.HIGH)
 
         # HIGH should come out first despite being added second
@@ -60,9 +54,7 @@ class TestDownloadQueue:
         """Test queue stats."""
         queue = DownloadQueue()
 
-        task = DownloadTask(
-            url="https://example.com/file.hdf", output_path=Path("file.hdf")
-        )
+        task = DownloadTask(url="https://example.com/file.hdf", output_path=Path("file.hdf"))
         queue.enqueue(task)
 
         stats = queue.get_stats()

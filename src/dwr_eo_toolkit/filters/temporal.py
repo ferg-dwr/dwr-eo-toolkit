@@ -6,7 +6,7 @@ Supports date range queries and future seasonal filtering.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from dwr_eo_toolkit.filters.base import Filter
 
@@ -65,7 +65,7 @@ class DateRange(Filter):
 
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert to provider search parameters.
 
@@ -145,7 +145,7 @@ class Season(Filter):
     Future implementation: Search for specific seasons (spring, summer, fall, winter).
     """
 
-    def __init__(self, season: str, years: Optional[list] = None):
+    def __init__(self, season: str, years: list | None = None):
         """
         Initialize seasonal filter.
 
@@ -163,7 +163,7 @@ class Season(Filter):
             raise ValueError(f"Season must be one of {valid_seasons}")
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement seasonal date range logic
         raise NotImplementedError("Season filter coming in Phase 2B+")
@@ -176,9 +176,7 @@ class YearMonthRange(Filter):
     Future implementation: Search by year and month ranges.
     """
 
-    def __init__(
-        self, start_year: int, start_month: int, end_year: int, end_month: int
-    ):
+    def __init__(self, start_year: int, start_month: int, end_year: int, end_month: int):
         """Initialize year-month range."""
         self.start_year = start_year
         self.start_month = start_month
@@ -190,7 +188,7 @@ class YearMonthRange(Filter):
         # TODO: Implement validation
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement conversion
         raise NotImplementedError("YearMonthRange filter coming in Phase 2B+")

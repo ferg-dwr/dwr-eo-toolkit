@@ -215,9 +215,7 @@ class TestEarthAccessProviderSearch:
         assert len(results) == 0
         assert total == 0
 
-    def test_search_with_known_adapter_uses_short_name(
-        self, provider, mock_earthaccess
-    ):
+    def test_search_with_known_adapter_uses_short_name(self, provider, mock_earthaccess):
         """Should use short_name from adapter when available."""
         mock_granules = [{"id": "granule1"}]
         mock_earthaccess.search_data.return_value = mock_granules
@@ -227,9 +225,7 @@ class TestEarthAccessProviderSearch:
             mock_metadata = Mock()
             mock_metadata.short_name = "ECO_L2T_LSTE"
             mock_adapter.get_metadata.return_value = mock_metadata
-            mock_adapter.post_process_granules.return_value = (
-                mock_granules  # ← ADD THIS
-            )
+            mock_adapter.post_process_granules.return_value = mock_granules  # ← ADD THIS
             mock_get_adapter.return_value = mock_adapter
 
             results, total = provider.search(product="ECOSTRESS")

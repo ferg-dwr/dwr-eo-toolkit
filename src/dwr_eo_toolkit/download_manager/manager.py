@@ -2,8 +2,9 @@
 DownloadManager - Main interface for downloading granules.
 """
 
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any
 
 from .progress import DownloadProgress
 from .result import DownloadResult
@@ -48,9 +49,9 @@ class DownloadManager:
 
     def download(
         self,
-        granules: List[Union[Dict[str, Any], DownloadTask]],
-        output_dir: Union[str, Path],
-        progress_callback: Optional[Callable[[DownloadProgress], None]] = None,
+        granules: list[dict[str, Any] | DownloadTask],
+        output_dir: str | Path,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
     ) -> DownloadResult:
         """Download multiple granules.
 
@@ -92,9 +93,9 @@ class DownloadManager:
 
     def download_single(
         self,
-        granule: Union[Dict[str, Any], str],
-        output_dir: Union[str, Path],
-        filename: Optional[str] = None,
+        granule: dict[str, Any] | str,
+        output_dir: str | Path,
+        filename: str | None = None,
     ) -> DownloadResult:
         """Download a single granule.
 
@@ -118,9 +119,9 @@ class DownloadManager:
 
     def _prepare_tasks(
         self,
-        granules: Sequence[Union[Dict[str, Any], DownloadTask]],
+        granules: Sequence[dict[str, Any] | DownloadTask],
         output_dir: Path,
-    ) -> List[DownloadTask]:
+    ) -> list[DownloadTask]:
         """Convert granules to DownloadTask objects.
 
         Args:
@@ -144,9 +145,7 @@ class DownloadManager:
                     raise ValueError(f"Granule {i} missing required 'url' field")
 
                 if not isinstance(url, str):
-                    raise ValueError(
-                        f"Granule {i} 'url' must be string, got {type(url)}"
-                    )
+                    raise ValueError(f"Granule {i} 'url' must be string, got {type(url)}")
 
                 task = DownloadTask(
                     url=url,
@@ -164,8 +163,8 @@ class DownloadManager:
 
     def create_session(
         self,
-        granules: Union[List[Dict[str, Any]], List],
-        output_dir: Union[str, Path],
+        granules: list[dict[str, Any]] | list,
+        output_dir: str | Path,
     ) -> DownloadSession:
         """Create a DownloadSession without executing downloads.
 

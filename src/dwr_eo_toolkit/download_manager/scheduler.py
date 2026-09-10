@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime
-from typing import Dict, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -20,7 +19,7 @@ class DownloadScheduler:
         """Initialize scheduler."""
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
-        self.jobs: Dict[str, dict] = {}
+        self.jobs: dict[str, dict] = {}
 
     def schedule_once(self, session: DownloadSession, run_at: datetime) -> str:
         """Schedule a one-time download.
@@ -133,7 +132,7 @@ class DownloadScheduler:
             logger.error(f"Failed to cancel job {job_id}: {e}")
         return False
 
-    def get_job(self, job_id: str) -> Optional[dict]:
+    def get_job(self, job_id: str) -> dict | None:
         """Get job details.
 
         Args:
@@ -144,7 +143,7 @@ class DownloadScheduler:
         """
         return self.jobs.get(job_id)
 
-    def list_jobs(self) -> Dict[str, dict]:
+    def list_jobs(self) -> dict[str, dict]:
         """List all scheduled jobs.
 
         Returns:

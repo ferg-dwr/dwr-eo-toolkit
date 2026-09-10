@@ -4,7 +4,7 @@ Utility functions for downloads module.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 def format_bytes(num_bytes: float) -> str:
@@ -63,7 +63,7 @@ def format_time(seconds: float) -> str:
     return " ".join(parts)
 
 
-def load_metadata(metadata_path: Path) -> Dict[str, Any]:
+def load_metadata(metadata_path: Path) -> dict[str, Any]:
     """Load metadata from .metadata file.
 
     Args:
@@ -85,7 +85,7 @@ def load_metadata(metadata_path: Path) -> Dict[str, Any]:
         return {}
 
 
-def save_metadata(metadata_path: Path, metadata: Dict[str, Any]) -> None:
+def save_metadata(metadata_path: Path, metadata: dict[str, Any]) -> None:
     """Save metadata to .metadata file.
 
     Args:
@@ -99,7 +99,7 @@ def save_metadata(metadata_path: Path, metadata: Dict[str, Any]) -> None:
         pass
 
 
-def get_partial_files(output_dir: Path) -> List[Path]:
+def get_partial_files(output_dir: Path) -> list[Path]:
     """Find partial (incomplete) downloads in directory.
 
     Args:
