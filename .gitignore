@@ -1,17 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Compressed files
-*.zip
-*.tar
-*.7zip
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -32,104 +23,13 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.env.prod
-.env.staging
-.env.dev
-.venv
-env/
+# Virtual environments
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
-.env.phase4
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
+miniconda3/
 
 # IDE
 .vscode/
@@ -138,107 +38,34 @@ dmypy.json
 *.swo
 *~
 .DS_Store
-.project
-.pydevproject
-.settings/
-*.sublime-project
-*.sublime-workspace
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Project specific
-# NASA Earthdata credentials (NEVER commit these!)
-.netrc
-.edl_token
-.earthdata_token
-
-# Log Stuff
-data/
-logs/
-.logs
-
-# Local NASA EO Data cache
-.dwr_eo_toolkit/
-
-# Test artifacts
-.pytest_cache/
-htmlcov/
-.ruff_cache
-
-# Coverage reports
-.coverage
-*.cover
-coverage.xml
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.swp
-
-# IDE temporary files
-.vscode/settings.json
-.idea/workspace.xml
-.idea/
-
-# Downloaded data (if you're testing locally)
-data/
-downloads/
-*.hdf
-*.nc
-*.tif
-*.tiff
-*.geotiff
-
-# API responses (if debugging)
-api_responses/
-api_logs/
-
-# Environment variable files (never commit)
+# Environment variables (NEVER commit secrets!)
 .env
 .env.local
 .env.*.local
 
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+# Alembic migrations (auto-generated)
+alembic/versions/
 
-# Linux
-.directory
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Compiled files
-*.c
-*.so
-*.o
+# Logs
+logs/
+*.log
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
-
-# Zone.Identifier files (Windows alternate data streams)
-:Zone.Identifier
-*:Zone.Identifier
-*.zone.identifier
+# Docker
+.dwr/
 
 # runtime data and project management folders
 .dwr/
@@ -246,8 +73,3 @@ vision/
 
 # Claude Code local config
 .claude/
-
-# For databases
-postgres_data/
-*.db
-*.sqlite
