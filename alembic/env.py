@@ -1,18 +1,26 @@
 """Alembic environment configuration.
 
-Automatically loads DATABASE_URL from environment for migrations.
+Reads DATABASE_URL from the environment, falling back to alembic.ini.
+
+The URL is used exactly as given. An earlier version rewrote "localhost" to
+"postgres" here so that migrations would work inside Docker Compose; that made
+migrations impossible to run from anywhere else, because a correct localhost
+URL was silently turned into a hostname that only resolves on the compose
+network. Compose already supplies the right hostname through .env, so the
+rewrite was never needed.
 """
 
 import os
 from logging.config import fileConfig
 
+from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-from alembic import context
-
-# Load environment variables
-load_dotenv(".env.phase4")
+# Load .env from the current directory (or the nearest parent). Passing an
+# explicit filename that does not exist makes load_dotenv a silent no-op, which
+# is indistinguishable from a file that loaded but set nothing.
+load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,18 +31,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-from dwr_eo_toolkit.database import Base
+from dwr_eo_toolkit.database import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def _database_url() -> str | None:
+    """Resolve the connection URL: environment first, then alembic.ini."""
+    return os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
 
 
 def run_migrations_offline() -> None:
@@ -49,13 +53,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # Get URL from environment first, fall back to config
-    url = os.getenv("DATABASE_URL")
-    if not url:
-        url = config.get_main_option("sqlalchemy.url")
-
     context.configure(
-        url=url,
+        url=_database_url(),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -72,15 +71,10 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Get configuration section
-    configuration = config.get_section(config.config_ini_section)
+    configuration = config.get_section(config.config_ini_section) or {}
 
-    # Override sqlalchemy.url with environment variable if available
     database_url = os.getenv("DATABASE_URL")
     if database_url:
-        # Fix for Docker: Replace localhost with postgres service name
-        if "localhost" in database_url:
-            database_url = database_url.replace("localhost", "postgres")
         configuration["sqlalchemy.url"] = database_url
 
     connectable = engine_from_config(

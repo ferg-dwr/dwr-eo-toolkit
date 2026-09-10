@@ -179,7 +179,7 @@ curl -X POST http://localhost:8000/api/v1/downloads/search \
 ### Example: Start a Download
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/downloads \
+curl -X POST http://localhost:8000/api/v1/downloads/start \
   -H "Content-Type: application/json" \
   -d '{
     "product": "ECOSTRESS",
@@ -205,7 +205,8 @@ GET    /redoc                         # ReDoc
 
 POST   /api/v1/downloads/search       # Search for granules
 GET    /api/v1/downloads              # List download sessions
-POST   /api/v1/downloads              # Create download session
+POST   /api/v1/downloads              # Register a download session (no I/O)
+POST   /api/v1/downloads/start        # Search + download synchronously
 GET    /api/v1/downloads/{id}         # Get download details
 PATCH  /api/v1/downloads/{id}         # Update download
 DELETE /api/v1/downloads/{id}         # Cancel download
