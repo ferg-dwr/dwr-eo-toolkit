@@ -7,21 +7,29 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple, cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from ..database.connection import get_db
 from ..database.models import BatchOperation, DownloadSession, ScheduledJob
+from ..filters.spatial import BoundingBox
 from ..providers import EarthAccessProvider
-from .schemas import BatchCreate, JobCreate
+from .schemas import BatchCreate, DownloadCreate, JobCreate
 
 # ==============================================================================
 # Pydantic Models for Search & Download Endpoints
 # ==============================================================================
 
 
-class SearchRequest(BaseModel):
-    """Request model for search endpoint"""
+class GranuleQueryRequest(BaseModel):
+    """Fields shared by every endpoint that resolves a product + bbox + date range.
+
+    Search and download differ in what they do with the granules, not in how
+    the query is described, so the validation lives here once. Coordinate
+    checking delegates to filters.spatial.BoundingBox rather than restating
+    the rules -- that class already knows latitude is +/-90, not +/-180, and
+    that an inverted box is an error rather than an empty result.
+    """
 
     product: str = Field(..., description="Product name (e.g., 'ECOSTRESS', 'MODIS')")
     min_lon: float = Field(..., description="Min longitude")
@@ -30,7 +38,6 @@ class SearchRequest(BaseModel):
     max_lat: float = Field(..., description="Max latitude")
     start_date: str = Field(..., description="Start date YYYY-MM-DD")
     end_date: str = Field(..., description="End date YYYY-MM-DD")
-    max_results: int = Field(100, description="Max granules to return", ge=1, le=2000)
 
     @field_validator("product")
     @classmethod
@@ -39,13 +46,6 @@ class SearchRequest(BaseModel):
         if v.upper() not in valid_products:
             raise ValueError(f"Product must be one of {valid_products}")
         return v.upper()
-
-    @field_validator("min_lon", "min_lat", "max_lon", "max_lat")
-    @classmethod
-    def validate_coords(cls, v):
-        if not -180 <= v <= 180:
-            raise ValueError("Coordinate must be between -180 and 180")
-        return v
 
     @field_validator("start_date", "end_date")
     @classmethod
@@ -66,8 +66,25 @@ class SearchRequest(BaseModel):
                 raise ValueError("end_date must be >= start_date")
         return v
 
+    @model_validator(mode="after")
+    def validate_bbox(self):
+        """Reject out-of-range and inverted boxes at the door.
+
+        A transposed bbox is not a validation error to CMR -- it just returns
+        no granules, which is indistinguishable from a genuinely empty result
+        and miserable to debug from a notebook.
+        """
+        BoundingBox(self.min_lon, self.min_lat, self.max_lon, self.max_lat).validate()
+        return self
+
     def get_bbox(self) -> Tuple[float, float, float, float]:
         return (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
+
+
+class SearchRequest(GranuleQueryRequest):
+    """Request model for search endpoint"""
+
+    max_results: int = Field(100, description="Max granules to return", ge=1, le=2000)
 
 
 class SearchResponse(BaseModel):
@@ -81,16 +98,9 @@ class SearchResponse(BaseModel):
     request_summary: dict = Field(default_factory=dict)
 
 
-class DownloadStartRequest(BaseModel):
-    """Request to start a download"""
+class DownloadStartRequest(GranuleQueryRequest):
+    """Request to search for granules and download them."""
 
-    product: str = Field(..., description="Product name (ECOSTRESS, MODIS)")
-    min_lon: float = Field(..., description="Min longitude")
-    min_lat: float = Field(..., description="Min latitude")
-    max_lon: float = Field(..., description="Max longitude")
-    max_lat: float = Field(..., description="Max latitude")
-    start_date: str = Field(..., description="Start date YYYY-MM-DD")
-    end_date: str = Field(..., description="End date YYYY-MM-DD")
     max_results: int = Field(10, description="Max granules to download", ge=1, le=100)
     output_dir: str = Field("./downloads", description="Output directory for files")
     max_workers: int = Field(3, description="Parallel download workers", ge=1, le=10)
@@ -146,10 +156,12 @@ def get_provider() -> EarthAccessProvider:
     Returns metadata about available granules that match the search criteria.
     """,
 )
-async def search_imagery(request: SearchRequest) -> SearchResponse:
+async def search_imagery(
+    request: SearchRequest,
+    provider: EarthAccessProvider = Depends(get_provider),
+) -> SearchResponse:
     """Search for imagery granules."""
     try:
-        provider = get_provider()
 
         print(f"🔍 Search request: {request.product}")
         print(f"   Bbox: {request.get_bbox()}")
@@ -194,7 +206,7 @@ async def search_imagery(request: SearchRequest) -> SearchResponse:
 
 
 @downloads_router.post(
-    "",
+    "/start",
     status_code=200,
     response_model=DownloadStartResponse,
     summary="Search and download granules",
@@ -214,9 +226,9 @@ async def search_imagery(request: SearchRequest) -> SearchResponse:
 async def start_download(
     request: DownloadStartRequest,
     db: Session = Depends(get_db),
+    provider: EarthAccessProvider = Depends(get_provider),
 ) -> DownloadStartResponse:
     """Search for granules and download them."""
-    provider = get_provider()
     session = None
 
     try:
@@ -344,6 +356,27 @@ async def list_downloads(db: Session = Depends(get_db)):
         "downloads": [_session_to_dict(s) for s in sessions],
         "count": len(sessions),
     }
+
+
+@downloads_router.post("", status_code=201)
+async def create_download(payload: DownloadCreate, db: Session = Depends(get_db)):
+    """Register a download session without running it.
+
+    Cheap and side-effect free: no CMR query, no files. Use POST
+    /api/v1/downloads/start to actually fetch granules.
+    """
+    session = DownloadSession(
+        status="pending",
+        state={
+            "product": payload.product,
+            "start_date": payload.start_date,
+            "end_date": payload.end_date,
+        },
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return _session_to_dict(session)
 
 
 @downloads_router.get("/{download_id}")
