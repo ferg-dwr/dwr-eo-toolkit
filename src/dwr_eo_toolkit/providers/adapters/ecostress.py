@@ -60,7 +60,9 @@ class ECOSTRESSAdapter(InstrumentAdapter):
     def __init__(self) -> None:
         """Initialize ECOSTRESS adapter."""
         super().__init__()
-        self.long_name = "ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station"
+        self.long_name = (
+            "ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station"
+        )
 
     def get_keywords(self) -> list[str]:
         """Get keywords that match ECOSTRESS."""
@@ -101,7 +103,9 @@ class ECOSTRESSAdapter(InstrumentAdapter):
             ],
         )
 
-    def post_process_granules(self, granules: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
+    def post_process_granules(
+        self, granules: list[Dict[str, Any]]
+    ) -> list[Dict[str, Any]]:
         """
         Post-process ECOSTRESS granules.
 

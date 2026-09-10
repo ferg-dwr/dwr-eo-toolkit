@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,24 +12,44 @@ authors = [
     {name = "Fernando Emiliano Romero Galvan", email = "fernando.romerogalvan@gmail.com"},
 ]
 license = {text = "MIT"}
+
+# Base install covers the query-and-download path only: `core` needs requests,
+# `providers` needs earthaccess, and `filters`/`monitoring` need nothing
+# third-party. Everything else is an extra, so an analyst who wants to search
+# NASA granules does not also install a Postgres driver and a web server.
 dependencies = [
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "sqlalchemy>=2.0.0",
-    "psycopg2-binary>=2.9.0",
-    "alembic>=1.13.0",
-    "pydantic>=2.0.0",
     "earthaccess>=0.17.0",
     "requests>=2.31.0",
-    "numpy>=1.24.0",
-    "pandas>=2.0.0",
-    "apscheduler>=3.10.0",
-    "click>=8.0",
-    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
+# Batch/scheduled downloads
+scheduler = [
+    "apscheduler>=3.10.0",
+]
+# Persistence layer
+db = [
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.13.0",
+    "python-dotenv>=1.0",
+]
+# REST API server (implies db: api routes read/write the ORM)
+api = [
+    "dwr-eo-toolkit[db,scheduler]",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+]
+cli = [
+    "click>=8.0",
+]
+# Everything, for the Docker image and for contributors
+all = [
+    "dwr-eo-toolkit[api,cli]",
+]
 dev = [
+    "dwr-eo-toolkit[all]",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "pytest-mock>=3.10",
@@ -37,6 +57,7 @@ dev = [
     "mypy>=1.0",
     "types-requests>=2.31.0",
     "httpx>=0.24.0",
+    "build>=1.0",
 ]
 
 [project.urls]
@@ -44,9 +65,15 @@ Homepage = "https://github.com/ferg-dwr/dwr-eo-toolkit"
 Documentation = "https://github.com/ferg-dwr/dwr-eo-toolkit"
 Repository = "https://github.com/ferg-dwr/dwr-eo-toolkit.git"
 
+# Explicit `packages = [...]` declares ONLY the top-level package and silently
+# drops every subpackage from the wheel. Discovery is what src-layout needs.
+# Guarded by tests/test_packaging.py.
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP"]
@@ -75,10 +102,5 @@ addopts = "-v --strict-markers"
 markers = [
     "integration: marks tests as integration tests",
     "slow: marks tests as slow",
+    "packaging: marks tests that build a wheel (slow, needs `build`)",
 ]
-
-[tool.setuptools]
-packages = ["dwr_eo_toolkit"]
-
-[tool.setuptools.package-dir]
-"" = "src"

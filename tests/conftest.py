@@ -113,7 +113,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "integration: mark test as an integration test (requires API access)"
     )
-    config.addinivalue_line("markers", "slow: mark test as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line(
+        "markers", "slow: mark test as slow (deselect with '-m \"not slow\"')"
+    )
     config.addinivalue_line("markers", "auth: mark test as related to authentication")
     config.addinivalue_line("markers", "client: mark test as related to HTTP client")
 

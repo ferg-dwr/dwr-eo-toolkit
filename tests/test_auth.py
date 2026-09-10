@@ -218,7 +218,9 @@ class TestEarthDataLoginAuth:
             cache_file = auth.token_cache_file
             cache_data = {
                 "token": "oldtoken",
-                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+                "timestamp": (
+                    datetime.now(timezone.utc) - timedelta(hours=2)
+                ).isoformat(),
             }
             cache_file.write_text(json.dumps(cache_data))
 
@@ -318,7 +320,9 @@ class TestAuthCoverageExtra:
         auth._token_expiry = None
         auth.token_cache_file = tmp_path / "cache.json"
 
-        with patch.object(auth.token_provider, "get_credentials", return_value="pre_generated_tok"):
+        with patch.object(
+            auth.token_provider, "get_credentials", return_value="pre_generated_tok"
+        ):
             token = auth.get_token()
 
         assert token == "pre_generated_tok"
@@ -344,7 +348,9 @@ class TestAuthCoverageExtra:
 
         with patch.object(auth.netrc_provider, "get_credentials", return_value=None):
             with patch.object(
-                auth.env_provider, "get_credentials", return_value=("envuser", "envpass")
+                auth.env_provider,
+                "get_credentials",
+                return_value=("envuser", "envpass"),
             ):
                 creds = auth._get_credentials()
 
@@ -399,7 +405,9 @@ class TestAuthCoverageExtra:
         """clear_cache swallows errors when deleting cache file (lines 373-374)."""
         auth = EarthDataLoginAuth()
         auth.token_cache_file = tmp_path / "cache.json"
-        auth.token_cache_file.write_text('{"token":"t","timestamp":"2024-01-01T00:00:00+00:00"}')
+        auth.token_cache_file.write_text(
+            '{"token":"t","timestamp":"2024-01-01T00:00:00+00:00"}'
+        )
 
         with patch.object(Path, "unlink", side_effect=OSError("locked")):
             auth.clear_cache()

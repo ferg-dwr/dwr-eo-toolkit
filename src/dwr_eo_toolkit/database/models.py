@@ -3,7 +3,16 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -19,11 +28,15 @@ class DownloadSession(Base):
     __tablename__ = "download_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(
+        String, unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
 
     # Session state and metadata
     state = Column(JSON, default={})  # Stores DownloadSession state
-    status = Column(String, default="pending")  # pending, in_progress, completed, failed
+    status = Column(
+        String, default="pending"
+    )  # pending, in_progress, completed, failed
 
     # File counts
     total_files = Column(Integer, default=0)
@@ -31,7 +44,9 @@ class DownloadSession(Base):
     failed_files = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
@@ -41,12 +56,12 @@ class DownloadSession(Base):
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
-    tasks = relationship("DownloadTask", back_populates="session", cascade="all, delete-orphan")
+    tasks = relationship(
+        "DownloadTask", back_populates="session", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return (
-            f"<DownloadSession(id={self.id}, session_id={self.session_id}, status={self.status})>"
-        )
+        return f"<DownloadSession(id={self.id}, session_id={self.session_id}, status={self.status})>"
 
 
 class DownloadTask(Base):
@@ -64,7 +79,9 @@ class DownloadTask(Base):
     file_name = Column(String)
 
     # Status and progress
-    status = Column(String, default="pending")  # pending, downloading, completed, failed
+    status = Column(
+        String, default="pending"
+    )  # pending, downloading, completed, failed
     progress = Column(Float, default=0.0)  # 0-100%
 
     # File information
@@ -76,7 +93,9 @@ class DownloadTask(Base):
     retry_count = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
@@ -98,7 +117,9 @@ class BatchOperation(Base):
     __tablename__ = "batch_operations"
 
     id = Column(Integer, primary_key=True, index=True)
-    batch_id = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    batch_id = Column(
+        String, unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
 
     # Batch metadata
     name = Column(String)
@@ -118,7 +139,9 @@ class BatchOperation(Base):
     config = Column(JSON, default={})  # Any additional configuration
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
@@ -145,7 +168,9 @@ class ScheduledJob(Base):
     cron_expression = Column(String, nullable=True)  # For recurring jobs
 
     # Status
-    status = Column(String, default="pending")  # pending, active, paused, completed, failed
+    status = Column(
+        String, default="pending"
+    )  # pending, active, paused, completed, failed
     is_active = Column(Boolean, default=True)
 
     # Schedule information
@@ -156,7 +181,9 @@ class ScheduledJob(Base):
     session_config = Column(JSON)  # Serialized DownloadSession config
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
@@ -164,7 +191,9 @@ class ScheduledJob(Base):
     )
 
     def __repr__(self):
-        return f"<ScheduledJob(id={self.id}, job_id={self.job_id}, status={self.status})>"
+        return (
+            f"<ScheduledJob(id={self.id}, job_id={self.job_id}, status={self.status})>"
+        )
 
 
 class DownloadResult(Base):
@@ -173,7 +202,9 @@ class DownloadResult(Base):
     __tablename__ = "download_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    result_id = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    result_id = Column(
+        String, unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
     task_id = Column(String, ForeignKey("download_tasks.task_id"))
 
     # Download result information

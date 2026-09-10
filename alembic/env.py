@@ -5,12 +5,14 @@ Automatically loads DATABASE_URL from environment for migrations.
 
 import os
 from logging.config import fileConfig
+
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 
 # Load environment variables
-load_dotenv('.env.phase4')
+load_dotenv(".env.phase4")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,6 +28,7 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from dwr_eo_toolkit.database import Base
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -47,10 +50,10 @@ def run_migrations_offline() -> None:
 
     """
     # Get URL from environment first, fall back to config
-    url = os.getenv('DATABASE_URL')
+    url = os.getenv("DATABASE_URL")
     if not url:
         url = config.get_main_option("sqlalchemy.url")
-    
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,35 +67,35 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
- 
+
     In this scenario we need to create an Engine
     and associate a connection with the context.
- 
+
     """
     # Get configuration section
     configuration = config.get_section(config.config_ini_section)
-    
+
     # Override sqlalchemy.url with environment variable if available
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv("DATABASE_URL")
     if database_url:
         # Fix for Docker: Replace localhost with postgres service name
         if "localhost" in database_url:
             database_url = database_url.replace("localhost", "postgres")
-        configuration['sqlalchemy.url'] = database_url
-    
+        configuration["sqlalchemy.url"] = database_url
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
- 
+
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
- 
+        context.configure(connection=connection, target_metadata=target_metadata)
+
         with context.begin_transaction():
             context.run_migrations()
+
+
 if context.is_offline_mode():
     run_migrations_offline()
 else:

@@ -57,7 +57,11 @@ class DownloadCreate(BaseModel):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "example": {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+            "example": {
+                "product": "MODIS",
+                "start_date": "2024-01-01",
+                "end_date": "2024-01-31",
+            }
         }
     )
 

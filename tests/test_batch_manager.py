@@ -51,13 +51,17 @@ class TestBatchManagerBasics:
         assert len(manager.sessions) == 0
         assert manager.paused is False
 
-    def test_batch_manager_add_session(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_add_session(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Add single session."""
         session = MagicMock(spec=DownloadSession)
         batch_manager.add_session(session)
         assert len(batch_manager.sessions) == 1
 
-    def test_batch_manager_add_multiple_sessions(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_add_multiple_sessions(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Add multiple sessions."""
         session1 = MagicMock(spec=DownloadSession)
         session2 = MagicMock(spec=DownloadSession)
@@ -73,7 +77,9 @@ class TestBatchManagerBasics:
 class TestBatchManagerExecution:
     """Test batch execution."""
 
-    def test_batch_manager_execute_empty(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_execute_empty(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Execute with no sessions."""
         results = batch_manager.execute_all()
         assert results == []
@@ -117,7 +123,9 @@ class TestBatchManagerExecution:
         assert len(results) == 2
         assert all(isinstance(r, DownloadResult) for r in results)
 
-    def test_batch_manager_execute_with_error(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_execute_with_error(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Execute with session that raises error."""
         mock_session = MagicMock(spec=DownloadSession)
         mock_session.execute.side_effect = RuntimeError("Download failed")
@@ -141,7 +149,9 @@ class TestBatchManagerCheckpoints:
         result.successful = 8
         result.failed = 2
 
-        checkpoint_file = batch_manager.save_checkpoint("test_checkpoint", mock_session, result)
+        checkpoint_file = batch_manager.save_checkpoint(
+            "test_checkpoint", mock_session, result
+        )
 
         assert checkpoint_file.exists()
         assert checkpoint_file.name == "test_checkpoint.json"
@@ -222,7 +232,9 @@ class TestBatchManagerControl:
         assert batch_manager.paused is True
         mock_session.pause.assert_called_once()
 
-    def test_batch_manager_resume_all(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_resume_all(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Resume all sessions."""
         mock_session = MagicMock(spec=DownloadSession)
         batch_manager.add_session(mock_session)
@@ -234,7 +246,9 @@ class TestBatchManagerControl:
         assert batch_manager.paused is False
         mock_session.resume.assert_called_once()
 
-    def test_batch_manager_cancel_all(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_cancel_all(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Cancel all sessions."""
         mock_session = MagicMock(spec=DownloadSession)
         batch_manager.add_session(mock_session)
@@ -247,7 +261,9 @@ class TestBatchManagerControl:
 class TestBatchManagerProgress:
     """Test progress tracking."""
 
-    def test_batch_manager_get_progress_empty(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_get_progress_empty(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Get progress with no sessions."""
         progress = batch_manager.get_progress()
 
@@ -298,7 +314,9 @@ class TestBatchManagerProgress:
 class TestBatchManagerStatistics:
     """Test statistics gathering."""
 
-    def test_batch_manager_get_statistics_empty(self, batch_manager: BatchDownloadManager) -> None:
+    def test_batch_manager_get_statistics_empty(
+        self, batch_manager: BatchDownloadManager
+    ) -> None:
         """Get statistics with no sessions."""
         stats = batch_manager.get_statistics()
 

@@ -150,7 +150,10 @@ async def websocket_download(websocket: WebSocket, download_id: str) -> None:
         # - Clean up resources
         await manager.broadcast(
             download_id,
-            {"type": "user_disconnected", "timestamp": datetime.now(timezone.utc).isoformat()},
+            {
+                "type": "user_disconnected",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
 
@@ -207,7 +210,10 @@ async def websocket_batch(websocket: WebSocket, batch_id: str) -> None:
 
         await manager.broadcast(
             batch_id,
-            {"type": "user_disconnected", "timestamp": datetime.now(timezone.utc).isoformat()},
+            {
+                "type": "user_disconnected",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
 
@@ -265,7 +271,10 @@ async def websocket_job(websocket: WebSocket, job_id: str) -> None:
 
         await manager.broadcast(
             job_id,
-            {"type": "user_disconnected", "timestamp": datetime.now(timezone.utc).isoformat()},
+            {
+                "type": "user_disconnected",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
         )
 
 
@@ -306,7 +315,9 @@ async def notify_batch_update(batch_id: str, progress: int, task_status: dict) -
     await manager.broadcast(batch_id, message)
 
 
-async def notify_job_executed(job_id: str, execution_status: str, next_run: str) -> None:
+async def notify_job_executed(
+    job_id: str, execution_status: str, next_run: str
+) -> None:
     """
     Notify all clients about job execution.
 

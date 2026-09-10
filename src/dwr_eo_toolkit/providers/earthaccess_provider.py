@@ -141,7 +141,9 @@ class EarthAccessProvider(BaseProvider):
             logger.error(f"Search failed for {product}: {e}")
             raise
 
-    def download(self, granules: List[Any], output_dir: str, **kwargs: Any) -> List[str]:
+    def download(
+        self, granules: List[Any], output_dir: str, **kwargs: Any
+    ) -> List[str]:
         """
         Download granules.
 

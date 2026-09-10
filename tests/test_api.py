@@ -12,7 +12,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from dwr_eo_toolkit.api.app import app
-from dwr_eo_toolkit.api.routes import downloads_router  # noqa: F401 — import registers routes
+from dwr_eo_toolkit.api.routes import (
+    downloads_router,
+)  # noqa: F401 — import registers routes
 from dwr_eo_toolkit.database.connection import get_db
 from dwr_eo_toolkit.database.models import (
     Base,
@@ -89,7 +91,11 @@ class TestDownloadsEndpoints:
         assert data["downloads"] == []
 
     def test_create_download_returns_201(self, client):
-        payload = {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        payload = {
+            "product": "MODIS",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        }
         resp = client.post("/api/v1/downloads", json=payload)
         assert resp.status_code == 201
         data = resp.json()
@@ -102,7 +108,11 @@ class TestDownloadsEndpoints:
         assert resp.status_code == 422
 
     def test_get_download_returns_200(self, client):
-        payload = {"product": "ECOSTRESS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        payload = {
+            "product": "ECOSTRESS",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        }
         created = client.post("/api/v1/downloads", json=payload).json()
         resp = client.get(f"/api/v1/downloads/{created['id']}")
         assert resp.status_code == 200
@@ -113,7 +123,11 @@ class TestDownloadsEndpoints:
         assert resp.status_code == 404
 
     def test_update_download_returns_200(self, client):
-        payload = {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        payload = {
+            "product": "MODIS",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        }
         created = client.post("/api/v1/downloads", json=payload).json()
         resp = client.patch(f"/api/v1/downloads/{created['id']}")
         assert resp.status_code == 200
@@ -123,7 +137,11 @@ class TestDownloadsEndpoints:
         assert resp.status_code == 404
 
     def test_cancel_download_returns_204(self, client):
-        payload = {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        payload = {
+            "product": "MODIS",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        }
         created = client.post("/api/v1/downloads", json=payload).json()
         resp = client.delete(f"/api/v1/downloads/{created['id']}")
         assert resp.status_code == 204
@@ -133,7 +151,11 @@ class TestDownloadsEndpoints:
         assert resp.status_code == 404
 
     def test_list_downloads_after_create(self, client):
-        payload = {"product": "MODIS", "start_date": "2024-01-01", "end_date": "2024-01-31"}
+        payload = {
+            "product": "MODIS",
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        }
         client.post("/api/v1/downloads", json=payload)
         resp = client.get("/api/v1/downloads")
         assert resp.json()["count"] == 1

@@ -66,3 +66,10 @@ logs/
 
 # Docker
 .dwr/
+
+# runtime data and project management folders
+.dwr/
+vision/
+
+# Claude Code local config
+.claude/
