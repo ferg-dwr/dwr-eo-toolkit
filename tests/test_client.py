@@ -565,7 +565,9 @@ class TestClientCoverageExtra:
         mock_response.status_code = 200
         mock_response.headers = {}
 
-        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
+        with patch.object(
+            http_client, "request", return_value=mock_response
+        ) as mock_req:
             http_client.put("/resource", {"key": "val"})
             mock_req.assert_called_once_with("PUT", "/resource", json={"key": "val"})
 
@@ -577,7 +579,9 @@ class TestClientCoverageExtra:
         mock_response.status_code = 200
         mock_response.headers = {}
 
-        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
+        with patch.object(
+            http_client, "request", return_value=mock_response
+        ) as mock_req:
             http_client.delete("/resource")
             mock_req.assert_called_once_with("DELETE", "/resource")
 

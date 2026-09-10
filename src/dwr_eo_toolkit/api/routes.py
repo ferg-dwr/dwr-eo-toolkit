@@ -162,7 +162,6 @@ async def search_imagery(
 ) -> SearchResponse:
     """Search for imagery granules."""
     try:
-
         print(f"🔍 Search request: {request.product}")
         print(f"   Bbox: {request.get_bbox()}")
         print(f"   Dates: {request.start_date} to {request.end_date}")
@@ -382,30 +381,18 @@ async def create_download(payload: DownloadCreate, db: Session = Depends(get_db)
 @downloads_router.get("/{download_id}")
 async def get_download(download_id: str, db: Session = Depends(get_db)):
     """Get details of a specific download session."""
-    session = (
-        db.query(DownloadSession)
-        .filter(DownloadSession.session_id == download_id)
-        .first()
-    )
+    session = db.query(DownloadSession).filter(DownloadSession.session_id == download_id).first()
     if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Download '{download_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Download '{download_id}' not found")
     return _session_to_dict(session)
 
 
 @downloads_router.patch("/{download_id}")
 async def update_download(download_id: str, db: Session = Depends(get_db)):
     """Update a download (pause, resume, cancel)."""
-    session = (
-        db.query(DownloadSession)
-        .filter(DownloadSession.session_id == download_id)
-        .first()
-    )
+    session = db.query(DownloadSession).filter(DownloadSession.session_id == download_id).first()
     if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Download '{download_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Download '{download_id}' not found")
     db.commit()
     return _session_to_dict(session)
 
@@ -413,15 +400,9 @@ async def update_download(download_id: str, db: Session = Depends(get_db)):
 @downloads_router.delete("/{download_id}", status_code=204)
 async def cancel_download(download_id: str, db: Session = Depends(get_db)):
     """Cancel a download session."""
-    session = (
-        db.query(DownloadSession)
-        .filter(DownloadSession.session_id == download_id)
-        .first()
-    )
+    session = db.query(DownloadSession).filter(DownloadSession.session_id == download_id).first()
     if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Download '{download_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Download '{download_id}' not found")
     session.status = "cancelled"  # type: ignore[assignment]
     db.commit()
 
