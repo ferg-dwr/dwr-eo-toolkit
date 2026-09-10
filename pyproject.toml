@@ -103,3 +103,8 @@ markers = [
     "slow: marks tests as slow",
     "packaging: marks tests that build a wheel (slow, needs `build`)",
 ]
+filterwarnings = [
+    # Third-party, not actionable here. Remove when the dependency is fixed.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning",
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]
