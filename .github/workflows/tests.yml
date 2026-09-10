@@ -108,11 +108,10 @@ jobs:
     - name: Test Docker image
       run: |
         docker build -t dwr-eo-toolkit:test .
-        docker run --rm dwr-eo-toolkit:test python -c "
-          from dwr_eo_toolkit.download_manager import (
-            BatchDownloadManager,
-            DownloadScheduler,
-            DownloadSession
-          )
-          print('Core imports successful')
-        "
+        # Kept on one line: `python -c "` followed by an indented heredoc-style
+        # block sends leading whitespace to the interpreter and raises
+        # IndentationError, which is what this step used to do.
+        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit.download_manager import BatchDownloadManager, DownloadScheduler, DownloadSession; print('scheduler extra OK')"
+        # Base install only: proves the lazy __init__ and extras split hold in
+        # the built image, not just in the test env.
+        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit.filters import Query; from dwr_eo_toolkit.providers import EarthAccessProvider; print('base imports OK')"
