@@ -11,7 +11,7 @@ Test coverage:
 - Parameter conversion
 """
 
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -48,7 +48,7 @@ class TestBaseFilter:
 
         # Missing validate
         class NoValidate(Filter):
-            def to_params(self) -> Dict[str, Any]:
+            def to_params(self) -> dict[str, Any]:
                 return {}
 
         with pytest.raises(TypeError, match="validate"):
@@ -58,7 +58,7 @@ class TestBaseFilter:
         """Subclass with all methods implemented can be instantiated."""
 
         class CompleteFilter(Filter):
-            def to_params(self) -> Dict[str, Any]:
+            def to_params(self) -> dict[str, Any]:
                 return {"test": "params"}
 
             def validate(self) -> bool:
@@ -439,11 +439,7 @@ class TestQuery:
 
     def test_filters_summary(self):
         """Should provide filter summary."""
-        query = (
-            Query()
-            .with_product("ECOSTRESS_L2_LSTE")
-            .with_spatial_bounds(-120, 30, -100, 40)
-        )
+        query = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
 
         summary = query.filters_summary()
         assert "ECOSTRESS_L2_LSTE" in summary
@@ -451,11 +447,7 @@ class TestQuery:
 
     def test_copy(self):
         """Should create independent copy."""
-        original = (
-            Query()
-            .with_product("ECOSTRESS_L2_LSTE")
-            .with_spatial_bounds(-120, 30, -100, 40)
-        )
+        original = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
 
         copy = original.copy().with_cloud_cover(10)
 
@@ -482,11 +474,7 @@ class TestQuery:
 
     def test_repr(self):
         """Should have meaningful representation."""
-        query = (
-            Query()
-            .with_product("ECOSTRESS_L2_LSTE")
-            .with_spatial_bounds(-120, 30, -100, 40)
-        )
+        query = Query().with_product("ECOSTRESS_L2_LSTE").with_spatial_bounds(-120, 30, -100, 40)
         repr_str = repr(query)
         assert "Query" in repr_str
         assert "ECOSTRESS_L2_LSTE" in repr_str

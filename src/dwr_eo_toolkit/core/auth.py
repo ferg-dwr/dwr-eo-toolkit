@@ -14,9 +14,8 @@ import json
 import logging
 import os
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 import requests
 
@@ -33,7 +32,7 @@ class CredentialProvider(ABC):
     """Abstract base for credential sources."""
 
     @abstractmethod
-    def get_credentials(self) -> Union[Tuple[str, str], str, None]:
+    def get_credentials(self) -> tuple[str, str] | str | None:
         """Returns either (username, password) tuple or token string or None"""
         pass
 
@@ -41,7 +40,7 @@ class CredentialProvider(ABC):
 class NetrcProvider(CredentialProvider):
     """Reads credentials from .netrc file (Unix/Linux/Mac)."""
 
-    def __init__(self, netrc_path: Optional[str] = None):
+    def __init__(self, netrc_path: str | None = None):
         """
         Args:
             netrc_path: Path to .netrc file. Defaults to ~/.netrc
@@ -51,7 +50,7 @@ class NetrcProvider(CredentialProvider):
         else:
             self.netrc_path = Path.home() / ".netrc"
 
-    def get_credentials(self) -> Optional[tuple[str, str]]:
+    def get_credentials(self) -> tuple[str, str] | None:
         """Extract Earthdata Login credentials from .netrc."""
         if not self.netrc_path.exists():
             return None
@@ -91,7 +90,7 @@ class EnvironmentProvider(CredentialProvider):
         self.username_var = username_var
         self.password_var = password_var
 
-    def get_credentials(self) -> Optional[tuple[str, str]]:
+    def get_credentials(self) -> tuple[str, str] | None:
         """Extract credentials from environment variables."""
         username = os.getenv(self.username_var)
         password = os.getenv(self.password_var)
@@ -117,11 +116,11 @@ class TokenProvider(CredentialProvider):
         """
         self.token_var = token_var
 
-    def get_token(self) -> Optional[str]:
+    def get_token(self) -> str | None:
         """Get EDL bearer token from environment."""
         return os.getenv(self.token_var)
 
-    def get_credentials(self) -> Optional[str]:
+    def get_credentials(self) -> str | None:
         return os.getenv(self.token_var)
 
 
@@ -145,8 +144,8 @@ class EarthDataLoginAuth:
 
     def __init__(
         self,
-        netrc_path: Optional[str] = None,
-        token_cache_dir: Optional[str] = None,
+        netrc_path: str | None = None,
+        token_cache_dir: str | None = None,
         username_var: str = "EARTHDATA_USERNAME",
         password_var: str = "EARTHDATA_PASSWORD",
         token_var: str = "EARTHDATA_TOKEN",
@@ -176,8 +175,8 @@ class EarthDataLoginAuth:
         self.netrc_provider = NetrcProvider(netrc_path)
         self.env_provider = EnvironmentProvider(username_var, password_var)
 
-        self._cached_token: Optional[str] = None
-        self._token_expiry: Optional[datetime] = None
+        self._cached_token: str | None = None
+        self._token_expiry: datetime | None = None
 
     def get_token(self) -> str:
         """
@@ -197,7 +196,7 @@ class EarthDataLoginAuth:
         """
         # 1. Check in-memory cache
         if self._cached_token and self._token_expiry:
-            if datetime.now(timezone.utc) < self._token_expiry - timedelta(minutes=5):
+            if datetime.now(UTC) < self._token_expiry - timedelta(minutes=5):
                 logger.debug("Using cached bearer token (in-memory)")
                 return self._cached_token
 
@@ -214,14 +213,14 @@ class EarthDataLoginAuth:
             logger.debug("Using pre-generated EDL bearer token from environment")
             self._cached_token = creds
             # Pre-generated tokens expire in 60 days, but we don't know when
-            self._token_expiry = datetime.now(timezone.utc) + timedelta(days=59)
+            self._token_expiry = datetime.now(UTC) + timedelta(days=59)
             return creds
 
         # 4. Request new token using credentials
         token = self._request_token()
         if token:
             self._cached_token = token
-            self._token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+            self._token_expiry = datetime.now(UTC) + timedelta(hours=1)
             self._save_cached_token(token)
             return token
 
@@ -232,7 +231,7 @@ class EarthDataLoginAuth:
             "  3. EARTHDATA_USERNAME and EARTHDATA_PASSWORD environment variables"
         )
 
-    def _request_token(self) -> Optional[str]:
+    def _request_token(self) -> str | None:
         """
         Request a new EDL bearer token using username/password credentials.
 
@@ -260,7 +259,7 @@ class EarthDataLoginAuth:
             logger.error(f"Failed to request EDL token: {e}")
             return None
 
-    def _get_credentials(self) -> Optional[Tuple[str, str]]:
+    def _get_credentials(self) -> tuple[str, str] | None:
         """Get credentials from first available source."""
         # Try .netrc first (most secure)
         creds = self.netrc_provider.get_credentials()
@@ -279,7 +278,7 @@ class EarthDataLoginAuth:
         try:
             cache_data = {
                 "token": token,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
             self.token_cache_file.write_text(
                 json.dumps(cache_data, indent=2),
@@ -291,7 +290,7 @@ class EarthDataLoginAuth:
         except Exception as e:
             logger.warning(f"Could not cache token: {e}")
 
-    def _load_cached_token(self) -> Optional[str]:
+    def _load_cached_token(self) -> str | None:
         if not self.token_cache_file.exists():
             return None
 
@@ -305,7 +304,7 @@ class EarthDataLoginAuth:
 
             # Tokens expire in 1 hour (conservative assumption)
             cached_time = datetime.fromisoformat(timestamp_str)
-            if datetime.now(timezone.utc) - cached_time < timedelta(hours=1):
+            if datetime.now(UTC) - cached_time < timedelta(hours=1):
                 return str(token) if isinstance(token, str) else None
         except Exception as e:
             logger.debug(f"Could not load cached token: {e}")
@@ -328,9 +327,7 @@ class EarthDataLoginAuth:
             existing_lines = netrc_path.read_text().splitlines()
 
         # Remove any existing urs.earthdata.nasa.gov entry
-        new_lines = [
-            line for line in existing_lines if "urs.earthdata.nasa.gov" not in line
-        ]
+        new_lines = [line for line in existing_lines if "urs.earthdata.nasa.gov" not in line]
 
         # Add new entry
         new_lines.extend(
@@ -346,9 +343,7 @@ class EarthDataLoginAuth:
         netrc_path.chmod(0o600)  # .netrc must be readable only by owner
         logger.info(f"Updated {netrc_path} with Earthdata Login credentials")
 
-    def setup_environment(
-        self, username: str, password: str, token: Optional[str] = None
-    ) -> None:
+    def setup_environment(self, username: str, password: str, token: str | None = None) -> None:
         """
         Print shell commands to set up environment variables.
 

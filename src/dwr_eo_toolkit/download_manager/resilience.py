@@ -3,9 +3,9 @@ Resilience - Retry and resume strategies for download operations.
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Optional
 
 
 class RetryStrategy(Enum):
@@ -54,7 +54,7 @@ class ExponentialBackoffRetry:
         """
         self.config = config
         self.attempt = 0
-        self.last_exception: Optional[Exception] = None
+        self.last_exception: Exception | None = None
 
     def get_delay(self) -> float:
         """Calculate delay for next attempt.
@@ -63,9 +63,7 @@ class ExponentialBackoffRetry:
             Delay in seconds
         """
         if self.config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-            delay = self.config.initial_delay * (
-                self.config.backoff_multiplier**self.attempt
-            )
+            delay = self.config.initial_delay * (self.config.backoff_multiplier**self.attempt)
         elif self.config.strategy == RetryStrategy.LINEAR_BACKOFF:
             delay = self.config.initial_delay * (self.attempt + 1)
         else:  # FIXED_DELAY
@@ -145,8 +143,8 @@ class ResilienceManager:
 
     def __init__(
         self,
-        retry_config: Optional[RetryConfig] = None,
-        resume_config: Optional[ResumeConfig] = None,
+        retry_config: RetryConfig | None = None,
+        resume_config: ResumeConfig | None = None,
     ):
         """Initialize resilience manager.
 

@@ -15,7 +15,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Union, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -582,7 +582,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=1)
 
-        granules: List[Union[Dict[str, Any], DownloadTask]] = [
+        granules: list[dict[str, Any] | DownloadTask] = [
             {"url": "https://example.com/file.hdf", "filename": "file.hdf", "size": 12},
         ]
 
@@ -602,7 +602,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=2)
 
-        granules: List[Union[Dict[str, Any], DownloadTask]] = [
+        granules: list[dict[str, Any] | DownloadTask] = [
             {
                 "url": f"https://example.com/file{i}.hdf",
                 "filename": f"file{i}.hdf",
@@ -776,9 +776,7 @@ class TestProgressCoverageExtra:
         p = DownloadProgress()
         p.start_time = datetime.now()
         # Force elapsed to 0 by making start_time == now
-        with patch.object(
-            type(p), "elapsed_time", property(lambda self: timedelta(seconds=0))
-        ):
+        with patch.object(type(p), "elapsed_time", property(lambda self: timedelta(seconds=0))):
             speed = p.download_speed
         assert speed == "0 B/s"
 
@@ -803,9 +801,7 @@ class TestProgressCoverageExtra:
         """current_file_speed returns '0 B/s' when elapsed < 0.1s (lines 109-115)."""
         p = DownloadProgress(total_bytes=1000, downloaded_bytes=500)
         p.current_file_progress = 0.5
-        with patch.object(
-            type(p), "elapsed_time", property(lambda self: timedelta(seconds=0.05))
-        ):
+        with patch.object(type(p), "elapsed_time", property(lambda self: timedelta(seconds=0.05))):
             speed = p.current_file_speed
         assert speed == "0 B/s"
 
@@ -905,9 +901,7 @@ class TestResilienceCoverageExtra:
         from dwr_eo_toolkit.download_manager.resilience import ResilienceManager
 
         manager = ResilienceManager()
-        task = DownloadTask(
-            url="https://ex.com/f.hdf", output_path=tmp_path / "missing.hdf"
-        )
+        task = DownloadTask(url="https://ex.com/f.hdf", output_path=tmp_path / "missing.hdf")
         assert manager.should_resume(task) is False
 
     def test_should_resume_true_for_partial_file(self, tmp_path):
@@ -1011,9 +1005,7 @@ class TestDownloadSessionCoverageExtra:
     def test_execute_handles_outer_exception(self, tmp_path):
         """execute catches exceptions outside the future loop (lines 277-279)."""
         session = DownloadSession(
-            tasks=[
-                DownloadTask(url="https://ex.com/f.hdf", output_path=tmp_path / "f.hdf")
-            ]
+            tasks=[DownloadTask(url="https://ex.com/f.hdf", output_path=tmp_path / "f.hdf")]
         )
 
         with patch(

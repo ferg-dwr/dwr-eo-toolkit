@@ -10,7 +10,7 @@ Tests cover:
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -31,9 +31,9 @@ class MockResponse:
     def __init__(
         self,
         status_code: int = 200,
-        json_data: Optional[Dict[str, Any]] = None,
+        json_data: dict[str, Any] | None = None,
         text: str = "",
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         self.status_code = status_code
         self._json_data = json_data or {}
@@ -565,9 +565,7 @@ class TestClientCoverageExtra:
         mock_response.status_code = 200
         mock_response.headers = {}
 
-        with patch.object(
-            http_client, "request", return_value=mock_response
-        ) as mock_req:
+        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
             http_client.put("/resource", {"key": "val"})
             mock_req.assert_called_once_with("PUT", "/resource", json={"key": "val"})
 
@@ -579,9 +577,7 @@ class TestClientCoverageExtra:
         mock_response.status_code = 200
         mock_response.headers = {}
 
-        with patch.object(
-            http_client, "request", return_value=mock_response
-        ) as mock_req:
+        with patch.object(http_client, "request", return_value=mock_response) as mock_req:
             http_client.delete("/resource")
             mock_req.assert_called_once_with("DELETE", "/resource")
 

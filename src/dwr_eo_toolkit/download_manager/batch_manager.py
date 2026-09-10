@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from .result import DownloadResult
@@ -21,16 +21,14 @@ class CheckpointData:
 
     id: str
     timestamp: str
-    session_stats: Dict[str, Any] = field(default_factory=dict)
-    result: Dict[str, Any] = field(default_factory=dict)
+    session_stats: dict[str, Any] = field(default_factory=dict)
+    result: dict[str, Any] = field(default_factory=dict)
 
 
 class BatchDownloadManager:
     """Manage multiple parallel download sessions."""
 
-    def __init__(
-        self, max_concurrent_sessions: int = 3, queue: Optional[Any] = None
-    ) -> None:
+    def __init__(self, max_concurrent_sessions: int = 3, queue: Any | None = None) -> None:
         """
         Initialize batch manager.
 
@@ -40,8 +38,8 @@ class BatchDownloadManager:
         """
         self.max_concurrent = max_concurrent_sessions
         self.queue = queue
-        self.sessions: List[DownloadSession] = []
-        self.results: List[DownloadResult] = []
+        self.sessions: list[DownloadSession] = []
+        self.results: list[DownloadResult] = []
         self.paused = False
         self.checkpoint_dir = Path(".dwr/checkpoints")
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +55,7 @@ class BatchDownloadManager:
         self.sessions.append(session)
         logger.debug(f"Added session with priority: {priority}")
 
-    def execute_all(self) -> List[DownloadResult]:
+    def execute_all(self) -> list[DownloadResult]:
         """
         Execute all sessions in parallel.
 
@@ -69,7 +67,7 @@ class BatchDownloadManager:
             return []
 
         logger.info(f"Starting execution of {len(self.sessions)} sessions")
-        results: List[DownloadResult] = []
+        results: list[DownloadResult] = []
 
         with ThreadPoolExecutor(max_workers=self.max_concurrent) as executor:
             futures = {
@@ -146,9 +144,7 @@ class BatchDownloadManager:
             )
 
             checkpoint_file = self.checkpoint_dir / f"{checkpoint_id}.json"
-            checkpoint_file.write_text(
-                json.dumps(checkpoint_data.__dict__, indent=2, default=str)
-            )
+            checkpoint_file.write_text(json.dumps(checkpoint_data.__dict__, indent=2, default=str))
 
             logger.debug(f"Checkpoint saved: {checkpoint_file}")
             return checkpoint_file
@@ -157,9 +153,7 @@ class BatchDownloadManager:
             logger.error(f"Failed to save checkpoint {checkpoint_id}: {e}")
             raise
 
-    def resume_from_checkpoint(
-        self, checkpoint_id: str
-    ) -> Optional[List[DownloadResult]]:
+    def resume_from_checkpoint(self, checkpoint_id: str) -> list[DownloadResult] | None:
         """
         Resume from checkpoint.
 
@@ -190,7 +184,7 @@ class BatchDownloadManager:
             logger.error(f"Failed to resume from checkpoint {checkpoint_id}: {e}")
             return None
 
-    def get_progress(self) -> Dict[str, Any]:
+    def get_progress(self) -> dict[str, Any]:
         """
         Get overall progress across all sessions.
 
@@ -247,7 +241,7 @@ class BatchDownloadManager:
             if hasattr(session, "cancel"):
                 session.cancel()
 
-    def list_checkpoints(self) -> List[Dict[str, Any]]:
+    def list_checkpoints(self) -> list[dict[str, Any]]:
         """
         List all available checkpoints.
 
@@ -290,14 +284,14 @@ class BatchDownloadManager:
         logger.info(f"Cleared {count} checkpoints")
         return count
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """
         Get detailed statistics across all sessions.
 
         Returns:
             Dictionary with comprehensive statistics
         """
-        total_stats: Dict[str, Any] = {
+        total_stats: dict[str, Any] = {
             "total_sessions": len(self.sessions),
             "completed_sessions": len(self.results),
             "sessions": [],
@@ -312,13 +306,9 @@ class BatchDownloadManager:
                         "total_files": stats.total_files,
                         "files_downloaded": stats.files_downloaded,
                         "files_failed": stats.files_failed,
-                        "duration": (
-                            str(stats.duration) if hasattr(stats, "duration") else None
-                        ),
+                        "duration": (str(stats.duration) if hasattr(stats, "duration") else None),
                         "avg_speed_mbps": (
-                            stats.avg_speed_mbps
-                            if hasattr(stats, "avg_speed_mbps")
-                            else None
+                            stats.avg_speed_mbps if hasattr(stats, "avg_speed_mbps") else None
                         ),
                     }
                 )

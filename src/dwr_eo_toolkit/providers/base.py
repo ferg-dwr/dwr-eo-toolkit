@@ -13,7 +13,7 @@ Example:
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class BaseProvider(ABC):
@@ -30,11 +30,11 @@ class BaseProvider(ABC):
     def search(
         self,
         product: str,
-        bounding_box: Optional[tuple[float, float, float, float]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        bounding_box: tuple[float, float, float, float] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         **kwargs,
-    ) -> tuple[List[Dict[str, Any]], int]:
+    ) -> tuple[list[dict[str, Any]], int]:
         """
         Search for granules matching the query parameters.
 
@@ -74,7 +74,7 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    def get_metadata(self, product: str) -> Dict[str, Any]:
+    def get_metadata(self, product: str) -> dict[str, Any]:
         """
         Get metadata about a product.
 
@@ -125,5 +125,5 @@ class BaseProvider(ABC):
 
 
 # Type hints for common return structures
-GranuleResult = Dict[str, Any]
-ProductMetadata = Dict[str, Any]
+GranuleResult = dict[str, Any]
+ProductMetadata = dict[str, Any]

@@ -5,7 +5,7 @@ Base HTTP client for EO API requests
 import logging
 import time
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
@@ -52,11 +52,11 @@ class HTTPClient:
         auth_handler,
         base_url: str = "https://data.earthdata.nasa.gov",
         client_id: str = "nasa-eo-data",
-        user_agent: Optional[str] = None,
+        user_agent: str | None = None,
         timeout: int = 30,
         max_retries: int = 3,
         backoff_factor: float = 0.5,
-        verify_ssl: Optional[bool] = None,
+        verify_ssl: bool | None = None,
     ):
         """
         Initialize HTTP client.
@@ -93,9 +93,7 @@ class HTTPClient:
         else:
             self.verify_ssl = verify_ssl
             if verify_ssl is False:
-                logger.warning(
-                    "SSL verification is disabled - only use in trusted networks"
-                )
+                logger.warning("SSL verification is disabled - only use in trusted networks")
             else:
                 logger.debug(f"SSL verification enabled: {verify_ssl}")
 
@@ -104,7 +102,7 @@ class HTTPClient:
         self._configure_retries(max_retries, backoff_factor)
 
         # Track rate limiting
-        self._rate_limit_reset_time: Optional[float] = None
+        self._rate_limit_reset_time: float | None = None
 
     def _configure_retries(self, max_retries: int, backoff_factor: float) -> None:
         """
@@ -133,7 +131,7 @@ class HTTPClient:
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
-    def get_headers(self) -> Dict[str, str]:
+    def get_headers(self) -> dict[str, str]:
         """
         Build HTTP headers for all requests.
 
@@ -206,9 +204,7 @@ class HTTPClient:
 
             # Handle authentication errors
             if response.status_code == 401:
-                raise AuthenticationError(
-                    "Authentication failed: Invalid or expired token"
-                )
+                raise AuthenticationError("Authentication failed: Invalid or expired token")
 
             # Handle forbidden
             if response.status_code == 403:
@@ -263,19 +259,19 @@ class HTTPClient:
         logger.warning(f"Rate limited. Waiting {wait_seconds}s before retry.")
 
     def get(
-        self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs
+        self, endpoint: str, params: dict[str, Any] | None = None, **kwargs
     ) -> requests.Response:
         """Make a GET request."""
         return self.request("GET", endpoint, params=params, **kwargs)
 
     def post(
-        self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, **kwargs
+        self, endpoint: str, json_data: dict[str, Any] | None = None, **kwargs
     ) -> requests.Response:
         """Make a POST request."""
         return self.request("POST", endpoint, json=json_data, **kwargs)
 
     def put(
-        self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, **kwargs
+        self, endpoint: str, json_data: dict[str, Any] | None = None, **kwargs
     ) -> requests.Response:
         """Make a PUT request."""
         return self.request("PUT", endpoint, json=json_data, **kwargs)

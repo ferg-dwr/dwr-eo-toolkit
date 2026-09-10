@@ -5,7 +5,7 @@ Supports bounding box queries and future polygon/point+radius searches.
 """
 
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from dwr_eo_toolkit.filters.base import Filter
 
@@ -84,7 +84,7 @@ class BoundingBox(Filter):
 
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert to provider search parameters.
 
@@ -92,11 +92,9 @@ class BoundingBox(Filter):
             Dictionary with 'bounding_box' key
         """
         self.validate()
-        return {
-            "bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)
-        }
+        return {"bounding_box": (self.min_lon, self.min_lat, self.max_lon, self.max_lat)}
 
-    def center(self) -> Tuple[float, float]:
+    def center(self) -> tuple[float, float]:
         """
         Get bounding box center coordinates.
 
@@ -130,7 +128,9 @@ class BoundingBox(Filter):
 
     def __repr__(self) -> str:
         """String representation."""
-        return f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, lat: {self.min_lat}→{self.max_lat})"
+        return (
+            f"BoundingBox(lon: {self.min_lon}→{self.max_lon}, lat: {self.min_lat}→{self.max_lat})"
+        )
 
 
 # Future filters (stubs for Phase 2B+)
@@ -152,7 +152,7 @@ class Polygon(Filter):
         # TODO: Implement polygon validation
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement polygon to CMR parameter conversion
         raise NotImplementedError("Polygon filter coming in Phase 2B+")
@@ -176,7 +176,7 @@ class PointBuffer(Filter):
         # TODO: Implement validation
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement point buffer to CMR parameter conversion
         raise NotImplementedError("PointBuffer filter coming in Phase 2B+")

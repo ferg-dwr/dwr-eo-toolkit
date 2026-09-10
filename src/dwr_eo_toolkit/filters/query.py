@@ -15,7 +15,7 @@ Example:
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from dwr_eo_toolkit.filters.base import Filter
 from dwr_eo_toolkit.filters.product import CloudCover, ProcessingLevel, QualityFlag
@@ -44,8 +44,8 @@ class Query:
 
     def __init__(
         self,
-        product: Optional[str] = None,
-        filters: Optional[List[Filter]] = None,
+        product: str | None = None,
+        filters: list[Filter] | None = None,
     ):
         """
         Initialize query builder.
@@ -55,7 +55,7 @@ class Query:
             filters: List of Filter objects (optional)
         """
         self.product = product
-        self.filters: List[Filter] = filters or []
+        self.filters: list[Filter] = filters or []
 
     def with_spatial_bounds(
         self,
@@ -147,7 +147,7 @@ class Query:
         logger.debug(f"Added temporal filter: {date_range}")
         return self
 
-    def with_season(self, season: str, years: Optional[List[int]] = None) -> "Query":
+    def with_season(self, season: str, years: list[int] | None = None) -> "Query":
         """
         Add seasonal constraint (future).
 
@@ -241,7 +241,7 @@ class Query:
         logger.debug(f"Set product: {product}")
         return self
 
-    def execute(self, provider) -> Tuple[List[Dict[str, Any]], int]:
+    def execute(self, provider) -> tuple[list[dict[str, Any]], int]:
         """
         Execute query against a provider.
 
@@ -268,9 +268,7 @@ class Query:
             filter_params = filter_obj.to_params()
             params.update(filter_params)
 
-        logger.info(
-            f"Executing query for {self.product} with {len(self.filters)} filters"
-        )
+        logger.info(f"Executing query for {self.product} with {len(self.filters)} filters")
         logger.debug(f"Query parameters: {params}")
 
         # Execute against provider
@@ -297,7 +295,7 @@ class Query:
         filters_str = ", ".join(filter_strs) if filter_strs else "None"
         return f"Product: {self.product}, Filters: {filters_str}"
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert query to provider parameters.
 

@@ -3,7 +3,6 @@ DownloadResult - Encapsulates results from download operations.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 
 @dataclass
@@ -18,9 +17,9 @@ class DownloadResult:
     """Total number of files requested."""
     total_size_bytes: int = 0
     """Total size of all downloaded files in bytes."""
-    failed_tasks: List = field(default_factory=list)
+    failed_tasks: list = field(default_factory=list)
     """List of failed DownloadTask objects."""
-    error_messages: Dict[str, str] = field(default_factory=dict)
+    error_messages: dict[str, str] = field(default_factory=dict)
     """Mapping of URL to error message for failed downloads."""
 
     @property

@@ -6,7 +6,6 @@ import hashlib
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -31,9 +30,9 @@ class DownloadTask:
     """Path where file will be saved."""
     filename: str = ""
     """Display name of file."""
-    size: Optional[int] = None
+    size: int | None = None
     """Expected file size in bytes."""
-    checksum: Optional[str] = None
+    checksum: str | None = None
     """Expected checksum of file."""
     checksum_type: str = "md5"
     """Type of checksum (md5, sha256, etc)."""
@@ -41,7 +40,7 @@ class DownloadTask:
     """Current status of task."""
     downloaded_bytes: int = 0
     """Bytes downloaded so far."""
-    error_message: Optional[str] = None
+    error_message: str | None = None
     """Error message if download failed."""
 
     def __post_init__(self):
@@ -66,9 +65,7 @@ class DownloadTask:
             self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Stream download
-            response = requests.get(
-                self.url, timeout=timeout, stream=True, allow_redirects=True
-            )
+            response = requests.get(self.url, timeout=timeout, stream=True, allow_redirects=True)
             response.raise_for_status()
 
             # Download file in chunks
@@ -188,9 +185,7 @@ class DownloadTask:
 
     def save_metadata(self) -> None:
         """Save task metadata to .metadata file next to downloaded file."""
-        metadata_path = self.output_path.with_suffix(
-            self.output_path.suffix + ".metadata"
-        )
+        metadata_path = self.output_path.with_suffix(self.output_path.suffix + ".metadata")
 
         metadata = {
             "url": self.url,

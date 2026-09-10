@@ -5,7 +5,7 @@ These filters apply constraints relevant to specific datasets or data types.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from dwr_eo_toolkit.filters.base import Filter
 
@@ -54,7 +54,7 @@ class CloudCover(Filter):
             raise ValueError("max_percent must be 0-100")
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert to provider search parameters.
 
@@ -114,7 +114,7 @@ class QualityFlag(Filter):
 
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert to provider search parameters.
 
@@ -169,7 +169,7 @@ class ProcessingLevel(Filter):
 
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert to provider search parameters.
 
@@ -196,9 +196,9 @@ class Orbit(Filter):
 
     def __init__(
         self,
-        orbit_number: Optional[int] = None,
-        track: Optional[int] = None,
-        relative_orbit: Optional[int] = None,
+        orbit_number: int | None = None,
+        track: int | None = None,
+        relative_orbit: int | None = None,
     ):
         """Initialize orbit filter."""
         self.orbit_number = orbit_number
@@ -210,7 +210,7 @@ class Orbit(Filter):
         # TODO: Implement validation
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement conversion
         raise NotImplementedError("Orbit filter coming in Phase 2B+")
@@ -232,7 +232,7 @@ class Instrument(Filter):
         # TODO: Implement validation
         return True
 
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """Convert to provider parameters."""
         # TODO: Implement conversion
         raise NotImplementedError("Instrument filter coming in Phase 2B+")

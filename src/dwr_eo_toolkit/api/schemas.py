@@ -6,13 +6,12 @@ Defines request/response schemas for API validation and documentation.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import List, Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class DownloadStatus(str, Enum):
+class DownloadStatus(StrEnum):
     """Status of a download task."""
 
     PENDING = "pending"
@@ -23,7 +22,7 @@ class DownloadStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class BatchStatus(str, Enum):
+class BatchStatus(StrEnum):
     """Status of a batch operation."""
 
     CREATED = "created"
@@ -34,7 +33,7 @@ class BatchStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     """Status of a scheduled job."""
 
     SCHEDULED = "scheduled"
@@ -103,9 +102,9 @@ class DownloadResponse(BaseModel):
 class DownloadListResponse(BaseModel):
     """Response for listing downloads."""
 
-    downloads: List[DownloadResponse]
+    downloads: list[DownloadResponse]
     count: int
-    total: Optional[int] = None  # For pagination
+    total: int | None = None  # For pagination
 
 
 class BatchCreate(BaseModel):
@@ -128,8 +127,8 @@ class BatchCreate(BaseModel):
     )
 
     name: str = Field(..., description="Batch operation name")
-    downloads: Optional[List[DownloadCreate]] = None
-    description: Optional[str] = None
+    downloads: list[DownloadCreate] | None = None
+    description: str | None = None
 
 
 class BatchResponse(BaseModel):
@@ -151,11 +150,11 @@ class BatchResponse(BaseModel):
 class BatchListResponse(BaseModel):
     """Response for listing batches."""
 
-    batches: List[BatchResponse]
+    batches: list[BatchResponse]
     count: int
 
 
-class ScheduleType(str, Enum):
+class ScheduleType(StrEnum):
     """Type of schedule."""
 
     ONCE = "once"
@@ -189,7 +188,7 @@ class JobCreate(BaseModel):
     product: str = Field(..., description="Product to download")
     schedule_type: ScheduleType
     start_date: str = Field(..., description="Start date (YYYY-MM-DD)")
-    end_date: Optional[str] = None
+    end_date: str | None = None
 
 
 class JobResponse(BaseModel):
@@ -202,8 +201,8 @@ class JobResponse(BaseModel):
     product: str
     schedule_type: ScheduleType
     status: JobStatus
-    next_run_time: Optional[datetime] = None
-    last_run_time: Optional[datetime] = None
+    next_run_time: datetime | None = None
+    last_run_time: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -211,7 +210,7 @@ class JobResponse(BaseModel):
 class JobListResponse(BaseModel):
     """Response for listing jobs."""
 
-    jobs: List[JobResponse]
+    jobs: list[JobResponse]
     count: int
 
 
@@ -221,13 +220,13 @@ class ErrorResponse(BaseModel):
     error: str
     status_code: int
     timestamp: datetime
-    detail: Optional[str] = None
+    detail: str | None = None
 
 
 class ValidationError(BaseModel):
     """Schema for validation errors."""
 
-    loc: List[str]
+    loc: list[str]
     msg: str
     type: str
 

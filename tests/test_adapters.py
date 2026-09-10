@@ -107,9 +107,7 @@ class TestECOSTRESSAdapter:
         """ECOSTRESS should be 70m."""
         metadata = adapter.get_metadata()
 
-        assert (
-            "70" in metadata.spatial_resolution or metadata.spatial_resolution == "70m"
-        )
+        assert "70" in metadata.spatial_resolution or metadata.spatial_resolution == "70m"
 
     def test_metadata_temporal_resolution(self, adapter):
         """ECOSTRESS should be 8 days."""
@@ -264,17 +262,13 @@ class TestMODISAdapter:
         """MODIS should have variable spatial resolution."""
         metadata = adapter.get_metadata()
 
-        assert (
-            "250" in metadata.spatial_resolution or "km" in metadata.spatial_resolution
-        )
+        assert "250" in metadata.spatial_resolution or "km" in metadata.spatial_resolution
 
     def test_metadata_temporal_resolution(self, adapter):
         """MODIS should be 1-2 days."""
         metadata = adapter.get_metadata()
 
-        assert (
-            "1" in metadata.temporal_resolution or "2" in metadata.temporal_resolution
-        )
+        assert "1" in metadata.temporal_resolution or "2" in metadata.temporal_resolution
 
     def test_metadata_doi_present(self, adapter):
         """MODIS should have a DOI."""
