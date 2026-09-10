@@ -1,5 +1,7 @@
 # dwr-eo-toolkit
 
+[![Tests](https://github.com/ferg-dwr/dwr-eo-toolkit/actions/workflows/tests.yml/badge.svg)](https://github.com/ferg-dwr/dwr-eo-toolkit/actions/workflows/tests.yml)
+
 A Python package for DWR employees to programmatically query and download NASA satellite imagery at scale.
 
 Query ECOSTRESS thermal data, MODIS reflectance, and other Earth observation datasets from the comfort of your Python scripts — or via the REST API.
