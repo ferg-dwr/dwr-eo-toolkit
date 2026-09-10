@@ -2,7 +2,7 @@
 API Routes — REST endpoints for downloads, batches, scheduled jobs, and search.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -272,7 +272,7 @@ async def start_download(
                 "granule_count": len(granules),
             },
         )
-        session.started_at = datetime.utcnow()  # type: ignore[assignment]
+        session.started_at = datetime.now(UTC)  # type: ignore[assignment]
         db.add(session)
         db.commit()
         db.refresh(session)
@@ -302,7 +302,7 @@ async def start_download(
             session.completed_files = files_downloaded  # type: ignore[assignment]
             session.failed_files = files_failed  # type: ignore[assignment]
             session.status = "completed" if files_failed == 0 else "partial"  # type: ignore[assignment]
-            session.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            session.completed_at = datetime.now(UTC)  # type: ignore[assignment]
             db.commit()
 
             print(f"   ✅ Downloaded {files_downloaded}/{len(granules)} files")
@@ -326,7 +326,7 @@ async def start_download(
             print(f"   ❌ Download failed: {download_err}")
             if session is not None:
                 session.status = "failed"  # type: ignore[assignment]
-                session.completed_at = datetime.utcnow()  # type: ignore[assignment]
+                session.completed_at = datetime.now(UTC)  # type: ignore[assignment]
                 db.commit()
             raise
 
