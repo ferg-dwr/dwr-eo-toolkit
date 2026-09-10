@@ -14,6 +14,8 @@ import pytest
 from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
 from dwr_eo_toolkit.providers.adapters.ecostress import ECOSTRESSAdapter
 from dwr_eo_toolkit.providers.adapters.modis import MODISAdapter
+from dwr_eo_toolkit.providers.adapters.opera_rtc_s1 import OperaRTCS1Adapter
+from dwr_eo_toolkit.providers.earthaccess_provider import AdapterRegistry
 
 
 class TestECOSTRESSAdapter:
@@ -419,3 +421,122 @@ class TestAdapterIntegration:
             # Check all URLs are valid
             for url_info in metadata.related_urls:
                 assert url_info["url"].startswith("http")
+
+
+class TestOperaRTCS1Adapter:
+    """OPERA RTC-S1 adapter: identifiers, keywords, and granule parsing."""
+
+    @pytest.fixture
+    def adapter(self):
+        return OperaRTCS1Adapter()
+
+    def test_short_names_cover_both_collections(self, adapter):
+        names = adapter.get_short_names()
+        assert "OPERA_L2_RTC-S1_V1" in names
+        assert "OPERA_L2_RTC-S1-STATIC_V1" in names
+
+    def test_metadata_defaults_to_per_acquisition_collection(self, adapter):
+        """Bare searches must hit backscatter, not the static geometry layers."""
+        assert adapter.get_metadata().short_name == "OPERA_L2_RTC-S1_V1"
+
+    def test_metadata_identifiers(self, adapter):
+        meta = adapter.get_metadata()
+        assert meta.doi == "10.5067/SNWG/OPERA_L2_RTC-S1_V1"
+        assert meta.provider == "ASF_DAAC"
+        assert meta.spatial_resolution == "30m"
+        assert meta.processing_level == "2"
+
+    def test_does_not_claim_generic_sar_keywords(self, adapter):
+        """OPERA ships CSLC-S1, DSWx-S1 and DIST-S1 too.
+
+        Claiming bare 'sar' or 'sentinel-1' here guarantees a collision when
+        one of those gets an adapter.
+        """
+        keywords = {k.lower() for k in adapter.get_keywords()}
+        assert "sar" not in keywords
+        assert "sentinel-1" not in keywords
+        assert "sentinel1" not in keywords
+
+    @pytest.mark.parametrize(
+        "granule_ur,expected",
+        [
+            (
+                "OPERA_L2_RTC-S1_T137-292318-IW1_20230401T140558Z_20230402T014543Z_S1A_30_v1.0",
+                {
+                    "burst_id": "T137-292318-IW1",
+                    "relative_orbit": 137,
+                    "acquired": "20230401T140558Z",
+                    "produced": "20230402T014543Z",
+                    "platform": "S1A",
+                    "posting": 30,
+                    "version": "1.0",
+                },
+            ),
+            (
+                "OPERA_L2_RTC-S1-STATIC_T035-073251-IW2_20240115T021045Z"
+                "_20240116T113022Z_S1B_30_v1.0",
+                {
+                    "burst_id": "T035-073251-IW2",
+                    "relative_orbit": 35,
+                    "platform": "S1B",
+                    "posting": 30,
+                },
+            ),
+        ],
+    )
+    def test_parse_granule_ur(self, adapter, granule_ur, expected):
+        parsed = adapter.parse_granule_ur(granule_ur)
+        for key, value in expected.items():
+            assert parsed[key] == value
+
+    @pytest.mark.parametrize(
+        "granule_ur",
+        [
+            "",
+            "ECOSTRESS_L2T_LSTE_12345_001_11SKA_20230401T140558_0601_01",
+            "OPERA_L2_RTC-S1_T137-292318-IW1_notadate_S1A_30_v1.0",
+            "OPERA_L3_DSWx-S1_T11SKA_20230401T140558Z_20230402T014543Z_S1A_30_v1.0",
+        ],
+    )
+    def test_unparseable_names_return_empty(self, adapter, granule_ur):
+        """A naming change should surface as missing fields, not wrong ones."""
+        assert adapter.parse_granule_ur(granule_ur) == {}
+
+    def test_post_process_adds_rtcs1_block(self, adapter):
+        granules = [
+            {
+                "umm": {
+                    "GranuleUR": "OPERA_L2_RTC-S1_T137-292318-IW1"
+                    "_20230401T140558Z_20230402T014543Z_S1A_30_v1.0"
+                }
+            }
+        ]
+        adapter.post_process_granules(granules)
+        assert granules[0]["umm"]["RTCS1"]["relative_orbit"] == 137
+
+    def test_post_process_leaves_unparseable_granules_alone(self, adapter):
+        granules = [{"umm": {"GranuleUR": "something-else"}}, {"umm": {}}]
+        adapter.post_process_granules(granules)
+        assert "RTCS1" not in granules[0]["umm"]
+        assert "RTCS1" not in granules[1]["umm"]
+
+
+class TestAdapterRegistry:
+    """The registry is a flat keyword -> adapter dict."""
+
+    def test_rtc_keywords_resolve_to_the_rtc_adapter(self):
+        registry = AdapterRegistry()
+        for keyword in OperaRTCS1Adapter().get_keywords():
+            assert isinstance(registry.get_adapter(keyword), OperaRTCS1Adapter)
+
+    def test_registry_construction_detects_keyword_collisions(self):
+        """A duplicate keyword would silently reroute searches.
+
+        Construction raises instead, so the failure is at import time rather
+        than in a result set someone has to notice is wrong.
+        """
+        registry = AdapterRegistry()
+        seen = {}
+        for keyword, adapter in registry.adapters.items():
+            assert keyword not in seen, f"collision on {keyword!r}"
+            seen[keyword] = adapter

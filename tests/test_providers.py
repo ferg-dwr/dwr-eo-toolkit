@@ -490,3 +490,46 @@ class TestEarthAccessProviderEdgeCases:
         )
 
         assert total == 0
+
+
+class TestSearchKwargsPassthrough:
+    """version and short_name reach earthaccess.search_data."""
+
+    def test_version_is_forwarded(self, provider, mock_earthaccess):
+        """Without a version, CMR returns every version of a collection.
+
+        Repeated processings of one acquisition then come back as separate
+        granules, so any count taken from the result is inflated.
+        """
+        mock_earthaccess.search_data.return_value = [{"id": "g1"}]
+        provider.search(product="ECOSTRESS", version="002")
+        assert mock_earthaccess.search_data.call_args[1]["version"] == "002"
+
+    def test_version_absent_when_not_requested(self, provider, mock_earthaccess):
+        mock_earthaccess.search_data.return_value = []
+        provider.search(product="ECOSTRESS")
+        assert "version" not in mock_earthaccess.search_data.call_args[1]
+
+    def test_short_name_overrides_adapter_default(self, provider, mock_earthaccess):
+        """The only route to the RTC-S1 static geometry layers."""
+        mock_earthaccess.search_data.return_value = []
+        provider.search(product="RTC-S1", short_name="OPERA_L2_RTC-S1-STATIC_V1")
+        call_kwargs = mock_earthaccess.search_data.call_args[1]
+        assert call_kwargs["short_name"] == "OPERA_L2_RTC-S1-STATIC_V1"
+
+    def test_short_name_override_drops_keyword_fallback(self, provider, mock_earthaccess):
+        """An unknown product falls back to a fuzzy keyword search.
+
+        Passing short_name must replace that, not sit alongside it -- CMR
+        would AND the two and return nothing.
+        """
+        mock_earthaccess.search_data.return_value = []
+        provider.search(product="not-a-registered-product", short_name="OPERA_L2_RTC-S1_V1")
+        call_kwargs = mock_earthaccess.search_data.call_args[1]
+        assert call_kwargs["short_name"] == "OPERA_L2_RTC-S1_V1"
+        assert "keyword" not in call_kwargs
+
+    def test_rtc_product_resolves_to_backscatter_collection(self, provider, mock_earthaccess):
+        mock_earthaccess.search_data.return_value = []
+        provider.search(product="RTC-S1")
+        assert mock_earthaccess.search_data.call_args[1]["short_name"] == "OPERA_L2_RTC-S1_V1"
