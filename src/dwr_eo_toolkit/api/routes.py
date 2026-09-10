@@ -277,7 +277,7 @@ async def start_download(
         db.commit()
         db.refresh(session)
 
-        download_id = session.session_id
+        download_id = str(session.session_id)
         print(f"   💾 Created download session: {download_id}")
 
         # ---- Step 3: Ensure output dir exists ----
