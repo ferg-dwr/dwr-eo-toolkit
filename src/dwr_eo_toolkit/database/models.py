@@ -1,9 +1,18 @@
 """SQLAlchemy models for the DWR EO Toolkit."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -31,11 +40,11 @@ class DownloadSession(Base):
     failed_files = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -76,11 +85,11 @@ class DownloadTask(Base):
     retry_count = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -118,11 +127,11 @@ class BatchOperation(Base):
     config = Column(JSON, default={})  # Any additional configuration
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -156,11 +165,11 @@ class ScheduledJob(Base):
     session_config = Column(JSON)  # Serialized DownloadSession config
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     def __repr__(self):
@@ -196,7 +205,7 @@ class DownloadResult(Base):
     error_message = Column(String, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=timezone.utc, index=True)
+    created_at = Column(DateTime, default=UTC, index=True)
 
     def __repr__(self):
         return f"<DownloadResult(id={self.id}, result_id={self.result_id}, success={self.success})>"

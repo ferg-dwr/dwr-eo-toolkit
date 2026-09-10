@@ -6,7 +6,6 @@ import hashlib
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -31,9 +30,9 @@ class DownloadTask:
     """Path where file will be saved."""
     filename: str = ""
     """Display name of file."""
-    size: Optional[int] = None
+    size: int | None = None
     """Expected file size in bytes."""
-    checksum: Optional[str] = None
+    checksum: str | None = None
     """Expected checksum of file."""
     checksum_type: str = "md5"
     """Type of checksum (md5, sha256, etc)."""
@@ -41,7 +40,7 @@ class DownloadTask:
     """Current status of task."""
     downloaded_bytes: int = 0
     """Bytes downloaded so far."""
-    error_message: Optional[str] = None
+    error_message: str | None = None
     """Error message if download failed."""
 
     def __post_init__(self):

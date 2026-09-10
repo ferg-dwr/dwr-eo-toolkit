@@ -11,7 +11,7 @@ Tests cover:
 
 import json
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -187,7 +187,7 @@ class TestEarthDataLoginAuth:
             token1 = auth.get_token()
 
             # Manually expire cache
-            auth._token_expiry = datetime.now(timezone.utc) - timedelta(seconds=1)
+            auth._token_expiry = datetime.now(UTC) - timedelta(seconds=1)
 
             with patch.dict("os.environ", {"EARTHDATA_TOKEN": "token2"}):
                 # Second call should re-fetch (simulating token rotation)
@@ -218,7 +218,7 @@ class TestEarthDataLoginAuth:
             cache_file = auth.token_cache_file
             cache_data = {
                 "token": "oldtoken",
-                "timestamp": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             }
             cache_file.write_text(json.dumps(cache_data))
 
@@ -297,7 +297,7 @@ class TestEarthDataLoginAuth:
             # Cache a token
             auth._save_cached_token("token123")
             auth._cached_token = "token123"
-            auth._token_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+            auth._token_expiry = datetime.now(UTC) + timedelta(hours=1)
 
             # Clear
             auth.clear_cache()
@@ -344,7 +344,9 @@ class TestAuthCoverageExtra:
 
         with patch.object(auth.netrc_provider, "get_credentials", return_value=None):
             with patch.object(
-                auth.env_provider, "get_credentials", return_value=("envuser", "envpass")
+                auth.env_provider,
+                "get_credentials",
+                return_value=("envuser", "envpass"),
             ):
                 creds = auth._get_credentials()
 

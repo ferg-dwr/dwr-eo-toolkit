@@ -5,7 +5,7 @@ Simple, clean integration with NASA's official earthaccess library.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import earthaccess
 
@@ -21,7 +21,7 @@ class AdapterRegistry:
     """Registry for instrument adapters."""
 
     def __init__(self) -> None:
-        self.adapters: Dict[str, InstrumentAdapter] = {}
+        self.adapters: dict[str, InstrumentAdapter] = {}
         self._register_default_adapters()
 
     def _register_default_adapters(self) -> None:
@@ -35,7 +35,7 @@ class AdapterRegistry:
         for keyword in modis_adapter.get_keywords():
             self.adapters[keyword.lower()] = modis_adapter
 
-    def get_adapter(self, product: str) -> Optional[InstrumentAdapter]:
+    def get_adapter(self, product: str) -> InstrumentAdapter | None:
         """Get adapter for product keyword."""
         return self.adapters.get(product.lower())
 
@@ -69,18 +69,18 @@ class EarthAccessProvider(BaseProvider):
             earthaccess.login(strategy="environment")
             logger.info("Authenticated with earthaccess")
 
-    def get_adapter(self, product: str) -> Optional[InstrumentAdapter]:
+    def get_adapter(self, product: str) -> InstrumentAdapter | None:
         """Get adapter for a product."""
         return self.adapter_registry.get_adapter(product)
 
     def search(
         self,
         product: str,
-        bounding_box: Optional[Tuple[float, ...]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+        bounding_box: tuple[float, ...] | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         **kwargs: Any,
-    ) -> Tuple[List[Any], int]:
+    ) -> tuple[list[Any], int]:
         """
         Search for granules.
 
@@ -141,7 +141,7 @@ class EarthAccessProvider(BaseProvider):
             logger.error(f"Search failed for {product}: {e}")
             raise
 
-    def download(self, granules: List[Any], output_dir: str, **kwargs: Any) -> List[str]:
+    def download(self, granules: list[Any], output_dir: str, **kwargs: Any) -> list[str]:
         """
         Download granules.
 
@@ -171,7 +171,7 @@ class EarthAccessProvider(BaseProvider):
             logger.error(f"Download failed: {e}")
             raise
 
-    def get_metadata(self, product: str) -> Dict[str, Any]:
+    def get_metadata(self, product: str) -> dict[str, Any]:
         """Get metadata about a product."""
         adapter = self.get_adapter(product)
         if adapter:

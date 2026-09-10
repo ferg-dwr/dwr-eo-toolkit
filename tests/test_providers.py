@@ -184,7 +184,10 @@ class TestEarthAccessProviderSearch:
 
         bbox = (-122.82, 36.78, -120.94, 38.25)
         results, total = provider.search(
-            product="MODIS", bounding_box=bbox, start_date="2020-01-01", end_date="2020-12-31"
+            product="MODIS",
+            bounding_box=bbox,
+            start_date="2020-01-01",
+            end_date="2020-12-31",
         )
 
         assert total == 2
@@ -428,7 +431,10 @@ class TestEarthAccessProviderIntegration:
         # Search with filters
         bbox = (-122.82, 36.78, -120.94, 38.25)
         results, _ = provider.search(
-            product="MODIS", bounding_box=bbox, start_date="2020-01-01", end_date="2020-12-31"
+            product="MODIS",
+            bounding_box=bbox,
+            start_date="2020-01-01",
+            end_date="2020-12-31",
         )
 
         # Download

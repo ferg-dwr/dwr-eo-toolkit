@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from queue import PriorityQueue
-from typing import Optional
 
 from .task import DownloadTask
 
@@ -24,7 +23,7 @@ class PrioritizedTask:
 class DownloadQueue:
     """Priority-based task queue for downloads."""
 
-    def __init__(self, max_size: Optional[int] = None):
+    def __init__(self, max_size: int | None = None):
         self.queue: PriorityQueue[PrioritizedTask] = PriorityQueue(
             maxsize=max_size or 0
         )  # ✅ Fixed
@@ -44,7 +43,7 @@ class DownloadQueue:
         self.total_dequeued += 1
         return prioritized.task
 
-    def peek(self) -> Optional[DownloadTask]:
+    def peek(self) -> DownloadTask | None:
         """Look at next task without removing."""
         if self.queue.empty():
             return None

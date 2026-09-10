@@ -1,7 +1,7 @@
 """Database connection and session management."""
 
 import os
-from typing import Generator, Optional
+from collections.abc import Generator
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -10,10 +10,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
+DATABASE_URL: str | None = os.getenv("DATABASE_URL")
 
-engine: Optional[Engine] = None
-SessionLocal: Optional[sessionmaker] = None
+engine: Engine | None = None
+SessionLocal: sessionmaker | None = None
 
 if DATABASE_URL:
     engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)

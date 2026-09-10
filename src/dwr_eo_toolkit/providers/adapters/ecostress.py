@@ -4,7 +4,7 @@ Adapter for ECOSTRESS thermal imagery products.
 Provides metadata and constants for ECOSTRESS product handling.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter, InstrumentMetadata
 
@@ -101,7 +101,7 @@ class ECOSTRESSAdapter(InstrumentAdapter):
             ],
         )
 
-    def post_process_granules(self, granules: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
+    def post_process_granules(self, granules: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Post-process ECOSTRESS granules.
 

@@ -4,7 +4,7 @@ DownloadProgress - Real-time progress tracking for downloads.
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -184,7 +184,7 @@ class DownloadStatistics:
     success_rate: float
     """Success rate as percentage (0-100)."""
 
-    most_common_errors: Optional[List[str]] = None
+    most_common_errors: list[str] | None = None
     """Most common errors encountered."""
 
     def __post_init__(self):
@@ -192,7 +192,7 @@ class DownloadStatistics:
         if self.most_common_errors is None:
             self.most_common_errors = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert statistics to dictionary for JSON serialization."""
         return {
             "total_files": self.total_files,
@@ -207,7 +207,7 @@ class DownloadStatistics:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DownloadStatistics":
+    def from_dict(cls, data: dict[str, Any]) -> "DownloadStatistics":
         """Create DownloadStatistics from dictionary."""
         return cls(
             total_files=data["total_files"],

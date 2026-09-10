@@ -62,7 +62,12 @@ jobs:
     - name: Check for test warnings and deprecations
       run: |
         pytest tests/ --tb=no 2>&1 | tee test_output.log
-        if grep -i "DeprecationWarning\|ResourceWarning" test_output.log; then
+        # Only gate on warnings from our own code. Warnings raised inside
+        # site-packages (starlette, anyio, fastapi) are not fixable here and
+        # change with every dependency bump; failing on them makes the gate
+        # noise rather than signal.
+        if grep -i "DeprecationWarning\|ResourceWarning" test_output.log \
+             | grep -v "site-packages"; then
           echo "Tests generated warnings"
           exit 1
         fi
@@ -103,11 +108,10 @@ jobs:
     - name: Test Docker image
       run: |
         docker build -t dwr-eo-toolkit:test .
-        docker run --rm dwr-eo-toolkit:test python -c "
-          from dwr_eo_toolkit.download_manager import (
-            BatchDownloadManager,
-            DownloadScheduler,
-            DownloadSession
-          )
-          print('Core imports successful')
-        "
+        # Kept on one line: `python -c "` followed by an indented heredoc-style
+        # block sends leading whitespace to the interpreter and raises
+        # IndentationError, which is what this step used to do.
+        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit.download_manager import BatchDownloadManager, DownloadScheduler, DownloadSession; print('scheduler extra OK')"
+        # Base install only: proves the lazy __init__ and extras split hold in
+        # the built image, not just in the test env.
+        docker run --rm dwr-eo-toolkit:test python -c "from dwr_eo_toolkit.filters import Query; from dwr_eo_toolkit.providers import EarthAccessProvider; print('base imports OK')"

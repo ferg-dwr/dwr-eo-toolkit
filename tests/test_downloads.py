@@ -15,7 +15,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Union, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -582,7 +582,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=1)
 
-        granules: List[Union[Dict[str, Any], DownloadTask]] = [
+        granules: list[dict[str, Any] | DownloadTask] = [
             {"url": "https://example.com/file.hdf", "filename": "file.hdf", "size": 12},
         ]
 
@@ -602,7 +602,7 @@ class TestDownloadIntegration:
 
         manager = DownloadManager(max_workers=2)
 
-        granules: List[Union[Dict[str, Any], DownloadTask]] = [
+        granules: list[dict[str, Any] | DownloadTask] = [
             {
                 "url": f"https://example.com/file{i}.hdf",
                 "filename": f"file{i}.hdf",

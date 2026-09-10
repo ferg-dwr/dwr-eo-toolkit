@@ -6,7 +6,7 @@ All filters must implement to_params() and validate() methods.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
 
 
 class Filter(ABC):
@@ -23,7 +23,7 @@ class Filter(ABC):
     """
 
     @abstractmethod
-    def to_params(self) -> Dict[str, Any]:
+    def to_params(self) -> dict[str, Any]:
         """
         Convert filter to provider search parameters.
 

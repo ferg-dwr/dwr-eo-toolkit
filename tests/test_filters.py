@@ -11,7 +11,7 @@ Test coverage:
 - Parameter conversion
 """
 
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -48,7 +48,7 @@ class TestBaseFilter:
 
         # Missing validate
         class NoValidate(Filter):
-            def to_params(self) -> Dict[str, Any]:
+            def to_params(self) -> dict[str, Any]:
                 return {}
 
         with pytest.raises(TypeError, match="validate"):
@@ -58,7 +58,7 @@ class TestBaseFilter:
         """Subclass with all methods implemented can be instantiated."""
 
         class CompleteFilter(Filter):
-            def to_params(self) -> Dict[str, Any]:
+            def to_params(self) -> dict[str, Any]:
                 return {"test": "params"}
 
             def validate(self) -> bool:

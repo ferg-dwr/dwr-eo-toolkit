@@ -6,7 +6,7 @@ Provides standardized metadata and processing for Earth observation products.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
@@ -23,7 +23,7 @@ class InstrumentMetadata:
     data_format: str
     doi: str
     keywords: list[str]
-    related_urls: list[Dict[str, str]]
+    related_urls: list[dict[str, str]]
 
 
 class InstrumentAdapter(ABC):
@@ -75,7 +75,7 @@ class InstrumentAdapter(ABC):
         """
         pass
 
-    def post_process_granules(self, granules: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
+    def post_process_granules(self, granules: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Post-process granules (optional).
 
