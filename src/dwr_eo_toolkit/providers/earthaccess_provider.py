@@ -12,6 +12,7 @@ import earthaccess
 from dwr_eo_toolkit.providers.adapters.base import InstrumentAdapter
 from dwr_eo_toolkit.providers.adapters.ecostress import ECOSTRESSAdapter
 from dwr_eo_toolkit.providers.adapters.modis import MODISAdapter
+from dwr_eo_toolkit.providers.adapters.opera_rtc_s1 import OperaRTCS1Adapter
 from dwr_eo_toolkit.providers.base import BaseProvider
 
 logger = logging.getLogger(__name__)
@@ -26,14 +27,18 @@ class AdapterRegistry:
 
     def _register_default_adapters(self) -> None:
         """Register built-in adapters."""
-        ecostress_adapter = ECOSTRESSAdapter()
-        modis_adapter = MODISAdapter()
-
-        for keyword in ecostress_adapter.get_keywords():
-            self.adapters[keyword.lower()] = ecostress_adapter
-
-        for keyword in modis_adapter.get_keywords():
-            self.adapters[keyword.lower()] = modis_adapter
+        for adapter in (ECOSTRESSAdapter(), MODISAdapter(), OperaRTCS1Adapter()):
+            for keyword in adapter.get_keywords():
+                key = keyword.lower()
+                if key in self.adapters:
+                    # A flat dict means a duplicate silently reroutes searches
+                    # to the wrong collection. Surface it instead.
+                    raise ValueError(
+                        f"Adapter keyword collision on {key!r}: "
+                        f"{type(self.adapters[key]).__name__} and "
+                        f"{type(adapter).__name__} both claim it."
+                    )
+                self.adapters[key] = adapter
 
     def get_adapter(self, product: str) -> InstrumentAdapter | None:
         """Get adapter for product keyword."""
@@ -114,6 +119,21 @@ class EarthAccessProvider(BaseProvider):
             **search_param,
             "count": kwargs.get("max_results", 2000),
         }
+
+        # Explicit short_name overrides adapter/keyword resolution. Needed for
+        # adapters covering more than one collection -- reaching
+        # OPERA_L2_RTC-S1-STATIC_V1 is only possible this way.
+        if kwargs.get("short_name"):
+            search_params.pop("keyword", None)
+            search_params["short_name"] = kwargs["short_name"]
+            logger.debug(f"Overriding with short_name: {kwargs['short_name']}")
+
+        # Without a version, CMR returns every version of a collection
+        # together, so repeated processings of one acquisition come back as
+        # separate granules and any count taken from the result is inflated.
+        if kwargs.get("version"):
+            search_params["version"] = kwargs["version"]
+            logger.debug(f"Restricting to version: {kwargs['version']}")
 
         # Add spatial bounds if provided
         if bounding_box:
